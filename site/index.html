@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel</title>
+<meta name="description" content="A product demo you can stop and use. Reel records the steps of a workflow, so playback is the real app running.">
+<style>
+@font-face {
+  font-family: "Geist Serif";
+  src: url("./demo/assets/GeistSerif-Regular-mkvjf7at.woff2") format("woff2");
+  font-display: swap;
+}
+/* Tokens from qendrimbeka.com, which took them from kobamoney.com. */
+:root {
+  color-scheme: light;
+  --paper: #ffffff;
+  --card: #ffffff;
+  --ink: #111511;
+  --body: #444944;
+  --muted: #5a5e5a;
+  --quiet: #8d918e;
+  --forest: #1d3a2a;
+  --line: #11151117;
+  --line-strong: #1115112e;
+  --radius-card: 18px;
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/24px "Geist Serif", Georgia, serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: #1d3a2a26; }
+:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 6px; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px; }
+a:hover { text-decoration-color: currentColor; }
+
+/* The signature: this recording's own commands on a hairline, and the fork a viewer takes. */
+.ridge {
+  display: block;
+  width: 100vw;
+  height: 150px;
+  margin: 36px 0 0 calc(50% - 50vw);
+  pointer-events: none;
+}
+.ridge path, .ridge line {
+  fill: none;
+  stroke: var(--forest);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.ridge .draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 2.2s cubic-bezier(.45, 0, .2, 1) forwards;
+}
+.ridge .fork { animation-delay: 1.3s; animation-duration: 1.4s; }
+.ridge .tick { opacity: 0; animation: appear .5s ease forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes appear { to { opacity: 1; } }
+
+.page { position: relative; max-width: 860px; margin: 0 auto; padding: 0 24px 96px; }
+.hero { padding: 104px 0 0; max-width: 620px; }
+.eyebrow { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
+h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 1.7rem + 3vw, 3.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+}
+.lede { margin: 18px 0 0; font-size: clamp(1.0625rem, 1rem + .3vw, 1.1875rem); line-height: 1.5;
+  color: var(--body); max-width: 34rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 0; }
+.pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; padding: 0 20px; border-radius: 999px;
+  font-size: 15px; letter-spacing: -0.012em; text-decoration: none;
+  border: 1px solid var(--line-strong); background: var(--card); color: var(--ink);
+  transition: background .15s;
+}
+.pill:hover { background: #f7f6f3; }
+.pill.dark { border-color: #ffffff26; background: #121412; color: #fff; box-shadow: 0 1px 2px #0000002e; }
+.pill.dark:hover { background: #2a2d2a; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0 0; padding: 0; }
+.stat { background: #f7f6f3; border-radius: var(--radius-card); padding: 14px 16px; margin: 0; }
+.stat dd { display: block; margin: 0; font-size: 1.5rem; line-height: 1;
+  letter-spacing: -0.028em; font-variant-numeric: tabular-nums; }
+.stat dt { display: block; margin-top: 7px; font-size: 13px; line-height: 18px; color: var(--muted); }
+.stat { display: flex; flex-direction: column-reverse; justify-content: flex-end; }
+
+section { margin-top: 88px; scroll-margin-top: 32px; }
+h2 { margin: 0 0 6px; font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.028em; }
+.note { margin: 0; font-size: 15px; line-height: 1.6; color: var(--body); max-width: 36rem; }
+
+.stage { display: block; width: 100%; aspect-ratio: 880 / 700; margin-top: 24px; border: 1px solid var(--line);
+  border-radius: var(--radius-card); background: #fbf8f4; }
+.under { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+
+.steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
+.step { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 16px; }
+.step h3 { margin: 0; font-size: 15px; letter-spacing: -0.012em; }
+.step p { margin: 6px 0 0; font-size: 15px; line-height: 1.6; color: var(--body); }
+
+.table-wrap { overflow-x: auto; margin-top: 22px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 12px 0 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+th { font-size: 13px; color: var(--muted); font-weight: inherit; }
+td { color: var(--body); }
+td:first-child { color: var(--ink); }
+tr.top td { color: var(--ink); }
+
+.list { margin: 22px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.list li { padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 15px; line-height: 1.6; color: var(--body); }
+
+footer { margin-top: 72px; font-size: 13px; line-height: 20px; color: var(--muted); max-width: 40rem; }
+footer p { margin: 0 0 6px; }
+
+@media (max-width: 760px) {
+  h1 br { display: none; }
+  .hero { padding-top: 64px; }
+  .ridge { height: 110px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .stage { aspect-ratio: auto; height: 720px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ridge .draw { animation: none; stroke-dashoffset: 0; }
+  .ridge .tick { animation: none; opacity: 1; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">Reel, an editor for product demos</p>
+    <h1>A product demo<br>you can stop and use.</h1>
+    <p class="lede">Reel records the steps of a workflow, not a video of it. Playback is the real
+    app running, so anyone watching can pause, try it from that moment, then return to the story.</p>
+    <div class="actions">
+      <a class="pill dark" href="#replay">Play the replay</a>
+      <a class="pill" href="https://github.com/qbeka/reel-studio">GitHub</a>
+    </div>
+  </header>
+
+  <svg class="ridge" id="ridge" viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+  <dl class="stats">
+    <div class="stat"><dt>to any point of a generated 20,000 command log, p95</dt><dd>17.4 ms</dd></div>
+    <div class="stat"><dt>replaying that log from the start, p95</dt><dd>973 ms</dd></div>
+    <div class="stat"><dt>mismatches against replay at 5,332 positions</dt><dd>0</dd></div>
+    <div class="stat"><dt>viewer with gzip, and no backend</dt><dd>91 KB</dd></div>
+  </dl>
+
+  <main>
+    <section id="replay" aria-labelledby="replay-title">
+      <h2 id="replay-title">Fix a shared receipt</h2>
+      <p class="note">Press play and watch a split get fixed. Press Try it at any moment. The story
+      pauses and the app on screen is yours. Change anything, then return at a chapter.</p>
+      <iframe class="stage" title="Fix a shared receipt, interactive demo"
+        src="./demo/embed.html" loading="lazy"></iframe>
+      <p class="under">The receipts are invented. <a href="./demo/index.html">Open it full page</a> or
+      <a href="./demo/transcript.html">read the transcript</a>.</p>
+    </section>
+
+    <section aria-labelledby="how-title">
+      <h2 id="how-title">What happens underneath</h2>
+      <p class="note">A video can only be watched. Because Reel keeps commands instead of pixels,
+      every moment in the story is a working copy of the app.</p>
+      <div class="steps">
+        <div class="step"><h3>Record</h3><p>A scene declares commands such as <code>setSplit</code>.
+        Reel stores them with their logical time. It stores no pixels, DOM changes or mouse paths.</p></div>
+        <div class="step"><h3>Seek</h3><p>Reel restores the nearest checkpoint and replays forward
+        to the exact time. A newer seek replaces any seek still running.</p></div>
+        <div class="step"><h3>Try it</h3><p>The state on screen becomes your own copy, and the
+        timeline forks. Nothing you do reaches the recording, the URL or storage.</p></div>
+        <div class="step"><h3>Return</h3><p>You pick a chapter. Reel says which ones match your copy
+        and which clear it. The two are never merged.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="evidence-title">
+      <h2 id="evidence-title">The evidence</h2>
+      <p class="note">Time to a coherent state after a warm seek, p95, median of 5 runs. Checkpoints
+      only matter on long logs. A short real demo gains nothing from them.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Log</th><th scope="col">Commands</th><th scope="col">With checkpoints</th><th scope="col">From the start</th></tr></thead>
+          <tbody>
+            <tr><td>This recording</td><td>10</td><td>1.1 ms</td><td>1.1 ms</td></tr>
+            <tr><td>Generated, long</td><td>2,000</td><td>2.2 ms</td><td>7.6 ms</td></tr>
+            <tr class="top"><td>Generated, stress</td><td>20,000</td><td>17.4 ms</td><td>973 ms</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="under">A first seek in a fresh page is slower, about 1.1 s at worst on the stress log.</p>
+    </section>
+
+    <section aria-labelledby="checks-title">
+      <h2 id="checks-title">How it was checked</h2>
+      <ul class="list">
+        <li>An independent model of each scene, sharing no code with the app, agreed on every log.
+        It caught 6 of 6 seeded money bugs that comparing against replay could not see.</li>
+        <li>Seeking matched a full replay at all 5,332 positions tested.</li>
+        <li>14 of 14 seeded failures were caught. 36 of 38 mutants were killed, and the other 2 are equivalent.</li>
+        <li>The unit and browser suites pass on macOS and Linux. The exported viewer runs in
+        Chromium, WebKit and Firefox.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="limits-title">
+      <h2 id="limits-title">What this cannot tell you</h2>
+      <ul class="list">
+        <li>The timings come from one Apple M5 Pro laptop in headless Chromium, with other work running.
+        They are lab numbers, not field data.</li>
+        <li>Reel records scenes written for it. It cannot record an arbitrary website.</li>
+        <li>The large logs are generated. The only real recording here has 10 commands.</li>
+        <li>No person has used it in a study, and the editor was tested only in Chromium.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Everything on this page is static files. The demo sends nothing and stores nothing.</p>
+    <p><a href="https://github.com/qbeka/reel-studio/blob/main/docs/REPORT.md">Full report</a> ·
+    <a href="https://github.com/qbeka/reel-studio">Source</a> · <a href="https://www.qendrimbeka.com/">qendrimbeka.com</a></p>
+  </footer>
+</div>
+
+<script>
+// Command and chapter times from this recording, in milliseconds.
+const COMMANDS = [1816, 4228, 5735, 6841, 7947, 9565, 12572, 14181, 14634, 16798];
+const CHAPTERS = [0, 4228, 9565, 12172, 16798];
+const END = 20000;
+const FORK = 12172;
+const svg = document.getElementById("ridge");
+const x = (t) => (t / END) * 1000;
+const line = (t, half, delay) =>
+  `<line class="tick" x1="${x(t)}" x2="${x(t)}" y1="${56 - half}" y2="${56 + half}" style="animation-delay:${delay}s"/>`;
+const ticks = [
+  ...COMMANDS.map((t) => line(t, 4, 0.2 + (t / END) * 1.6)),
+  ...CHAPTERS.map((t) => line(t, 12, 0.2 + (t / END) * 1.6)),
+].join("");
+const f = x(FORK);
+svg.innerHTML =
+  `<path class="draw" pathLength="1" d="M0 56H1000"/>` + ticks +
+  `<path class="draw fork" pathLength="1" d="M${f} 56C${f + 50} 56 ${f + 40} 118 ${f + 110} 118H${f + 300}"/>`;
+</script>
+</body>
+</html>

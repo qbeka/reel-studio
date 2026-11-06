@@ -3,7 +3,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const roots = ['src', 'docs', 'scripts', 'bench', 'tests', 'projects'];
-const top = ['README.md', 'NOTICE.md', 'viewer.html', 'index.html'];
+const top = ['README.md', 'NOTICE.md', 'viewer.html', 'index.html', 'site/index.html'];
 // Built from code points, so this file does not contain the characters it bans.
 const dashes = String.fromCodePoint(0x2013, 0x2014);
 const banned = new RegExp(`[${dashes}]|\\p{Extended_Pictographic}`, 'u');

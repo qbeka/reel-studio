@@ -144,6 +144,7 @@ pnpm bench
 | Document | Contents |
 |---|---|
 | [docs/REPORT.md](docs/REPORT.md) | Results, limits, what failed and what changed. |
+| [site/index.html](site/index.html) | The project page that frames the exported demo. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How seeking, branches and export work. |
 | [docs/FORMAT.md](docs/FORMAT.md) | The adapter contract and project file. |
 | [docs/DESIGN.md](docs/DESIGN.md) | The central workflow and the design that was rejected. |
