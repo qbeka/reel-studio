@@ -122,9 +122,9 @@ function renderEmbedPage(
   @media (max-width: 559px) { .poster-wide { display: none; } .poster-narrow { display: block; } }
   .start { position: absolute; left: 50%; bottom: 44px; translate: -50% 0; display: inline-flex; align-items: center;
     min-height: 44px; padding: 10px 22px; border-radius: 999px; background: #121412; color: #fff;
-    font: 16px/1.2 'Geist Sans', system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
+    font: 16px/1.2 'Geist', system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
   .start:focus-visible { outline: 2px solid #1d3a2a; outline-offset: 3px; }
-  .note { margin: 0; padding: 6px 12px; color: #5a5e5a; font: 13px/1.3 'Geist Sans', system-ui, sans-serif; }
+  .note { margin: 0; padding: 6px 12px; color: #5a5e5a; font: 13px/1.3 'Geist', system-ui, sans-serif; }
   .note a { color: inherit; }
 </style>
 </head>
