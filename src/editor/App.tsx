@@ -5,7 +5,7 @@ import {
   FORMAT_VERSION,
   type ReelProject,
   parseProject,
-  validateProject,
+  validateCommands,
 } from '../core/project';
 import { resolveScene } from '../core/registry';
 import { SCENES } from '../scenes/registry';
@@ -90,7 +90,9 @@ export function App() {
       setProblems([resolved.message]);
       return;
     }
-    const issues = validateProject(resolved.adapter, resolved.project);
+    // Only commands can make a project impossible to play. A track problem must not lock
+    // an author out of their work, and the export dialog lists those.
+    const issues = validateCommands(resolved.adapter, resolved.project);
     if (issues.length > 0) {
       setProblems(['This project cannot play.', ...issues.slice(0, 6).map((i) => i.message)]);
       return;
@@ -122,6 +124,15 @@ export function App() {
     const parsed = parseProject(raw);
     if (!parsed.ok) {
       setProblems(parsed.errors.slice(0, 6));
+      return;
+    }
+    // Saving under an existing id would replace that draft and push out its last save.
+    if (list.some((draft) => draft.id === parsed.project.id)) {
+      const id = `${parsed.project.id.slice(0, 50)}-${crypto.randomUUID().slice(0, 8)}`;
+      await openProject(
+        { ...parsed.project, id },
+        'A draft of this project already exists. This file opened as a separate copy.',
+      );
       return;
     }
     await openProject(parsed.project);

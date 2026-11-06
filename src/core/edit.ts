@@ -27,8 +27,8 @@ export function proposeEdit(adapter: AnyAdapter, project: ReelProject): EditProp
 export function withoutBroken(adapter: AnyAdapter, proposal: EditProposal): EditProposal {
   const seqs = new Set(proposal.broken.map((issue) => issue.seq));
   const commands = proposal.project.commands.filter((c) => !seqs.has(c.seq));
-  // Removing commands cannot cause a new failure, because `validateCommands` skipped them
-  // when it produced `broken`. Checking again keeps that claim honest.
+  // Removing them cannot cause a new failure, because `validateCommands` skipped them when
+  // it produced `broken`. Checking again keeps that claim honest.
   return proposeEdit(adapter, { ...proposal.project, commands });
 }
 

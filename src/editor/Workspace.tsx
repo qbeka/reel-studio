@@ -78,12 +78,18 @@ export function Workspace({
   );
   const playback = useMemo(() => new Playback(timeline, { start: 0, end }), [timeline, end]);
   const lastT = useRef(0);
+  /** The playback that has been moved to `lastT`. A new one starts at 0 until then. */
+  const placed = useRef<Playback | null>(null);
   useEffect(() => {
     playback.seek(lastT.current);
+    placed.current = playback;
     return () => playback.destroy();
   }, [playback]);
   const story = useSyncExternalStore(playback.subscribe, playback.getSnapshot);
-  lastT.current = story.t;
+  if (placed.current === playback) lastT.current = story.t;
+
+  const latest = useRef(history);
+  latest.current = history;
 
   /* Recording ------------------------------------------------------------------------ */
 
@@ -102,11 +108,13 @@ export function Workspace({
       setRecording(null);
       setStopping(false);
       setRejected(null);
-      if (session.log.length > 0) {
-        setHistory((h) => commit(h, appendCommands(h.present, session.log)));
-      }
+      if (session.log.length === 0) return;
+      // A recording goes through the same check as any other edit.
+      const proposal = proposeEdit(adapter, appendCommands(latest.current.present, session.log));
+      if (proposal.broken.length === 0) setHistory((h) => commit(h, proposal.project));
+      else setRepair(proposal);
     },
-    [],
+    [adapter],
   );
 
   // Stop can arrive while a scene is waiting for its fixture service. Closing now would
@@ -238,19 +246,30 @@ export function Workspace({
 
   /* Saving --------------------------------------------------------------------------- */
 
-  const saveNow = useCallback(async () => {
+  /** The newest project known to be in storage. */
+  const stored = useRef<ReelProject | null>(null);
+
+  const saveNow = useCallback(async (): Promise<boolean> => {
     if (drafts === null) {
       setSave({ kind: 'failed', message: 'Local storage is not available in this browser.' });
-      return;
+      return false;
     }
     setSave({ kind: 'saving' });
     try {
       await drafts.save(project);
+      stored.current = project;
       setSave({ kind: 'saved', at: Date.now() });
+      return true;
     } catch (error) {
       setSave({ kind: 'failed', message: storageMessage(error) });
+      return false;
     }
   }, [drafts, project]);
+
+  /** Autosave waits for a pause, so leaving saves first rather than dropping the wait. */
+  const leave = async () => {
+    if (await saveNow()) onClose();
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => void saveNow(), AUTOSAVE_MS);
@@ -275,7 +294,8 @@ export function Workspace({
         setSelection(null);
       } else if (command && event.key.toLowerCase() === 'z') {
         event.preventDefault();
-        setHistory((h) => (event.shiftKey ? redo(h) : undo(h)));
+        // The recording in progress is built on the current log, which must not move.
+        if (recording === null) setHistory((h) => (event.shiftKey ? redo(h) : undo(h)));
       } else if (!command && event.key === ' ' && event.target === document.body && recording === null) {
         event.preventDefault();
         if (playback.getSnapshot().playing) playback.pause();
@@ -287,13 +307,29 @@ export function Workspace({
   }, [playback, recording, saveNow]);
 
   const isRecording = recording !== null;
+
+  // The browser's own warning, for closing the tab with work not yet in storage.
+  const unsaved = isRecording || (stored.current !== project && project !== initial);
+  useEffect(() => {
+    if (!unsaved) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [unsaved]);
+
   const shownState = isRecording ? liveState : story.state;
   const empty = project.commands.length === 0 && !isRecording;
 
   return (
     <main className="ed" data-recording={isRecording}>
       <header className="ed-top">
-        <button type="button" className="ed-wordmark" onClick={onClose}>
+        <button
+          type="button"
+          className="ed-wordmark"
+          disabled={isRecording}
+          title={isRecording ? 'Stop recording first' : undefined}
+          onClick={() => void leave()}
+        >
           Reel
         </button>
         <h1 className="ed-title">{project.title}</h1>
@@ -335,6 +371,9 @@ export function Workspace({
           {save.message} Your work is still open here.{' '}
           <button type="button" className="ed-text" onClick={downloadProject}>
             Download project file
+          </button>{' '}
+          <button type="button" className="ed-text ed-remove" onClick={onClose}>
+            Leave without saving
           </button>
         </p>
       )}
@@ -413,6 +452,7 @@ export function Workspace({
         </div>
 
         <Inspector
+          locked={isRecording}
           adapter={adapter}
           project={project}
           selection={selection}
@@ -440,6 +480,7 @@ export function Workspace({
       </div>
 
       <Timeline
+        locked={isRecording}
         project={project}
         end={end}
         t={story.t}

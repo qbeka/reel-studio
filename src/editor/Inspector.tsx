@@ -13,15 +13,18 @@ function TimeField({
   value: number;
   onCommit: (ms: number) => void;
 }) {
-  const [text, setText] = useState((value / 1000).toFixed(1));
-  useEffect(() => setText((value / 1000).toFixed(1)), [value]);
+  // Exact to the millisecond. A rounded display would rewrite the time on every blur.
+  const shown = String(value / 1000);
+  const [text, setText] = useState(shown);
+  useEffect(() => setText(shown), [shown]);
   const commit = () => {
-    const seconds = Number(text);
+    if (text === shown) return;
+    const seconds = text.trim() === '' ? Number.NaN : Number(text);
     if (Number.isFinite(seconds) && seconds >= 0 && seconds * 1000 <= LIMITS.timeMs) {
       const ms = Math.round(seconds * 1000);
       if (ms !== value) onCommit(ms);
     } else {
-      setText((value / 1000).toFixed(1));
+      setText(shown);
     }
   };
   return (
@@ -111,6 +114,8 @@ function TargetField({
 }
 
 export interface InspectorProps {
+  /** True during recording, when the log must not change underneath the session. */
+  locked: boolean;
   adapter: AnyAdapter;
   project: ReelProject;
   selection: Selection;
@@ -124,6 +129,14 @@ export interface InspectorProps {
 }
 
 export function Inspector(props: InspectorProps) {
+  return (
+    <div className="ed-inspector-wrap" inert={props.locked}>
+      <InspectorPanel {...props} />
+    </div>
+  );
+}
+
+function InspectorPanel(props: InspectorProps) {
   const { adapter, project, selection, t, onChange, onClearSelection } = props;
 
   if (selection?.kind === 'command') {
@@ -252,6 +265,7 @@ export function Inspector(props: InspectorProps) {
           <button
             type="button"
             className="ed-small"
+            disabled={project.commands.length === 0}
             onClick={() => {
               const end = project.trim?.end ?? Number.MAX_SAFE_INTEGER;
               if (t < end) onChange({ ...project, trim: { start: t, end: project.trim?.end ?? projectTrimEnd(project, t) } });
@@ -262,6 +276,7 @@ export function Inspector(props: InspectorProps) {
           <button
             type="button"
             className="ed-small"
+            disabled={project.commands.length === 0}
             onClick={() => {
               const start = project.trim?.start ?? 0;
               if (t > start) onChange({ ...project, trim: { start, end: t } });
@@ -273,7 +288,8 @@ export function Inspector(props: InspectorProps) {
         {project.trim !== null && (
           <p className="ed-hint">
             Viewers see {formatTime(project.trim.start)} to {formatTime(project.trim.end)}. Commands
-            before the start still run, so the state stays correct.{' '}
+            before the start still run and ship in the export, so the state stays correct.
+            Commands after the end are removed from the export.{' '}
             <button type="button" className="ed-text" onClick={() => onChange({ ...project, trim: null })}>
               Clear trim
             </button>

@@ -2,7 +2,7 @@ import { type ReactElement, createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { AnyAdapter, LayoutName } from '../core/adapter';
 import { canonicalJson } from '../core/canonical';
-import { type ReelProject, formatTime } from '../core/project';
+import { type ReelProject, forViewer, formatTime } from '../core/project';
 import { hashJson, sha256, sha256Text } from '../core/sha256';
 import { Timeline } from '../core/timeline';
 import { type TranscriptLine, buildTranscript } from '../core/transcript';
@@ -153,10 +153,11 @@ const decoder = new TextDecoder();
  * The project must already have passed `validateProject`.
  */
 export function assembleBundle(
-  project: ReelProject,
+  authored: ReelProject,
   adapter: AnyAdapter,
   runtime: ReadonlyMap<string, Uint8Array>,
 ): Map<string, Uint8Array> {
+  const project = forViewer(authored);
   const viewerHtml = runtime.get('viewer.html');
   if (viewerHtml === undefined) throw new Error('The viewer runtime has no viewer.html.');
   const stylesheet = [...runtime.keys()].find((p) => p.endsWith('.css'));
@@ -177,8 +178,10 @@ export function assembleBundle(
   const noscript = `<noscript><main style="max-width:680px;margin:32px auto;padding:0 20px"><h1>${title}</h1><p>${escapeHtml(project.disclosure)}</p><ol>${transcriptHtml(lines)}</ol></main></noscript>`;
   const index = decoder
     .decode(viewerHtml)
-    .replace('<title>Reel demo</title>', `<title>${title}</title>`)
-    .replace('<!--reel:noscript-->', noscript);
+    // A function, because a replacement string treats `$&` and similar as patterns, and
+    // project text can contain them.
+    .replace('<title>Reel demo</title>', () => `<title>${title}</title>`)
+    .replace('<!--reel:noscript-->', () => noscript);
   files.set('index.html', encoder.encode(index));
 
   files.set('transcript.html', encoder.encode(renderTranscriptPage(project, lines)));

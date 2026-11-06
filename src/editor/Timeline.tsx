@@ -35,6 +35,8 @@ interface DragState {
 }
 
 export interface TimelineProps {
+  /** True during recording, when the log must not change underneath the session. */
+  locked: boolean;
   project: ReelProject;
   end: number;
   t: number;
@@ -45,7 +47,16 @@ export interface TimelineProps {
   onMove: (selection: NonNullable<Selection>, t: number) => void;
 }
 
-export function Timeline({ project, end, t, selection, onSelect, onSeek, onMove }: TimelineProps) {
+export function Timeline({
+  locked,
+  project,
+  end,
+  t,
+  selection,
+  onSelect,
+  onSeek,
+  onMove,
+}: TimelineProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ left: 0, width: 800 });
   /** Pixels per second. Null means fit the whole story to the width. */
@@ -122,7 +133,7 @@ export function Timeline({ project, end, t, selection, onSelect, onSeek, onMove 
   const trim = project.trim;
 
   return (
-    <section className="ed-timeline" aria-label="Timeline">
+    <section className="ed-timeline" aria-label="Timeline" inert={locked}>
       <div className="ed-lanes-head" aria-hidden="true">
         <span />
         <span>Chapters</span>

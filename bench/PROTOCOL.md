@@ -29,7 +29,7 @@ p95 of **each** of 5 independent runs is below 100 ms on the reference machine.
 | Ready | From navigation until the slider exists. |
 | Heap | `Runtime.getHeapUsage` used size after a forced collection, at the end of a run. |
 | Checkpoint overhead | Heap of `checkpointed` minus heap of `baseline`, per run, on the same workload. |
-| Scrub | Seek requests sent every 16 ms without waiting. Reports requests, commits and total time. |
+| Scrub | Seek requests sent every 16 ms without waiting. Reports requests, distinct states committed (`data-state-t`) and total time. |
 | Export time | `pnpm export` wall time, 5 repetitions, one process each. |
 | Bundle size | Total bytes in the export, and gzip bytes of JS and CSS. |
 
@@ -68,9 +68,12 @@ the same code.
    Chromium process.
 3. Cold: open a fresh page per position, seek once.
 4. Warm: open one page. Warmup is 40 seeded seeks plus a seek to the end. These samples
-   are discarded. Measure 300 seeded seeks, or 30 for `baseline`, since each takes seconds.
-   A workload with too few distinct times uses all of them.
-5. Scrub 120 positions, then check 12 positions against a replay in Node.
+   are discarded. Measure 300 seeded seeks at distinct times, or 30 for `baseline`, since
+   each takes seconds. A workload with too few distinct times uses all of them, which the
+   raw files show.
+5. Scrub 120 positions, then check 12 positions: the full visible scene must equal a server
+   render of a replay in Node. The run also records at how many of those positions a state
+   one command old would look different, which states the power of the check.
 6. Force a collection and read the heap.
 
 Seek positions come from command timestamps through a linear congruential generator with
@@ -84,7 +87,12 @@ number. Consecutive equal times are skipped, because a seek to the current time 
 - Keep every sample in `raw/`. No sample is excluded. Any exclusion would be listed in
   the manifest.
 - Report the load average recorded with each run.
-- A coherence check below 100 percent invalidates that run.
+- A coherence check below 100 percent invalidates the result, and the script exits with an
+  error.
+- The baseline is the worst case for a player with no checkpoints, because every seek
+  starts from zero. A player that resumes from its current position would match the
+  checkpointed variant on short forward seeks, and matches the baseline on backward ones.
+  The report states this.
 
 ## Reference machine
 

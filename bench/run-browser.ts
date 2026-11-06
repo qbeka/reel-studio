@@ -11,6 +11,8 @@ import { arch, cpus, loadavg, platform, release, totalmem } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { type Browser, chromium } from '@playwright/test';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { serveStatic } from '../scripts/static-server';
 import type { LogEntry } from '../src/core/adapter';
 import type { ReelProject } from '../src/core/project';
@@ -56,18 +58,69 @@ function workloadProject(name: string, every: number, shortProject: ReelProject)
   return projectFrom(receiptAdapter, `bench-${name}`, `Bench ${name}`, receiptLog(spec), spec.seed, every);
 }
 
-/** Seeded positions from the command timestamps, so every seek lands on real work. */
+/**
+ * Seeded positions from the command timestamps, so every seek lands on real work. Times
+ * are distinct and shuffled. A log with fewer distinct times than `count` uses them all,
+ * and the manifest records how many each sample has.
+ */
 function seededTimes(log: readonly LogEntry[], count: number, seed: number): number[] {
+  const times = [...new Set(log.map((c) => c.t))];
   let x = seed >>> 0;
-  const out: number[] = [];
-  let previous = -1;
-  while (out.length < count) {
+  for (let i = times.length - 1; i > 0; i--) {
     x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
-    const t = log[x % log.length]!.t;
-    if (t !== previous) out.push(t);
-    previous = t;
+    const j = x % (i + 1);
+    [times[i], times[j]] = [times[j]!, times[i]!];
   }
-  return out;
+  return times.slice(0, count);
+}
+
+/**
+ * What a scene shows, as an ordered list: text, field values and which options are active.
+ * This is the whole visible content, so a stale state fails unless it looks identical.
+ */
+function expectedTokens(state: ReceiptState): string[] {
+  const html = renderToStaticMarkup(
+    createElement(receiptAdapter.Render, { state, send: () => {}, interactive: false, layout: 'wide' }),
+  );
+  const decode = (text: string) =>
+    text
+      .replaceAll('&#x27;', "'")
+      .replaceAll('&quot;', '"')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&amp;', '&');
+  const tokens: string[] = [];
+  for (const match of html.matchAll(/<[^>]+>|[^<]+/g)) {
+    const part = match[0];
+    if (!part.startsWith('<')) {
+      const text = decode(part).trim();
+      if (text !== '') tokens.push(text);
+      continue;
+    }
+    if (part.includes('data-active="true"')) tokens.push('[active]');
+    const value = part.startsWith('<input') ? /\svalue="([^"]*)"/.exec(part) : null;
+    if (value !== null) tokens.push(decode(value[1]!));
+  }
+  return tokens;
+}
+
+/** The same list, read from the live page. */
+function pageTokens(): string[] {
+  const root = document.querySelector('.rs')!;
+  const tokens: string[] = [];
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent!.trim();
+      if (text !== '') tokens.push(text);
+      return;
+    }
+    if (!(node instanceof HTMLElement)) return;
+    if (node.dataset.active === 'true') tokens.push('[active]');
+    if (node instanceof HTMLInputElement && node.type !== 'radio') tokens.push(node.value);
+    node.childNodes.forEach(walk);
+  };
+  root.childNodes.forEach(walk);
+  return tokens;
 }
 
 const pageHelpers = `
@@ -221,9 +274,10 @@ for (let run = 1; run <= RUNS; run++) {
         const slider = document.querySelector('.reel-slider') as HTMLInputElement;
         const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
         const bar = document.querySelector('.reel-bar') as HTMLElement;
+        // `data-t` is the request. `data-state-t` changes only when a state is committed.
         const seen = new Set<string>();
-        const observer = new MutationObserver(() => seen.add(bar.dataset.t!));
-        observer.observe(bar, { attributes: true, attributeFilter: ['data-t'] });
+        const observer = new MutationObserver(() => seen.add(bar.dataset.stateT!));
+        observer.observe(bar, { attributes: true, attributeFilter: ['data-state-t'] });
         const start = performance.now();
         for (const t of list) {
           set.call(slider, String(t));
@@ -238,19 +292,25 @@ for (let run = 1; run <= RUNS; run++) {
         return { requested: list.length, committed: seen.size, totalMs: performance.now() - start, lastT: bar.dataset.t };
       }, scrubTimes);
 
-      // Coherence: what the page shows at a position must match a replay here in Node.
+      // Coherence: the full visible scene must equal a render of a replay here in Node.
+      // `staleVisible` counts positions where a state one command old would look different,
+      // which is how much power this check has at those positions.
       let coherent = 0;
-      const coherence = seededTimes(log, Math.min(12, Math.max(4, log.length - 1)), 4000 + run);
-      const check = new Timeline<ReceiptState>(receiptAdapter, log, { seed: projectJson.seed, checkpointEvery: 256 });
+      let staleVisible = 0;
+      const coherence = seededTimes(log, 12, 4000 + run);
+      const check = new Timeline<ReceiptState>(receiptAdapter, log, {
+        seed: projectJson.seed,
+        checkpointEvery: 256,
+      });
       for (const t of coherence) {
         await page.evaluate((v) => (window as any).__seek(v), t);
-        const state = check.stateAt(t);
-        const shown = await page.locator('.rs').innerText();
-        const open = state.expenses.find((e) => e.id === state.selectedId);
-        const fits =
-          shown.includes(`${state.expenses.length} receipts`) &&
-          (state.view !== 'receipt' || open === undefined || shown.includes(open.merchant));
-        if (fits) coherent++;
+        const count = check.countAt(t);
+        const expected = JSON.stringify(expectedTokens(check.stateAfter(count)));
+        if (count > 0 && JSON.stringify(expectedTokens(check.stateAfter(count - 1))) !== expected) {
+          staleVisible++;
+        }
+        const shown = await page.evaluate(`(${pageTokens.toString()})()`);
+        if (JSON.stringify(shown) === expected) coherent++;
       }
 
       await session.send('HeapProfiler.collectGarbage');
@@ -269,7 +329,7 @@ for (let run = 1; run <= RUNS; run++) {
         cold,
         warm,
         scrub,
-        coherentChecks: { passed: coherent, total: coherence.length },
+        coherentChecks: { passed: coherent, total: coherence.length, staleVisible },
         heapUsedBytes: heap.usedSize,
       };
       await writeFile(
@@ -288,6 +348,11 @@ for (let run = 1; run <= RUNS; run++) {
 
 server.closeAllConnections();
 server.close();
+
+const incoherent = results.filter((r) => {
+  const c = r.coherentChecks as { passed: number; total: number };
+  return c.passed !== c.total;
+});
 
 const lock = await readFile('pnpm-lock.yaml');
 const manifest = {
@@ -313,3 +378,7 @@ const manifest = {
 };
 await writeFile(join(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`Saved to ${outDir}`);
+if (incoherent.length > 0) {
+  console.error(`${incoherent.length} runs failed the coherence check. This result is invalid.`);
+  process.exit(1);
+}

@@ -22,11 +22,13 @@ export function canonicalize(value: unknown, path = '$'): Json {
         throw new TypeError(`${path} is not a plain object`);
       }
       const source = value as Record<string, unknown>;
-      const out: { [key: string]: Json } = {};
-      for (const key of Object.keys(source).sort()) {
-        out[key] = canonicalize(source[key], `${path}.${key}`);
-      }
-      return out;
+      // `fromEntries` defines keys. Assignment would treat `__proto__` as the prototype
+      // and silently drop it, so two different values could hash the same.
+      return Object.fromEntries(
+        Object.keys(source)
+          .sort()
+          .map((key) => [key, canonicalize(source[key], `${path}.${key}`)]),
+      );
     }
     default:
       throw new TypeError(`${path} has unsupported type ${typeof value}`);

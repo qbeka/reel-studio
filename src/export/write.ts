@@ -19,11 +19,13 @@ export interface WriteOptions {
 }
 
 /**
- * Writes a bundle so that `out` is always complete or untouched.
+ * Writes a bundle so that a failure cannot leave a half written export at `out`.
  *
- * Files go to a sibling temporary folder, and a rename puts the folder in place. A crash
- * at any point leaves the previous export unchanged. A rename is atomic only within one
- * filesystem, which is why the temporary folder sits next to `out`.
+ * Files go to a sibling temporary folder, and renames put the folder in place. A failure
+ * while writing leaves the previous export unchanged. Replacing a folder takes two renames
+ * and there is no atomic swap here, so a crash in the gap between them leaves `out` absent,
+ * with the old export intact in the `.previous` folder beside it. A rename is atomic only
+ * within one filesystem, which is why both folders sit next to `out`.
  */
 export async function writeBundle(
   files: ReadonlyMap<string, Uint8Array>,

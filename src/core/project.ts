@@ -59,6 +59,9 @@ export type ParseResult =
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
+/** Far above any real log, and low enough that `seq + 1` stays exact in a double. */
+const MAX_SEQ = 2 ** 40;
+
 const isTime = (v: unknown): v is number =>
   Number.isInteger(v) && (v as number) >= 0 && (v as number) <= LIMITS.timeMs;
 
@@ -154,6 +157,8 @@ export function parseProject(input: unknown): ParseResult {
     if (
       !isRecord(raw) ||
       !Number.isInteger(raw.seq) ||
+      (raw.seq as number) < 1 ||
+      (raw.seq as number) > MAX_SEQ ||
       !isTime(raw.t) ||
       typeof raw.type !== 'string' ||
       !isRecord(raw.payload) ||
@@ -260,6 +265,24 @@ export function projectEnd(project: ReelProject): number {
   return Math.max(lastCommand, lastCaption, ...project.chapters.map((c) => c.t));
 }
 
+/**
+ * What a viewer receives. Commands before the start stay, because they build the state at
+ * the start. Everything after the end goes, so a trim really removes that part of the
+ * recording. Tracks outside the range go too, and the poster moves inside it.
+ */
+export function forViewer(project: ReelProject): ReelProject {
+  const { start, end } = playRange(project);
+  return {
+    ...project,
+    trim: project.trim,
+    posterT: Math.min(end, Math.max(start, project.posterT)),
+    commands: project.commands.filter((c) => c.t <= end),
+    chapters: project.chapters.filter((c) => c.t >= start && c.t <= end),
+    captions: project.captions.filter((c) => c.end > start && c.start < end),
+    camera: project.camera,
+  };
+}
+
 /** The range a viewer can reach. */
 export function playRange(project: ReelProject): { start: number; end: number } {
   return project.trim ?? { start: 0, end: projectEnd(project) };
@@ -320,14 +343,9 @@ export function validateTracks(adapter: AnyAdapter, project: ReelProject): Issue
       issues.push({ trackId, message: `${label} frames an unknown target, ${target}.` });
     }
   };
-  for (const chapter of project.chapters) {
-    if (chapter.t > end) {
-      issues.push({ trackId: chapter.id, message: `Chapter "${chapter.title}" starts after the end.` });
-    }
-  }
   for (const caption of project.captions) checkTarget(caption.id, caption.target, 'A caption');
   for (const shot of project.camera) checkTarget(shot.id, shot.target, 'A camera shot');
-  if (project.trim !== null && project.trim.start >= end) {
+  if (project.trim !== null && end > 0 && project.trim.start >= end) {
     issues.push({ message: 'The trim starts after the end of the recording.' });
   }
   return issues;

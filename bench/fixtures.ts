@@ -107,6 +107,11 @@ export function receiptLog({
       writer.send('setSplit', { member: members[1]!, value: correct[1]! });
       writer.send('setSplit', { member: members[2]!, value: correct[2]! });
       writer.send('confirmEdit');
+      // Sometimes the person gives up and starts this receipt over.
+      if (dice.chance(0.15)) {
+        writer.send('cancelEdit');
+        continue;
+      }
     }
     for (const [i, member] of members.entries()) {
       if (writer.log.length >= commands - 2) break;
@@ -114,7 +119,7 @@ export function receiptLog({
     }
     if (writer.log.length < commands - 1 && writer.state.draft !== null) {
       writer.send('confirmEdit');
-      if (writer.state.pendingSave !== null) {
+      if (writer.log.length < commands && writer.state.pendingSave !== null) {
         const requestId = writer.state.pendingSave.requestId;
         writer.send('saveResult', { requestId, ok: !dice.chance(0.03) }, 'outcome');
       }

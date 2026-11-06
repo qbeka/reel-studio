@@ -26,11 +26,15 @@ export interface Prediction {
   selected: string | null;
   view: string;
   expenseCount: number;
+  /** The open split, or null. */
+  draft: Split | null;
+  /** Balances if the draft were saved, or null when it cannot be saved. */
+  preview: Record<string, number> | null;
 }
 
 type Status = 'idle' | 'editing' | 'saving';
 
-interface Split {
+export interface Split {
   mode: string;
   values: Record<string, number>;
 }
@@ -206,11 +210,13 @@ export class ReceiptOracle {
     };
   }
 
-  predict(): Prediction {
+  /** Net positions with `draft` standing in for the split of the selected expense. */
+  private ledger(draft: Split | null) {
     const totals = new Map(MEMBERS.map((m) => [m, 0n]));
     const shares: Prediction['shares'] = {};
     for (const expense of this.expenses) {
-      const owed = sharesOf(expense, expense.split);
+      const split = draft !== null && expense.id === this.selected ? draft : expense.split;
+      const owed = sharesOf(expense, split);
       const sum = owed.reduce((a, b) => a + b, 0n);
       if (sum !== expense.total) throw new Error(`Shares of ${expense.id} do not add up.`);
       totals.set(expense.payer, totals.get(expense.payer)! + expense.total);
@@ -222,9 +228,18 @@ export class ReceiptOracle {
     }
     const net = [...totals.values()].reduce((a, b) => a + b, 0n);
     if (net !== 0n) throw new Error('Balances do not sum to zero.');
+    return { balances: Object.fromEntries([...totals].map(([m, v]) => [m, Number(v)])), shares };
+  }
+
+  predict(): Prediction {
+    const { balances, shares } = this.ledger(null);
+    const open = this.expenses.find((e) => e.id === this.selected);
+    const canPreview = this.draft !== null && open !== undefined && splitIsValid(open, this.draft);
     return {
-      balances: Object.fromEntries([...totals].map(([m, v]) => [m, Number(v)])),
+      balances,
       shares,
+      draft: this.draft,
+      preview: canPreview ? this.ledger(this.draft).balances : null,
       status: this.status,
       error: this.error,
       selected: this.selected,

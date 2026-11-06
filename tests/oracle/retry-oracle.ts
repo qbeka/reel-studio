@@ -10,6 +10,8 @@ interface OracleJob {
   status: JobStatus;
   attempts: number;
   delays: number[];
+  createdAt: number;
+  nextAttemptAt: number | null;
 }
 
 const NEXT_STATUS: Record<string, readonly JobStatus[]> = {
@@ -49,7 +51,13 @@ export class RetryOracle {
     }
     switch (type) {
       case 'enqueue':
-        this.jobs.set(`job-${++this.count}`, { status: 'sending', attempts: 0, delays: [] });
+        this.jobs.set(`job-${++this.count}`, {
+          status: 'sending',
+          attempts: 0,
+          delays: [],
+          createdAt: entry.t,
+          nextAttemptAt: null,
+        });
         break;
       case 'setHealthy':
         break;
@@ -60,11 +68,13 @@ export class RetryOracle {
         break;
       case 'attemptDue':
         job!.status = 'sending';
+        job!.nextAttemptAt = null;
         break;
       case 'requeue':
         job!.status = 'sending';
         job!.attempts = 0;
         job!.delays = [];
+        job!.nextAttemptAt = null;
         break;
       case 'attemptResult': {
         job!.attempts += 1;
@@ -79,7 +89,9 @@ export class RetryOracle {
           const exponential = this.baseDelay * 2 ** (job!.attempts - 1);
           const scaled = BigInt(exponential) * BigInt(Math.round(draw.value * 2 ** 32));
           const extra = (scaled * BigInt(this.jitter)) / (100n * 2n ** 32n);
-          job!.delays.push(exponential + Number(extra));
+          const delay = exponential + Number(extra);
+          job!.delays.push(delay);
+          job!.nextAttemptAt = entry.t + delay;
           job!.status = 'waiting';
         }
         break;

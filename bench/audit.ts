@@ -40,6 +40,13 @@ export function auditReceipt(
       if (state.expenses.length !== expected.expenseCount) problems.push(`seq ${entry.seq}: receipt count differs`);
       if ((state.validation?.code ?? null) !== expected.error) problems.push(`seq ${entry.seq}: validation differs`);
       if (state.selectedId !== expected.selected) problems.push(`seq ${entry.seq}: selection differs`);
+      const draft = state.draft === null ? null : state.draft.split;
+      if (JSON.stringify(normal(draft)) !== JSON.stringify(normal(expected.draft))) {
+        problems.push(`seq ${entry.seq}: draft differs`);
+      }
+      const preview = state.preview === null ? null : sorted(state.preview);
+      const want = expected.preview === null ? null : sorted(expected.preview);
+      if (JSON.stringify(preview) !== JSON.stringify(want)) problems.push(`seq ${entry.seq}: preview differs`);
       if (state.view !== expected.view) problems.push(`seq ${entry.seq}: view differs`);
       const status = state.pendingSave !== null ? 'saving' : state.draft !== null ? 'editing' : 'idle';
       if (status !== expected.status) problems.push(`seq ${entry.seq}: status differs`);
@@ -54,6 +61,9 @@ export function auditReceipt(
 const sorted = (record: Record<string, number>) =>
   Object.fromEntries(Object.entries(record).sort(([a], [b]) => (a < b ? -1 : 1)));
 
+const normal = (split: { mode: string; values: Record<string, number> } | null) =>
+  split === null ? null : { mode: split.mode, values: sorted(split.values) };
+
 export function auditRetry(adapter: AnyAdapter, log: readonly LogEntry[], seed: number): string[] {
   const problems: string[] = [];
   const oracle = new RetryOracle(seed);
@@ -66,6 +76,10 @@ export function auditRetry(adapter: AnyAdapter, log: readonly LogEntry[], seed: 
         const expected = oracle.jobs.get(job.id);
         if (expected?.status !== job.status) problems.push(`seq ${entry.seq}: ${job.id} status differs`);
         if (expected?.attempts !== job.attempts.length) problems.push(`seq ${entry.seq}: ${job.id} attempts differ`);
+        if (expected?.createdAt !== job.createdAt) problems.push(`seq ${entry.seq}: ${job.id} createdAt differs`);
+        if (expected?.nextAttemptAt !== job.nextAttemptAt) {
+          problems.push(`seq ${entry.seq}: ${job.id} next attempt differs`);
+        }
         const delays = job.attempts.flatMap((a) => (a.delayMs === null ? [] : [a.delayMs]));
         if (JSON.stringify(delays) !== JSON.stringify(expected?.delays)) {
           problems.push(`seq ${entry.seq}: ${job.id} delays differ`);
