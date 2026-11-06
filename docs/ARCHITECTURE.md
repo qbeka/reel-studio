@@ -41,7 +41,7 @@ state, and applies the commands in between.
 `Timeline` stores the state after every Nth command, by reference. This is safe because
 `apply` must return new objects, and the tests deep-freeze every state to enforce it.
 Unchanged parts of a state are shared, so a checkpoint costs about what changed since the
-last one. A warm seek applies at most N - 1 commands, and at most 1,024 states exist. If a
+last one. A warm seek applies at most N - 1 commands, and at most 1,024 checkpoints exist. If a
 log would need more, the interval widens to fit. `parseProject` caps the log length.
 
 `SeekController` runs work in slices limited by time. A newer request abandons an older

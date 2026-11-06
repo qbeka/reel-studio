@@ -3,12 +3,15 @@
 Frozen before the final measurement. A change to anything here after that run means a new
 protocol version and a new run. The earlier results stay in `runs/`.
 
-Version: 2
+Version: 3
 
 Version 1 sampled warm positions with a weak generator, and the sample was skewed toward
 early states. Its run is in `runs/2026-11-06-protocol-1-skewed-positions`, marked as failed.
-Version 2 changes only the sampling: Mulberry32 for the shuffle, 60 baseline samples instead
-of 30, and position quantiles in every raw file.
+Version 2 changed only the sampling: Mulberry32 for the shuffle, 60 baseline samples instead
+of 30, and position quantiles in every raw file. An audit then found the code and these
+definitions apart in small ways. Version 3 fixes the measurement of even-sized medians, uses
+all distinct times on short logs, records the position band check, and describes the scrub
+as what it is. Its run also includes the defect fixes from that audit.
 
 ## Question
 
@@ -30,14 +33,14 @@ p95 of **each** of 5 independent runs is below 100 ms on the reference machine.
 | Metric | Definition |
 |---|---|
 | Next frame | Same start, ending at the first `requestAnimationFrame` callback after the commit. This does not prove the frame was displayed. |
-| Cold seek | The first seek in a fresh page, right after the viewer appears, to 25, 50, 75 and 100 percent of the log. The background walk may still be running. |
+| Cold seek | The first seek in a fresh page, right after the viewer appears, to 25, 50, 75 and 100 percent of the log. The background walk may still be running. Each run has 4 samples, so its median is the mean of the middle two. |
 | Ready | From navigation until the slider exists. |
 | Heap | `Runtime.getHeapUsage` used size after a forced collection, at the end of a run. |
 | Checkpoint overhead | Heap of `checkpointed` minus heap of `baseline`, per run, on the same workload. |
-| Scrub | Seek requests sent every 16 ms without waiting. Reports requests, distinct states committed (`data-state-t`) and total time. |
+| Scrub | Seek requests at least 16 ms apart, each followed by a 16 ms timer, without waiting for the seek. A busy main thread stretches the gap. Reports requests, distinct states committed (`data-state-t`) and total time. |
 | Export time | `pnpm export` wall time, 5 repetitions, one process each. |
 | Bundle size | Total bytes in the export, and gzip bytes of JS and CSS. |
-| Forward resume | Node engine only, one process. A player with no checkpoints that keeps its position and restarts only to go backward. Same positions as the Node baseline. |
+| Forward resume | Node engine only, one process. A player with no checkpoints that keeps its position and restarts only to go backward. It uses the same 100 positions as the Node baseline. |
 
 ## Workloads
 
@@ -77,15 +80,17 @@ the same code.
    are discarded. Measure 300 seeded seeks at distinct times, or 60 for `baseline`, since
    each takes about a second. A workload with too few distinct times uses all of them, which the
    raw files show.
-5. Scrub 120 positions, then check 12 positions: the full visible scene must equal a server
-   render of a replay in Node. The run also records at how many of those positions a state
-   one command old would look different, which states the power of the check.
+5. Scrub 120 positions, then run 12 checks: the full visible scene must equal a server
+   render of a replay in Node. Positions repeat across variants of a run, so count checks
+   and distinct positions separately. The run also records at how many checks a state one
+   command old would look different, which states the power of the check.
 6. Force a collection and read the heap.
 
 Seek positions are a uniform sample of the distinct command timestamps, shuffled with
 Mulberry32, with seed bases 1000 (warmup), 2000 (warm), 3000 (scrub) and 4000 (coherence),
-plus the run number. A sample whose median position is outside 0.4 to 0.6 of the log is
-reported as such in the raw file. `tests/unit/sampling.test.ts` checks the sampler.
+plus the run number. Each raw file records `warmPositionsInBand`, which is false when the
+sample's median position is outside 0.4 to 0.6 of the log. With 60 samples this happens by
+chance about one time in eight, so it is reported, not treated as a failure. `tests/unit/sampling.test.ts` checks the sampler.
 
 ## Reporting
 

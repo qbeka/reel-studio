@@ -10,7 +10,7 @@ const ARTIFACTS: { path: string; description: string }[] = [
   { path: 'runs/2026-11-06-release/receipt-split-viewer.zip', description: 'Exported viewer of the release story, built by the editor in a browser.' },
   { path: 'runs/2026-11-06-release/project.reel.json', description: 'The release story, recorded through the editor.' },
   { path: 'runs/2026-11-06-acceptance/retry-queue-viewer.zip', description: 'Exported viewer from the acceptance run on the second scene.' },
-  { path: 'runs/2026-11-06-final/manifest.json', description: 'Final benchmark manifest, protocol 2.' },
+  { path: 'runs/2026-11-06-final/manifest.json', description: 'Final benchmark manifest, protocol 3.' },
   { path: 'runs/2026-11-06-final/summary.json', description: 'Run level statistics computed from raw samples.' },
   { path: 'runs/2026-11-06-final/correctness.json', description: 'Seek, oracle and negative control results.' },
   { path: 'runs/2026-11-06-final/mutants.json', description: 'Mutation results with the test that killed each mutant.' },

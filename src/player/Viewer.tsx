@@ -94,6 +94,8 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
         setRejected(null);
       });
       playback.pause();
+      // A waiting Try it is settled now, or it would replace this branch when its seek ends.
+      setControlWanted(false);
       setBranch(next);
       setBranchState(next.session.state);
       setBranchEdits(edits);
@@ -118,11 +120,11 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
   }, [adapter, playback, enterBranch]);
 
   useEffect(() => {
-    if (controlWanted && !story.seeking) {
+    if (controlWanted && !story.seeking && branch === null) {
       setControlWanted(false);
       takeControl();
     }
-  }, [controlWanted, story.seeking, takeControl]);
+  }, [controlWanted, story.seeking, branch, takeControl]);
 
   const send = useCallback(
     (type: string, payload?: Payload) => {
@@ -141,6 +143,12 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
       (onChange) => openBranch(adapter, timeline.stateAt(t), t, browserHost, onChange),
       0,
     );
+    requestAnimationFrame(() => branchStatus.current?.focus());
+  };
+
+  const keepExperimenting = () => {
+    setReturning(false);
+    requestAnimationFrame(() => branchStatus.current?.focus());
   };
 
   const askToReturn = () => {
@@ -247,9 +255,9 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
   }, [inBranch, playback, jumpChapter, takeControl]);
 
   useEffect(() => {
-    if (!story.playing && !story.seeking && !inBranch && story.t > range.start) {
-      history.replaceState(null, '', momentHash(story.t));
-    }
+    if (story.playing || story.seeking || inBranch) return;
+    const hash = story.t > range.start ? momentHash(story.t) : '';
+    history.replaceState(null, '', `${location.pathname}${location.search}${hash}`);
   }, [story.playing, story.seeking, story.t, inBranch, range.start]);
 
   const last = story.count > 0 ? project.commands[story.count - 1] : undefined;
@@ -378,7 +386,7 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
           pausedMatches={matchesStory(adapter, timeline, branch.base.t, branchState)}
           hasEdits={branchEdits > 0 && !isUnchanged(adapter, branch)}
           onChoose={leaveBranch}
-          onCancel={() => setReturning(false)}
+          onCancel={keepExperimenting}
         />
       )}
 

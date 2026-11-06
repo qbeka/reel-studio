@@ -5,6 +5,7 @@ import {
   type History,
   appendCommands,
   commit,
+  fileProblems,
   initialHistory,
   newTrackId,
   nextSeq,
@@ -91,6 +92,16 @@ export function Workspace({
   const latest = useRef(history);
   latest.current = history;
 
+  /** Why the last edit was refused. */
+  const [refused, setRefused] = useState<string | null>(null);
+
+  /** Commits an edit, unless the result could not be read back from its file. */
+  const commitEdit = useCallback((next: ReelProject) => {
+    const problems = fileProblems(next);
+    setRefused(problems[0] ?? null);
+    if (problems.length === 0) setHistory((h) => commit(h, next));
+  }, []);
+
   /* Recording ------------------------------------------------------------------------ */
 
   const [recording, setRecording] = useState<LiveSession | null>(null);
@@ -111,10 +122,10 @@ export function Workspace({
       if (session.log.length === 0) return;
       // A recording goes through the same check as any other edit.
       const proposal = proposeEdit(adapter, appendCommands(latest.current.present, session.log));
-      if (proposal.broken.length === 0) setHistory((h) => commit(h, proposal.project));
+      if (proposal.broken.length === 0) commitEdit(proposal.project);
       else setRepair(proposal);
     },
-    [adapter],
+    [adapter, commitEdit],
   );
 
   // Stop can arrive while a scene is waiting for its fixture service. Closing now would
@@ -170,14 +181,10 @@ export function Workspace({
 
   /* Edits ---------------------------------------------------------------------------- */
 
-  const applyTrackEdit = useCallback((next: ReelProject) => {
-    setHistory((h) => commit(h, next));
-  }, []);
-
   /** Commits a command edit, or opens the repair dialog if it breaks a later command. */
   const applyCommandEdit = (next: ReelProject) => {
     const proposal = proposeEdit(adapter, next);
-    if (proposal.broken.length === 0) setHistory((h) => commit(h, next));
+    if (proposal.broken.length === 0) commitEdit(next);
     else setRepair(proposal);
   };
 
@@ -189,7 +196,7 @@ export function Workspace({
   const addChapter = () => {
     const id = newTrackId(project, 'chapter');
     const chapter = { id, t: Math.round(story.t), title: `Chapter at ${formatTime(story.t)}` };
-    applyTrackEdit({
+    commitEdit({
       ...project,
       chapters: [...project.chapters, chapter].sort((a, b) => a.t - b.t),
     });
@@ -200,7 +207,7 @@ export function Workspace({
     const id = newTrackId(project, 'caption');
     const start = Math.round(story.t);
     const caption = { id, start, end: start + 3000, text: 'New caption', target: null };
-    applyTrackEdit({
+    commitEdit({
       ...project,
       captions: [...project.captions, caption].sort((a, b) => a.start - b.start),
     });
@@ -210,7 +217,7 @@ export function Workspace({
   const addShot = () => {
     const id = newTrackId(project, 'shot');
     const shot = { id, t: Math.round(story.t), target: null };
-    applyTrackEdit({
+    commitEdit({
       ...project,
       camera: [...project.camera, shot].sort((a, b) => a.t - b.t),
     });
@@ -221,21 +228,21 @@ export function Workspace({
     if (item.kind === 'command') {
       applyCommandEdit(retimeCommand(project, item.seq, t));
     } else if (item.kind === 'chapter') {
-      applyTrackEdit({
+      commitEdit({
         ...project,
         chapters: project.chapters
           .map((c) => (c.id === item.id ? { ...c, t } : c))
           .sort((a, b) => a.t - b.t),
       });
     } else if (item.kind === 'caption') {
-      applyTrackEdit({
+      commitEdit({
         ...project,
         captions: project.captions
           .map((c) => (c.id === item.id ? { ...c, start: t, end: t + (c.end - c.start) } : c))
           .sort((a, b) => a.start - b.start),
       });
     } else {
-      applyTrackEdit({
+      commitEdit({
         ...project,
         camera: project.camera
           .map((c) => (c.id === item.id ? { ...c, t } : c))
@@ -403,9 +410,9 @@ export function Workspace({
               declares. It does not record pixels or mouse positions.
             </p>
           )}
-          {rejected !== null && (
+          {(rejected ?? refused) !== null && (
             <p className="ed-problem" role="alert">
-              {rejected}
+              {rejected ?? refused}
             </p>
           )}
 
@@ -457,7 +464,7 @@ export function Workspace({
           project={project}
           selection={selection}
           t={Math.round(story.t)}
-          onChange={applyTrackEdit}
+          onChange={commitEdit}
           onRetimeCommand={(seq, t) => applyCommandEdit(retimeCommand(project, seq, t))}
           onEditPayload={(seq, payload) => applyCommandEdit(setCommandPayload(project, seq, payload))}
           onRemoveCommand={removeCommand}
@@ -495,7 +502,7 @@ export function Workspace({
           proposal={repair}
           onRepair={() => {
             const fixed = withoutBroken(adapter, repair);
-            if (fixed.broken.length === 0) setHistory((h) => commit(h, fixed.project));
+            if (fixed.broken.length === 0) commitEdit(fixed.project);
             setRepair(null);
           }}
           onCancel={() => setRepair(null)}
@@ -591,7 +598,13 @@ function ExportDialog({
   onClose: () => void;
 }) {
   const ref = useModal();
-  const issues = useMemo(() => validateProject(adapter, project), [adapter, project]);
+  const issues = useMemo(
+    () => [
+      ...fileProblems(project).map((message) => ({ message })),
+      ...validateProject(adapter, project),
+    ],
+    [adapter, project],
+  );
   const [phase, setPhase] = useState<ExportPhase>({ kind: 'idle' });
   const controller = useRef<AbortController | null>(null);
   const blocked = issues.length > 0 || project.commands.length === 0;

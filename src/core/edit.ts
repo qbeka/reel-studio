@@ -1,5 +1,5 @@
 import type { AnyAdapter, LogEntry, Payload } from './adapter';
-import { type Issue, type ReelProject, validateCommands } from './project';
+import { type Issue, type ReelProject, parseProject, projectEnd, validateCommands } from './project';
 import { compareEntries } from './timeline';
 
 /**
@@ -30,6 +30,28 @@ export function withoutBroken(adapter: AnyAdapter, proposal: EditProposal): Edit
   // Removing them cannot cause a new failure, because `validateCommands` skipped them when
   // it produced `broken`. Checking again keeps that claim honest.
   return proposeEdit(adapter, { ...proposal.project, commands });
+}
+
+/**
+ * Why this project could not be read back, or an empty list. `parseProject` is the one
+ * definition of a valid file, so every edit goes through it. An edit it would refuse must
+ * not be saved, because the draft, the download and the export all read through it too.
+ */
+export function fileProblems(project: ReelProject): string[] {
+  const parsed = parseProject(JSON.parse(JSON.stringify(project)));
+  return parsed.ok ? [] : parsed.errors;
+}
+
+/** Trims the start to `t`. With no end set yet, the whole rest of the story stays. */
+export function trimStart(project: ReelProject, t: number): ReelProject {
+  const end = project.trim?.end ?? Math.max(t + 1, projectEnd(project));
+  return t < end ? { ...project, trim: { start: t, end } } : project;
+}
+
+/** Trims the end to `t`. */
+export function trimEnd(project: ReelProject, t: number): ReelProject {
+  const start = project.trim?.start ?? 0;
+  return t > start ? { ...project, trim: { start, end: t } } : project;
 }
 
 export function removeCommands(project: ReelProject, seqs: ReadonlySet<number>): ReelProject {

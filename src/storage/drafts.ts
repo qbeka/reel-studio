@@ -1,3 +1,4 @@
+import { canonicalJson } from '../core/canonical';
 import type { ReelProject } from '../core/project';
 import { parseProject } from '../core/project';
 
@@ -58,6 +59,11 @@ function parseDraft(text: string | null): ReelProject | null {
   }
 }
 
+function sameProject(stored: string, project: ReelProject): boolean {
+  const parsed = parseDraft(stored);
+  return parsed !== null && canonicalJson(parsed) === canonicalJson(project);
+}
+
 /** A plain sentence for the most likely failures. */
 export function storageMessage(error: unknown): string {
   const name = (error as { name?: string })?.name;
@@ -95,7 +101,8 @@ export class DraftStore {
     request.onsuccess = () => {
       const old = request.result as DraftRecord | undefined;
       const current = JSON.stringify(project);
-      if (old?.current === current) return;
+      // Canonical, because a reopened draft has the same data with its keys in file order.
+      if (old !== undefined && sameProject(old.current, project)) return;
       const record: DraftRecord = {
         id: project.id,
         title: project.title,

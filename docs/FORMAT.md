@@ -94,8 +94,9 @@ Commands, chapters and captions after `trim.end` are removed from the export. If
 must not ship, record it again without that part.
 
 Limits on a file: 100,000 commands, 64 chapters, 512 captions, 512 camera shots, 400
-characters of text, and a `seq` up to 2^40. A timeline stores at most 1,024 states, widening
-the interval if a file asks for more. The receipt scene holds at most 5,000 receipts and the
+characters of text, and a `seq` up to 2^40. An edit that would break a limit is refused with
+the reason, so a draft can always be read back. A timeline stores at most 1,024 checkpoints
+beyond the initial state, widening the interval if a file asks for more. The receipt scene holds at most 5,000 receipts and the
 retry queue at most 2,000 jobs, which keeps the cost of every command bounded.
 
 ## Scene resolution

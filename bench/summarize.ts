@@ -14,6 +14,13 @@ if (dir === undefined) {
   process.exit(2);
 }
 
+/** The middle value, or the mean of the middle two. */
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length / 2;
+  return Number.isInteger(mid) ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[Math.floor(mid)]!;
+}
+
 function quantile(values: readonly number[], q: number): number {
   const sorted = [...values].sort((a, b) => a - b);
   return sorted[Math.min(sorted.length - 1, Math.ceil(q * sorted.length) - 1)]!;
@@ -25,7 +32,7 @@ function acrossRuns(values: number[]) {
   const sorted = [...values].sort((a, b) => a - b);
   return {
     runs: sorted.length,
-    median: round(sorted[Math.floor((sorted.length - 1) / 2)]!),
+    median: round(median(sorted)),
     min: round(sorted[0]!),
     max: round(sorted.at(-1)!),
     perRun: values.map(round),
@@ -40,6 +47,7 @@ interface RunRecord {
   loadAverage: number[];
   warm: { commit: number; nextFrame: number }[];
   warmPositions: { p50: number };
+  warmPositionsInBand: boolean;
   cold: { position: number; commit: number }[];
   scrub: { requested: number; committed: number; totalMs: number };
   coherentChecks: { passed: number; total: number };
@@ -66,12 +74,13 @@ for (const [key, group] of [...groups].sort()) {
     variant,
     warmSamplesPerRun: group[0]!.warm.length,
     warmPositionP50: group.map((r) => r.warmPositions.p50),
-    warmP50Ms: acrossRuns(group.map((r) => quantile(r.warm.map((s) => s.commit), 0.5))),
+    warmPositionsOutOfBand: group.filter((r) => !r.warmPositionsInBand).length,
+    warmP50Ms: acrossRuns(group.map((r) => median(r.warm.map((s) => s.commit)))),
     warmP95Ms: acrossRuns(group.map((r) => quantile(r.warm.map((s) => s.commit), 0.95))),
     warmMaxMs: acrossRuns(group.map((r) => Math.max(...r.warm.map((s) => s.commit)))),
     nextFrameP95Ms: acrossRuns(group.map((r) => quantile(r.warm.map((s) => s.nextFrame), 0.95))),
     coldWorstMs: acrossRuns(group.map((r) => Math.max(...r.cold.map((s) => s.commit)))),
-    coldMedianMs: acrossRuns(group.map((r) => quantile(r.cold.map((s) => s.commit), 0.5))),
+    coldMedianMs: acrossRuns(group.map((r) => median(r.cold.map((s) => s.commit)))),
     readyMs: acrossRuns(group.map((r) => r.readyMs)),
     heapMB: acrossRuns(group.map((r) => r.heapUsedBytes / 1e6)),
     scrubCommits: group.map((r) => `${r.scrub.committed}/${r.scrub.requested}`),

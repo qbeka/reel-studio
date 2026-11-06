@@ -238,14 +238,14 @@ for (let run = 1; run <= RUNS; run++) {
       // Warm: the same page after a declared warmup.
       const { context, page, readyMs } = await openViewer(browser, url);
       const session = await context.newCDPSession(page);
-      const warmupTimes = seededTimes(log, Math.min(SAMPLES.warmup, log.length), 1000 + run);
+      const warmupTimes = seededTimes(log, SAMPLES.warmup, 1000 + run);
       await page.evaluate(async (times) => {
         for (const t of times) await (window as any).__seek(t);
       }, warmupTimes);
       await page.evaluate((t) => (window as any).__seek(t), log.at(-1)!.t);
 
       const count = variant.name === 'baseline' ? SAMPLES.warmBaseline : SAMPLES.warm;
-      const times = seededTimes(log, Math.min(count, Math.max(6, log.length - 1)), 2000 + run);
+      const times = seededTimes(log, count, 2000 + run);
       const warm: { t: number; commit: number; nextFrame: number }[] = await page.evaluate(
         async (list) => {
           const out = [];
@@ -256,7 +256,7 @@ for (let run = 1; run <= RUNS; run++) {
       );
 
       // Rapid scrub: requests at frame pace, without waiting for each to finish.
-      const scrubTimes = seededTimes(log, Math.min(SAMPLES.scrub, Math.max(6, log.length - 1)), 3000 + run);
+      const scrubTimes = seededTimes(log, SAMPLES.scrub, 3000 + run);
       const scrub = await page.evaluate(async (list) => {
         const slider = document.querySelector('.reel-slider') as HTMLInputElement;
         const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
@@ -305,6 +305,7 @@ for (let run = 1; run <= RUNS; run++) {
       await context.close();
       await browser.close();
 
+      const warmPositions = positionQuantiles(log, warm.map((s) => s.t));
       const record = {
         run,
         workload: name,
@@ -313,7 +314,8 @@ for (let run = 1; run <= RUNS; run++) {
         loadAverage: loadavg(),
         readyMs,
         warmup: warmupTimes.length + 1,
-        warmPositions: positionQuantiles(log, warm.map((s) => s.t)),
+        warmPositions,
+        warmPositionsInBand: warmPositions.p50 >= 0.4 && warmPositions.p50 <= 0.6,
         cold,
         warm,
         scrub,

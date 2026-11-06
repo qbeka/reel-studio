@@ -100,6 +100,50 @@ test.describe('viewer', () => {
   });
 });
 
+test.describe('viewer, second review', () => {
+  test('Try it waiting on a seek cannot replace a restored copy', async ({ page }) => {
+    await page.goto(`${slow.url}#t=${slowLog[40]!.t}`);
+    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Add a sample receipt' }).click();
+    await expect(page.getByText('1 edit so far.')).toBeVisible();
+    await page.getByRole('button', { name: 'Return to story' }).click();
+    await panel(page).getByRole('button', { name: /Part 4/ }).click();
+    await page.evaluate(() => {
+      const button = (name: string) =>
+        [...document.querySelectorAll('button')].find((b) => b.textContent === name) as HTMLButtonElement;
+      button('Try it').click();
+      button('Bring my copy back').click();
+    });
+    await expect(page.getByText('1 edit so far.')).toBeVisible();
+    await page.waitForFunction(
+      () => (document.querySelector('.reel-bar') as HTMLElement).dataset.seeking === 'false',
+      undefined,
+      { timeout: 60_000 },
+    );
+    await page.waitForTimeout(200);
+    await expect(page.getByText('1 edit so far.')).toBeVisible();
+  });
+
+  test('focus stays useful after Reset and Keep experimenting', async ({ page }) => {
+    await page.goto(`${host.url}#t=9000`);
+    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByLabel('Ana share').fill('10');
+    await page.getByRole('button', { name: 'Return to story' }).click();
+    await page.getByRole('button', { name: 'Keep experimenting' }).click();
+    const status = page.getByText('This is your copy.').locator('..');
+    await expect(status).toBeFocused();
+    await page.getByRole('button', { name: 'Reset my changes' }).click();
+    await expect(status).toBeFocused();
+  });
+
+  test('going back to the start clears the time from the address', async ({ page }) => {
+    await page.goto(`${host.url}#t=5000`);
+    await expect(page.getByRole('slider', { name: 'Story position' })).toHaveValue('5000');
+    await page.getByRole('slider', { name: 'Story position' }).fill('0');
+    await expect.poll(() => new URL(page.url()).hash).toBe('');
+  });
+});
+
 test.describe('editor', () => {
   async function recordShort(page: Page) {
     await newProject(page, 'Receipt split');
@@ -193,6 +237,32 @@ test.describe('editor', () => {
     await page.getByLabel('Time (seconds)').blur();
     await page.waitForTimeout(100);
     await expect(slider).toHaveValue('500');
+  });
+
+  test('a chapter past the file limit is refused with a reason, and the draft stays readable', async ({ page }) => {
+    const project = JSON.parse(await readFile('projects/receipt-split.reel.json', 'utf8'));
+    project.chapters = Array.from({ length: 64 }, (_, i) => ({ id: `c-${i}`, t: i * 100, title: `Part ${i}` }));
+    await page.goto('/');
+    await page.getByLabel('Open a project file').setInputFiles({
+      name: 'full.reel.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(project)),
+    });
+    await page.getByRole('button', { name: 'Record' }).waitFor();
+    await page.getByRole('button', { name: 'Chapter', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('limit is 64');
+    await expect(page.locator('.ed-chapter')).toHaveCount(64);
+  });
+
+  test('a refused retime leaves the field showing the stored time', async ({ page }) => {
+    await recordShort(page);
+    await lane(page).nth(1).click();
+    const field = page.getByLabel('Time (seconds)');
+    const before = await field.inputValue();
+    await field.fill('0');
+    await field.blur();
+    await page.getByRole('button', { name: 'Cancel the edit' }).click();
+    await expect(field).toHaveValue(before);
   });
 
   test('trim is unavailable with nothing recorded', async ({ page }) => {

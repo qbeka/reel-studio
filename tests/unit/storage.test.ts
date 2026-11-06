@@ -53,6 +53,15 @@ describe('DraftStore', () => {
     expect((await store.load(base.id))?.project.title).toBe('First');
   });
 
+  it('does not rotate when a reopened draft has the same data in another key order', async () => {
+    await store.save({ ...base, title: 'First' });
+    await store.save({ ...base, title: 'Second' });
+    const reordered = Object.fromEntries(Object.entries({ ...base, title: 'Second' }).reverse());
+    await store.save(reordered as unknown as ReelProject);
+    await store.restorePrevious(base.id);
+    expect((await store.load(base.id))?.project.title).toBe('First');
+  });
+
   it('recovers the previous save when the latest is damaged', async () => {
     await store.save({ ...base, title: 'Good' });
     await store.save({ ...base, title: 'Newest' });

@@ -336,7 +336,6 @@ export function validateCommandShapes(adapter: AnyAdapter, project: ReelProject)
 
 export function validateTracks(adapter: AnyAdapter, project: ReelProject): Issue[] {
   const issues: Issue[] = [];
-  const end = projectEnd(project);
   const known = new Set(adapter.targets.map((t) => t.id));
   const checkTarget = (trackId: string, target: string | null, label: string) => {
     if (target !== null && !known.has(target)) {
@@ -345,9 +344,6 @@ export function validateTracks(adapter: AnyAdapter, project: ReelProject): Issue
   };
   for (const caption of project.captions) checkTarget(caption.id, caption.target, 'A caption');
   for (const shot of project.camera) checkTarget(shot.id, shot.target, 'A camera shot');
-  if (project.trim !== null && end > 0 && project.trim.start >= end) {
-    issues.push({ message: 'The trim starts after the end of the recording.' });
-  }
   return issues;
 }
 

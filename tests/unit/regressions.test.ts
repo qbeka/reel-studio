@@ -13,11 +13,14 @@ import {
   returnOptions,
 } from '../../src/core/branch';
 import { canonicalJson } from '../../src/core/canonical';
+import { fileProblems, trimEnd, trimStart } from '../../src/core/edit';
 import { Playback } from '../../src/core/playback';
 import {
   type ReelProject,
   forViewer,
   parseProject,
+  projectEnd,
+  validateProject,
   validateTracks,
 } from '../../src/core/project';
 import { LiveSession, type SessionHost } from '../../src/core/session';
@@ -272,6 +275,24 @@ describe('limits', () => {
   });
 });
 
+describe('what a file may hold', () => {
+  const titled = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: `chapter-${i}`, t: i, title: `Part ${i}` }));
+
+  it('finds an edit that could not be read back', () => {
+    expect(fileProblems(base)).toEqual([]);
+    expect(fileProblems({ ...base, chapters: titled(64) })).toEqual([]);
+    expect(fileProblems({ ...base, chapters: titled(65) })[0]).toMatch(/limit is 64/);
+  });
+
+  it('finds a payload nested deeper than a file allows', () => {
+    let deep: object = { x: 1 };
+    for (let i = 0; i < 10; i++) deep = { x: deep };
+    const command = { ...base.commands[0]!, payload: deep as never };
+    expect(fileProblems({ ...base, commands: [command] })).not.toEqual([]);
+  });
+});
+
 describe('hashing', () => {
   it('a __proto__ key in a payload changes the hash', () => {
     const a = JSON.parse('{"__proto__":{"x":1},"b":2}');
@@ -287,6 +308,20 @@ describe('trim', () => {
     expect(project.commands[0]!.t).toBeLessThan(5000);
     expect(project.chapters.every((c) => c.t >= 5000 && c.t <= 11000)).toBe(true);
     expect(project.posterT).toBe(11000);
+  });
+
+  it('a trim over a quiet stretch still makes a playable export', () => {
+    const shipped = forViewer({ ...base, captions: [], camera: [], chapters: [], trim: { start: 11000, end: 13000 } });
+    expect(projectEnd(shipped)).toBeLessThan(11000);
+    expect(validateProject(receiptAdapter, shipped)).toEqual([]);
+  });
+
+  it('Start at keeps the rest of the story, including a final caption', () => {
+    const end = projectEnd(base);
+    expect(end).toBeGreaterThan(base.commands.at(-1)!.t);
+    expect(trimStart(base, 5000).trim).toEqual({ start: 5000, end });
+    expect(trimEnd(trimStart(base, 5000), 9000).trim).toEqual({ start: 5000, end: 9000 });
+    expect(trimEnd(base, 0)).toBe(base);
   });
 
   it('leaves later steps out of the transcript', () => {

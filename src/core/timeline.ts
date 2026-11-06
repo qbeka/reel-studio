@@ -26,7 +26,7 @@ export interface TimelineOptions {
 }
 
 /**
- * The most states a timeline stores. A long log with a small interval would otherwise
+ * The most checkpoints a timeline stores, beyond the initial state. A long log with a small interval would otherwise
  * store a full state per few commands, and a state can be large. A file sets the interval,
  * so this limit is what keeps that choice from exhausting memory.
  */
@@ -47,8 +47,8 @@ export interface Cursor<S> {
  * - Stored states are shared by reference. This is safe because `apply` must not mutate,
  *   and the tests deep-freeze every state to enforce that. Sharing also means a checkpoint
  *   usually costs only what changed since the previous one.
- * - At most MAX_CHECKPOINTS + 1 checkpoints exist, so memory is bounded by state size.
- *   When a log would need more, the interval widens to fit.
+ * - At most MAX_CHECKPOINTS states exist beyond the initial one, so memory is bounded by
+ *   state size. When a log would need more, the interval widens to fit.
  */
 export class Timeline<S = any> {
   readonly log: readonly LogEntry[];

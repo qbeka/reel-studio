@@ -17,7 +17,7 @@
     "export": "tsx scripts/export.ts",
     "demo": "pnpm build:viewer && tsx scripts/export.ts projects/receipt-split-release.reel.json --out exports/demo/projects/reel && tsx scripts/static-server.ts exports/demo 4173",
     "bench:smoke": "tsx bench/run-engine.ts --smoke",
-    "bench": "pnpm build && tsx bench/run-correctness.ts --label local && tsx bench/run-browser.ts --label local --protocol 2 && tsx bench/run-export.ts --label local && tsx bench/summarize.ts runs/$(date +%Y-%m-%d)-local"
+    "bench": "pnpm build && tsx bench/run-correctness.ts --label local && tsx bench/run-browser.ts --label local --protocol 3 && tsx bench/run-export.ts --label local && tsx bench/summarize.ts runs/$(date -u +%Y-%m-%d)-local"
   },
   "dependencies": {
     "react": "19.3.1",

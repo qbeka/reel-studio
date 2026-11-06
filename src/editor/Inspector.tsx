@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { AnyAdapter, Payload } from '../core/adapter';
+import { trimEnd, trimStart } from '../core/edit';
 import { LIMITS, type ReelProject, formatTime } from '../core/project';
 import type { Selection } from './Timeline';
 
@@ -23,9 +24,9 @@ function TimeField({
     if (Number.isFinite(seconds) && seconds >= 0 && seconds * 1000 <= LIMITS.timeMs) {
       const ms = Math.round(seconds * 1000);
       if (ms !== value) onCommit(ms);
-    } else {
-      setText(shown);
     }
+    // Shows the stored value. If the edit was refused or cancelled, that is the old one.
+    setText(shown);
   };
   return (
     <label className="ed-field">
@@ -266,10 +267,7 @@ function InspectorPanel(props: InspectorProps) {
             type="button"
             className="ed-small"
             disabled={project.commands.length === 0}
-            onClick={() => {
-              const end = project.trim?.end ?? Number.MAX_SAFE_INTEGER;
-              if (t < end) onChange({ ...project, trim: { start: t, end: project.trim?.end ?? projectTrimEnd(project, t) } });
-            }}
+            onClick={() => onChange(trimStart(project, t))}
           >
             Start at {formatTime(t)}
           </button>
@@ -277,10 +275,7 @@ function InspectorPanel(props: InspectorProps) {
             type="button"
             className="ed-small"
             disabled={project.commands.length === 0}
-            onClick={() => {
-              const start = project.trim?.start ?? 0;
-              if (t > start) onChange({ ...project, trim: { start, end: t } });
-            }}
+            onClick={() => onChange(trimEnd(project, t))}
           >
             End at {formatTime(t)}
           </button>
@@ -309,10 +304,6 @@ function InspectorPanel(props: InspectorProps) {
       </div>
     </Panel>
   );
-}
-
-function projectTrimEnd(project: ReelProject, t: number): number {
-  return Math.max(t + 1, project.commands.at(-1)?.t ?? 0);
 }
 
 function CommandInspector({
@@ -357,6 +348,7 @@ function CommandInspector({
     }
     setProblem(null);
     onEditPayload(entry.seq, parsed as Payload);
+    setText(shown);
   };
 
   return (
