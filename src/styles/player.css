@@ -450,6 +450,11 @@
   }
 }
 
+.reel-viewer a,
+.reel-status-page a {
+  color: var(--forest);
+}
+
 .reel-status-page {
   max-width: 640px;
   margin: 72px auto;
