@@ -165,4 +165,17 @@ machines. The state hashes in `manifest.json` should not.
 
 ## Clean checkout
 
-CLEAN_CHECKOUT_RESULT
+A fresh `git clone` of commit `92d8d27`, on the same machine, with a frozen lockfile. Source
+files match the measured commit. Only documents changed after it.
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile` | Passed |
+| `pnpm check` | Passed |
+| `pnpm test` | 237 of 237 passed |
+| `pnpm build` | Passed |
+| `pnpm exec playwright test` | 100 of 100 passed on Chromium, WebKit and Firefox |
+| `pnpm export` and `scripts/verify-bundle.ts` | 13 files matched, and the replay reproduced the final state |
+| `pnpm demo` | Served the viewer and the embed at `/projects/reel/` |
+
+This shows a clean checkout works here. It was not repeated on a second machine.
