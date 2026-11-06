@@ -14,8 +14,9 @@ import { type Chapter, type ReelProject, formatTime, playRange } from '../core/p
 import { browserHost } from '../core/session';
 import { Timeline } from '../core/timeline';
 import { captionAt, chapterIndexAt, shotAt } from '../core/tracks';
-import { buildTranscript } from '../core/transcript';
+import type { TranscriptLine } from '../core/transcript';
 import { type Framing, Stage } from './Stage';
+import { Transcript } from './Transcript';
 import { TimelineBar } from './Transport';
 
 /** How long the ring stays on a target after a command, in logical milliseconds. */
@@ -42,13 +43,14 @@ interface KeptCopy {
 export interface ViewerProps {
   adapter: AnyAdapter;
   project: ReelProject;
+  transcript: readonly TranscriptLine[];
   /** Embedded viewers offer a way back to the poster, which unloads the viewer. */
   embedded: boolean;
   /** Starts playing on load. The viewer asked for it by activating an embed. */
   autoplay: boolean;
 }
 
-export function Viewer({ adapter, project, embedded, autoplay }: ViewerProps) {
+export function Viewer({ adapter, project, transcript, embedded, autoplay }: ViewerProps) {
   const range = useMemo(() => playRange(project), [project]);
   const timeline = useMemo(
     () =>
@@ -62,7 +64,7 @@ export function Viewer({ adapter, project, embedded, autoplay }: ViewerProps) {
   useEffect(() => () => playback.destroy(), [playback]);
   const story = useSyncExternalStore(playback.subscribe, playback.getSnapshot);
 
-  const transcript = useMemo(() => buildTranscript(adapter, project), [adapter, project]);
+  const seekTo = useCallback((t: number) => playback.seek(t), [playback]);
   const [framing, setFraming] = useState<Framing>(() =>
     prefersReducedMotion() ? 'full' : 'follow',
   );
@@ -251,7 +253,7 @@ export function Viewer({ adapter, project, embedded, autoplay }: ViewerProps) {
         label={`${project.title}, ${inBranch ? 'your copy' : 'recorded story'}`}
       />
 
-      <div className="reel-bar" data-seeking={story.seeking}>
+      <div className="reel-bar" data-seeking={story.seeking} data-t={Math.round(story.t)}>
         <TimelineBar
           range={range}
           t={inBranch ? branch.base.t : story.t}
@@ -343,28 +345,7 @@ export function Viewer({ adapter, project, embedded, autoplay }: ViewerProps) {
       )}
 
       <div className="reel-lower">
-        <section aria-labelledby="reel-transcript-title" className="reel-transcript">
-          <h2 id="reel-transcript-title">Transcript</h2>
-          <ol>
-            {transcript.map((line) =>
-              line.kind === 'chapter' ? (
-                <li key={`c${line.t}${line.title}`} className="reel-transcript-chapter">
-                  <button type="button" disabled={inBranch} onClick={() => playback.seek(line.t)}>
-                    <span>{formatTime(line.t)}</span>
-                    {line.title}
-                  </button>
-                </li>
-              ) : (
-                <li key={`s${line.t}${line.text}`}>
-                  <button type="button" disabled={inBranch} onClick={() => playback.seek(line.t)}>
-                    <span>{formatTime(line.t)}</span>
-                    {line.text}
-                  </button>
-                </li>
-              ),
-            )}
-          </ol>
-        </section>
+        <Transcript lines={transcript} disabled={inBranch} onSeek={seekTo} />
 
         <details className="reel-keys">
           <summary>Keyboard</summary>

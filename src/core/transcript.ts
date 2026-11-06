@@ -36,3 +36,18 @@ export function buildTranscript(adapter: AnyAdapter, project: ReelProject): Tran
   flushChapters(range.end);
   return lines;
 }
+
+/** Reads a stored transcript. Unexpected entries are dropped. It is display text only. */
+export function parseTranscript(input: unknown): TranscriptLine[] {
+  if (!Array.isArray(input)) return [];
+  return input.flatMap((line): TranscriptLine[] => {
+    if (typeof line !== 'object' || line === null || !Number.isInteger(line.t)) return [];
+    if (line.kind === 'chapter' && typeof line.title === 'string') {
+      return [{ kind: 'chapter', t: line.t, title: line.title }];
+    }
+    if (line.kind === 'step' && typeof line.text === 'string') {
+      return [{ kind: 'step', t: line.t, text: line.text }];
+    }
+    return [];
+  });
+}

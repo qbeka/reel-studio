@@ -188,6 +188,8 @@ export function assembleBundle(
     ),
   );
   files.set('project.reel.json', encoder.encode(JSON.stringify(project)));
+  // Written once here, so a viewer does not replay the whole log at load to get it.
+  files.set('transcript.json', encoder.encode(JSON.stringify(lines)));
 
   const listed = [...files.entries()]
     .map(([path, bytes]) => ({ path, bytes: bytes.length, sha256: sha256(bytes) }))

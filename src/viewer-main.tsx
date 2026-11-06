@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { parseProject } from './core/project';
+import { parseProject, validateCommandShapes, validateTracks } from './core/project';
 import { resolveScene } from './core/registry';
-import { validateProject } from './core/project';
+import { type TranscriptLine, parseTranscript } from './core/transcript';
 import { Viewer } from './player/Viewer';
 import { SCENES } from './scenes/registry';
 import './styles/fonts.css';
@@ -27,11 +27,17 @@ function showProblem(title: string, message: string) {
 async function start() {
   const params = new URLSearchParams(location.search);
   let raw: unknown;
+  let transcript: TranscriptLine[] = [];
   try {
-    // A relative URL, so the bundle works under any base path.
-    const response = await fetch('./project.reel.json');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    raw = await response.json();
+    // Relative URLs, so the bundle works under any base path.
+    const [project, lines] = await Promise.all([
+      fetch('./project.reel.json'),
+      fetch('./transcript.json'),
+    ]);
+    if (!project.ok) throw new Error(`HTTP ${project.status}`);
+    raw = await project.json();
+    // The transcript is a convenience. The story still plays without it.
+    if (lines.ok) transcript = parseTranscript(await lines.json());
   } catch (error) {
     showProblem('This demo could not load', `The project file could not be read. ${String(error)}`);
     return;
@@ -47,7 +53,10 @@ async function start() {
     showProblem('This demo needs a different scene', resolved.message);
     return;
   }
-  const issues = validateProject(resolved.adapter, resolved.project);
+  const issues = [
+    ...validateCommandShapes(resolved.adapter, resolved.project),
+    ...validateTracks(resolved.adapter, resolved.project),
+  ];
   if (issues.length > 0) {
     showProblem('This demo cannot play', issues[0]!.message);
     return;
@@ -58,6 +67,7 @@ async function start() {
       <Viewer
         adapter={resolved.adapter}
         project={resolved.project}
+        transcript={transcript}
         embedded={params.get('embed') === '1'}
         autoplay={params.get('play') === '1'}
       />

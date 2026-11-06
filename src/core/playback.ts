@@ -44,6 +44,8 @@ export class Playback<S = any> {
   private frame: number | null = null;
   private lastFrame: number | null = null;
   private resumeAfterSeek = false;
+  /** Resolves when every command has been checked and every checkpoint exists. */
+  readonly ready: Promise<void>;
 
   constructor(
     private readonly timeline: Timeline<S>,
@@ -76,6 +78,7 @@ export class Playback<S = any> {
       },
     );
     if (range.start > 0) this.seek(range.start);
+    this.ready = this.seeker.prepare();
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -121,7 +124,7 @@ export class Playback<S = any> {
 
   destroy(): void {
     this.pause();
-    this.seeker.cancel();
+    this.seeker.close();
     this.listeners.clear();
   }
 

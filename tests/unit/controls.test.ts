@@ -28,7 +28,7 @@ describe('negative controls', () => {
   it('the real controller commits only the newest seek', async () => {
     const commits = await staleSeekScenario(
       (timeline, out, yieldToHost) =>
-        new SeekController(timeline, (r) => out.push(r.time), { sliceBudget: 8, yieldToHost }),
+        new SeekController(timeline, (r) => out.push(r.time), { sliceBudget: 8, sliceMs: 0, yieldToHost }),
     );
     expect(commits).toHaveLength(1);
   });

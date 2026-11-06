@@ -295,6 +295,22 @@ export function validateCommands(adapter: AnyAdapter, project: ReelProject): Iss
   return issues;
 }
 
+/**
+ * The checks that need no replay: known command types and valid payloads. The viewer runs
+ * this at load. Whether each command is possible in its state is checked by the replay
+ * that also fills the checkpoints, so one pass over the log does both jobs.
+ */
+export function validateCommandShapes(adapter: AnyAdapter, project: ReelProject): Issue[] {
+  const issues: Issue[] = [];
+  for (const entry of project.commands) {
+    const problem = adapter.commandTypes.includes(entry.type)
+      ? adapter.parse(entry.type, entry.payload)
+      : `The scene has no command called ${entry.type}.`;
+    if (problem !== null) issues.push({ seq: entry.seq, message: `${entry.type}: ${problem}` });
+  }
+  return issues;
+}
+
 export function validateTracks(adapter: AnyAdapter, project: ReelProject): Issue[] {
   const issues: Issue[] = [];
   const end = projectEnd(project);

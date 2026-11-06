@@ -135,6 +135,7 @@ describe('seek controller', () => {
     const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
     const controller = new SeekController(timeline, (r) => commits.push(r), {
       sliceBudget: 8,
+      sliceMs: 0,
       yieldToHost: pause.yieldToHost,
     });
 
@@ -154,6 +155,7 @@ describe('seek controller', () => {
     const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
     const controller = new SeekController(timeline, (r) => commits.push(r), {
       sliceBudget: 4,
+      sliceMs: 0,
       yieldToHost: pause.yieldToHost,
     });
 
@@ -172,12 +174,81 @@ describe('seek controller', () => {
     const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
     const controller = new SeekController(timeline, () => {}, {
       sliceBudget: 64,
+      sliceMs: 0,
       yieldToHost: pause.yieldToHost,
     });
     controller.request(log.at(-1)!.t);
     controller.cancel();
     while (pause.waiting > 0) await pause.release();
     expect(timeline.checkpointCount).toBeGreaterThan(1);
+  });
+
+  it('gives way after its time budget, even inside one seek', async () => {
+    const pause = deferredYield();
+    let clock = 0;
+    const commits: SeekResult<unknown>[] = [];
+    const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
+    const controller = new SeekController(timeline, (r) => commits.push(r), {
+      sliceBudget: 8,
+      sliceMs: 10,
+      now: () => (clock += 6),
+      yieldToHost: pause.yieldToHost,
+    });
+    controller.request(log.at(-1)!.t);
+    expect(commits).toHaveLength(0);
+    expect(timeline.applied).toBeLessThanOrEqual(16);
+    while (pause.waiting > 0) await pause.release();
+    expect(commits).toHaveLength(1);
+  });
+
+  it('prepare fills every checkpoint in the background and reports a bad command', async () => {
+    const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
+    const controller = new SeekController(timeline, () => {}, {});
+    await controller.prepare();
+    expect(timeline.checkpointCount).toBe(Math.floor(log.length / 16) + 1);
+    const before = timeline.applied;
+    timeline.stateAfter(log.length);
+    expect(timeline.applied - before).toBeLessThan(16);
+
+    const errors: unknown[] = [];
+    const badTimeline = new Timeline(scene, [entry(0, 'confirmEdit')], { seed, checkpointEvery: 16 });
+    await new SeekController(badTimeline, () => {}, {}, (e) => errors.push(e)).prepare();
+    expect(errors[0]).toBeInstanceOf(ReplayError);
+  });
+
+  it('prepare waits for a running seek, then skips the work that seek did', async () => {
+    const pause = deferredYield();
+    const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
+    const controller = new SeekController(timeline, () => {}, {
+      sliceBudget: 4,
+      sliceMs: 0,
+      yieldToHost: pause.yieldToHost,
+    });
+    const middle = log[Math.floor(log.length / 2)]!.t;
+    controller.request(middle);
+    const done = controller.prepare();
+    const seekWork = timeline.applied;
+    expect(seekWork).toBeLessThanOrEqual(4);
+    while (pause.waiting > 0) await pause.release();
+    await done;
+    // Each command ran once, apart from the few after the last checkpoint the seek crossed.
+    expect(timeline.applied).toBeLessThan(log.length + 16);
+    expect(timeline.checkpointCount).toBe(Math.floor(log.length / 16) + 1);
+  });
+
+  it('close stops the background walk', async () => {
+    const pause = deferredYield();
+    const timeline = new Timeline(scene, log, { seed, checkpointEvery: 16 });
+    const controller = new SeekController(timeline, () => {}, {
+      sliceBudget: 4,
+      sliceMs: 0,
+      yieldToHost: pause.yieldToHost,
+    });
+    const done = controller.prepare();
+    controller.close();
+    await pause.release();
+    await done;
+    expect(timeline.applied).toBeLessThan(log.length);
   });
 
   it('reports a replay failure to the latest request', () => {

@@ -119,14 +119,12 @@ describe('Playback', () => {
     expect(playback.getSnapshot().count).toBe(3);
   });
 
-  it('stops and reports a failure rather than showing a guess', () => {
+  it('reports a command that cannot run rather than showing a guess', async () => {
     const frames = manualFrames();
     const bad = [entry(10, 'confirmEdit')];
     const timeline = new Timeline(scene, bad, { seed: 2, checkpointEvery: 2 });
     const playback = new Playback(timeline, { start: 0, end: 100 }, frames.host);
-    playback.play();
-    frames.step(0);
-    frames.step(50);
+    await playback.ready;
     const snapshot = playback.getSnapshot();
     expect(snapshot.playing).toBe(false);
     expect(snapshot.error).toMatch(/confirmEdit/);
