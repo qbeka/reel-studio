@@ -18,7 +18,7 @@ sketched as storyboards.
 
 ### Approach A: sandbox beside the story (rejected)
 
-Viewer presses Try it. A second copy of the scene opens in a panel or dialog, reset to the
+Viewer presses Take over. A second copy of the scene opens in a panel or dialog, reset to the
 start of the current chapter. The story stays paused behind it. Closing the panel returns
 to the story.
 
@@ -37,11 +37,11 @@ where a side panel does not fit anyway.
 
 ### Approach B: fork in place (chosen)
 
-Viewer presses Try it at any moment. The scene does not move. The state on screen becomes
+Viewer presses Take over at any moment. The scene does not move. The state on screen becomes
 the viewer's own copy, the scene stops being inert, and the timeline line forks at the
-paused position. Each edit adds a tick to the fork. Return to story offers the chapters,
-says which ones match the viewer's state exactly, and says plainly that anything else
-clears the experiment.
+paused position. Each edit adds a tick to the fork. Back to demo returns to the fork and
+says in one sentence that the copy is set aside, with Bring my copy back beside it. Choose
+a moment offers the chapters and marks any that match the viewer's state exactly.
 
 ```
 +-----------------------------------------------+
@@ -49,7 +49,7 @@ clears the experiment.
 |                                               |
 |  ----o----------|-----------|---------------  |
 |       \__|__|__   your copy, 2 edits          |
-|  [Reset my changes]  [Return to story: ... ]  |
+|  [Choose a moment]            [Back to demo]   |
 +-----------------------------------------------+
 ```
 

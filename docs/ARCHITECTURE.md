@@ -62,14 +62,14 @@ it. Outcomes reached the log during recording as ordinary entries with `source: 
 
 ## Returning from a branch
 
-A branch never merges. Returning always restores a recorded state. The panel compares the
+A branch never merges. Returning always restores a recorded state. Choose a moment compares the
 canonical hash of the viewer's state with the authored state at each chapter. An exact
-match means nothing is lost, and the panel says so. Everything else clears the branch, and
-the panel says that too. The scene is locked while the panel is open, and the answer is
-computed from the live state, so a late outcome cannot leave a stale promise on screen.
+match means nothing is lost, and the list marks it. Anything else sets the branch aside. The
+answer is computed from the live state, and pressing the app closes the list, so a late
+outcome cannot leave a stale promise on screen.
 
-A cleared copy stays in memory, with its original base, so the viewer can bring it back
-until they next press Try it or leave the page. Nothing in a branch is written to storage,
+A copy set aside stays in memory, with its original base, so the viewer can bring it back
+until they next press Take over or leave the page. Nothing in a branch is written to storage,
 the URL or the project.
 
 A state can be waiting for an outcome when a branch starts, such as a fork during a save.

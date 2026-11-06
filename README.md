@@ -2,7 +2,7 @@
 
 Reel is a local editor for product demos that stay interactive. You record a workflow from
 a React scene, add chapters and captions, and export a static page. A viewer can pause it,
-scrub it, press **Try it** to use the product from that exact moment, then return to your
+scrub it, press **Take over** to use the product from that exact moment, then return to your
 story at a chapter.
 
 ![A viewer has taken control of a receipt demo. The split is edited, the balances are recomputed, and a thin line forks from the timeline.](docs/media/cover.png)
@@ -42,10 +42,10 @@ time. It does not record pixels, DOM changes or mouse paths, so playback is the 
 application running and a viewer can take over at any moment.
 
 - **Seek anywhere.** Reel restores a checkpoint and replays to the exact time.
-- **Try it.** The state on screen becomes the viewer's own copy, and the timeline forks.
-- **Return.** The viewer picks a chapter. Reel says which ones match their copy exactly and
-  which clear it. States are never merged. Nothing a viewer does reaches the recording, the
-  URL or storage.
+- **Take over.** The state on screen becomes the viewer's own copy, and the timeline forks.
+- **Return.** Back to demo restores the recorded moment and keeps the viewer's copy one press
+  away, and Choose a moment offers the chapters. States are never merged, and nothing a
+  viewer does reaches the recording, the URL or storage.
 - **Edit safely.** If you remove a command that later ones need, Reel shows what breaks and
   will not save a recording that cannot play.
 - **Export a folder.** It runs on any static host, under any path, with a plain transcript
@@ -145,7 +145,7 @@ pnpm bench
 | Document | Contents |
 |---|---|
 | [docs/REPORT.md](docs/REPORT.md) | Results, limits, what failed and what changed. |
-| [site/index.html](site/index.html) | The project page that frames the exported demo. |
+| [site/](site/) | The project page. It runs the viewer directly, with a short authoring view. Build it with `pnpm build:site`. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How seeking, branches and export work. |
 | [docs/FORMAT.md](docs/FORMAT.md) | The adapter contract and project file. |
 | [docs/DESIGN.md](docs/DESIGN.md) | The central workflow and the design that was rejected. |
