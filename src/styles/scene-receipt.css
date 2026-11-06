@@ -1,0 +1,337 @@
+/* All rules are nested under .rs so the scene cannot leak into a host page. */
+.rs {
+  --rs-ink: #111511;
+  --rs-body: #444944;
+  --rs-muted: #5a5e5a;
+  --rs-line: #1115111f;
+  --rs-line-strong: #1115113d;
+  --rs-forest: #1d3a2a;
+  --rs-wash: #6040200e;
+  --rs-error: #8c2f1b;
+
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  width: 100%;
+  height: 100%;
+  background: #fffdfa;
+  color: var(--rs-ink);
+  font-family: 'Geist Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+
+  & h3,
+  & h4,
+  & p,
+  & ul {
+    margin: 0;
+    padding: 0;
+    font-weight: 400;
+  }
+  & ul {
+    list-style: none;
+  }
+  & button,
+  & input {
+    font: inherit;
+    color: inherit;
+  }
+  & button {
+    cursor: pointer;
+  }
+  & button:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+  & :focus-visible {
+    outline: 2px solid var(--rs-forest);
+    outline-offset: 1px;
+  }
+
+  & .rs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 14px;
+    border-right: 1px solid var(--rs-line);
+    min-height: 0;
+
+    & h3 {
+      font-family: 'Geist Serif', Georgia, serif;
+      font-size: 19px;
+      padding: 0 8px 6px;
+    }
+    & ul {
+      display: grid;
+      gap: 2px;
+    }
+  }
+  & .rs-list-foot {
+    color: var(--rs-muted);
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  & .rs-expense {
+    display: grid;
+    width: 100%;
+    gap: 1px;
+    padding: 8px;
+    text-align: left;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    &:hover {
+      background: var(--rs-wash);
+    }
+    &[data-selected='true'] {
+      border-color: var(--rs-line-strong);
+      background: var(--rs-wash);
+    }
+    &[data-flash='true'] {
+      border-color: var(--rs-forest);
+    }
+  }
+  & .rs-expense-meta {
+    color: var(--rs-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  & .rs-quiet {
+    align-self: flex-start;
+    padding: 6px 8px;
+    background: none;
+    border: 0;
+    color: var(--rs-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-size: 13px;
+  }
+
+  & .rs-main {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 22px 18px;
+    min-width: 0;
+    min-height: 0;
+  }
+  & .rs-tabs,
+  & .rs-modes {
+    display: flex;
+    gap: 2px;
+  }
+  & .rs-tabs button,
+  & .rs-modes button {
+    padding: 5px 12px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--rs-muted);
+    font-size: 13px;
+
+    &[data-active='true'] {
+      color: var(--rs-ink);
+      border-color: var(--rs-line-strong);
+    }
+  }
+
+  & .rs-detail {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 22px;
+    min-height: 0;
+  }
+  & .rs-receipt {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    align-content: start;
+
+    & h3 {
+      font-family: 'Geist Serif', Georgia, serif;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    & p {
+      color: var(--rs-muted);
+      font-size: 13px;
+    }
+  }
+  & .rs-total {
+    font-weight: 400;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+  }
+  & .rs-items {
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--rs-line-strong);
+    padding-top: 8px;
+    display: grid;
+    gap: 4px;
+    color: var(--rs-body);
+    font-size: 13px;
+
+    & li {
+      display: flex;
+      justify-content: space-between;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+  & .rs-split {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  & .rs-shares {
+    width: 100%;
+    border-collapse: collapse;
+
+    & th {
+      text-align: left;
+      font-weight: 400;
+    }
+    & th,
+    & td {
+      padding: 5px 0;
+      border-bottom: 1px solid var(--rs-line);
+    }
+    & tr[data-flash='true'] th {
+      color: var(--rs-forest);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+  & .rs-share {
+    width: 72px;
+    padding: 4px 6px;
+    border: 1px solid var(--rs-line-strong);
+    border-radius: 6px;
+    background: #fff;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  & .rs-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  & .rs-muted {
+    color: var(--rs-muted);
+  }
+  & .rs-sum {
+    color: var(--rs-muted);
+    font-size: 13px;
+    text-align: right;
+
+    &[data-off='true'] {
+      color: var(--rs-error);
+    }
+  }
+  & .rs-error {
+    color: var(--rs-error);
+    border-left: 2px solid var(--rs-error);
+    padding-left: 8px;
+    font-size: 13px;
+  }
+  & .rs-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  & .rs-primary {
+    padding: 7px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #121412;
+    color: #fff;
+  }
+  & .rs-preview {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--rs-line);
+
+    & h4 {
+      color: var(--rs-muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+  }
+  & .rs-panel {
+    display: grid;
+    gap: 14px;
+
+    & h3 {
+      font-family: 'Geist Serif', Georgia, serif;
+      font-size: 22px;
+    }
+  }
+  & .rs-balances {
+    display: grid;
+    gap: 6px;
+
+    & li {
+      display: grid;
+      grid-template-columns: 64px 1fr 116px;
+      gap: 10px;
+      align-items: center;
+    }
+  }
+  & .rs-bar {
+    height: 3px;
+    background: var(--rs-line);
+
+    & span {
+      display: block;
+      height: 100%;
+      background: var(--rs-forest);
+
+      &[data-side='owes'] {
+        background: var(--rs-muted);
+      }
+    }
+  }
+  & .rs-empty {
+    display: grid;
+    place-items: center;
+    flex: 1;
+    color: var(--rs-muted);
+    font-family: 'Geist Serif', Georgia, serif;
+    font-size: 18px;
+  }
+
+  /* The narrow layout is a separate coordinate system. Camera shots name targets, so they keep working here. */
+  &[data-layout='narrow'] {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    font-size: 15px;
+
+    & .rs-list {
+      border-right: 0;
+      border-bottom: 1px solid var(--rs-line);
+      padding: 10px 12px;
+
+      & h3,
+      & .rs-list-foot {
+        display: none;
+      }
+      & ul {
+        grid-auto-flow: column;
+        grid-auto-columns: 132px;
+        overflow-x: auto;
+      }
+    }
+    & .rs-main {
+      padding: 10px 14px 12px;
+      gap: 8px;
+    }
+    & .rs-detail {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    & .rs-items {
+      display: none;
+    }
+    & .rs-balances li {
+      grid-template-columns: 52px 1fr 108px;
+    }
+  }
+}
