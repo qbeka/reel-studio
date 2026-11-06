@@ -43,11 +43,15 @@ function ExpenseList({ state, send, interactive }: SceneProps<ReceiptState>) {
           ? `${visible.length} of ${state.expenses.length} receipts`
           : `${state.expenses.length} receipts`}
       </p>
-      {interactive && (
-        <button type="button" className="rs-quiet" onClick={() => send('addReceipt')}>
-          Add a sample receipt
-        </button>
-      )}
+      {/* Always in the layout, so that taking over moves nothing. */}
+      <button
+        type="button"
+        className="rs-quiet"
+        data-idle={!interactive}
+        onClick={() => send('addReceipt')}
+      >
+        Add a sample receipt
+      </button>
     </section>
   );
 }
@@ -185,11 +189,15 @@ function SplitEditor({ state, send, interactive }: SceneProps<ReceiptState>) {
           >
             {saving ? 'Saving' : 'Save split'}
           </button>
-          {interactive && (
-            <button type="button" className="rs-quiet" disabled={saving} onClick={() => send('cancelEdit')}>
-              Undo changes
-            </button>
-          )}
+          <button
+            type="button"
+            className="rs-quiet"
+            data-idle={!interactive}
+            disabled={saving}
+            onClick={() => send('cancelEdit')}
+          >
+            Undo changes
+          </button>
         </div>
       </section>
     </div>
