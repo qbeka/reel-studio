@@ -1,0 +1,168 @@
+{
+  "seeks": [
+    {
+      "scene": "receipt-split",
+      "workload": "short",
+      "commands": 10,
+      "checkpointEvery": 4,
+      "positions": 31,
+      "mismatches": 0,
+      "oracleCommands": 10,
+      "oracleComparesEvery": 1,
+      "oracleProblems": 0
+    },
+    {
+      "scene": "receipt-split",
+      "workload": "long",
+      "commands": 2000,
+      "checkpointEvery": 256,
+      "positions": 982,
+      "mismatches": 0,
+      "oracleCommands": 2000,
+      "oracleComparesEvery": 1,
+      "oracleProblems": 0
+    },
+    {
+      "scene": "receipt-split",
+      "workload": "stress",
+      "commands": 20000,
+      "checkpointEvery": 256,
+      "positions": 3019,
+      "mismatches": 0,
+      "oracleCommands": 20000,
+      "oracleComparesEvery": 25,
+      "oracleProblems": 0
+    },
+    {
+      "scene": "retry-queue",
+      "workload": "generated",
+      "commands": 5000,
+      "checkpointEvery": 256,
+      "positions": 1300,
+      "mismatches": 0,
+      "oracleCommands": 5000,
+      "oracleComparesEvery": 1,
+      "oracleProblems": 0
+    }
+  ],
+  "controls": [
+    {
+      "id": "dropped-cents",
+      "group": "money",
+      "description": "Shares round down and the leftover cents are lost.",
+      "detectedBy": "oracle",
+      "detected": true,
+      "seekCheckBlind": true,
+      "detail": "1194 oracle problems, first: seq 7: balances differ. Seek check: 0 mismatches."
+    },
+    {
+      "id": "payer-not-credited",
+      "group": "money",
+      "description": "The person who paid is never credited.",
+      "detectedBy": "oracle",
+      "detected": true,
+      "seekCheckBlind": true,
+      "detail": "1194 oracle problems, first: seq 7: balances differ. Seek check: 0 mismatches."
+    },
+    {
+      "id": "remainder-to-first",
+      "group": "money",
+      "description": "Leftover cents always go to the first member, not the largest remainder.",
+      "detectedBy": "oracle",
+      "detected": true,
+      "seekCheckBlind": true,
+      "detail": "1194 oracle problems, first: seq 7: balances differ. Seek check: 0 mismatches."
+    },
+    {
+      "id": "swallows-validation-error",
+      "group": "money",
+      "description": "A split that does not add up shows no error.",
+      "detectedBy": "oracle",
+      "detected": true,
+      "seekCheckBlind": true,
+      "detail": "47 oracle problems, first: seq 35: validation differs. Seek check: 0 mismatches."
+    },
+    {
+      "id": "save-ignores-draft",
+      "group": "money",
+      "description": "A confirmed save keeps the old split.",
+      "detectedBy": "oracle",
+      "detected": true,
+      "seekCheckBlind": true,
+      "detail": "29144 oracle problems, first: seq 7: balances differ. Seek check: 0 mismatches."
+    },
+    {
+      "id": "rng-not-advanced",
+      "group": "money",
+      "description": "A new receipt reuses the same random draw as the last one.",
+      "detectedBy": "oracle",
+      "detected": true,
+      "seekCheckBlind": true,
+      "detail": "435 oracle problems, first: seq 63: balances differ. Seek check: 0 mismatches."
+    },
+    {
+      "id": "off-by-one-time",
+      "group": "seek",
+      "description": "A command exactly at the seek time is left out.",
+      "detectedBy": "seek check",
+      "detected": true,
+      "detail": "273 of 883 positions differ from replay."
+    },
+    {
+      "id": "skips-boundary",
+      "group": "seek",
+      "description": "Resuming from a checkpoint skips one command.",
+      "detectedBy": "seek check",
+      "detected": true,
+      "detail": "685 of 883 positions differ from replay."
+    },
+    {
+      "id": "stale-checkpoint",
+      "group": "seek",
+      "description": "A seek resumes from an old checkpoint.",
+      "detectedBy": "seek check",
+      "detected": true,
+      "detail": "832 of 883 positions differ from replay."
+    },
+    {
+      "id": "unstable-equal-times",
+      "group": "seek",
+      "description": "Commands with equal timestamps replay in a different order.",
+      "detectedBy": "seek check",
+      "detected": true,
+      "detail": "839 of 883 positions differ from replay."
+    },
+    {
+      "id": "mutating-reducer",
+      "group": "seek",
+      "description": "The reducer mutates state, so checkpoints change after they are stored.",
+      "detectedBy": "seek check",
+      "detected": true,
+      "detail": "882 of 883 positions differ from replay."
+    },
+    {
+      "id": "hidden-input",
+      "group": "seek",
+      "description": "The reducer reads a value outside the log, like a wall clock.",
+      "detectedBy": "seek check",
+      "detected": true,
+      "detail": "220 of 883 positions differ from replay."
+    },
+    {
+      "id": "stale-seek-commit",
+      "group": "seek",
+      "description": "An older seek overwrites a newer one when it finishes last.",
+      "detectedBy": "latest-wins check",
+      "detected": true,
+      "detail": "2 commits for 2 requests."
+    },
+    {
+      "id": "transient-in-hash",
+      "group": "hash",
+      "description": "A presentation field leaks into the state hash.",
+      "detectedBy": "round trip check",
+      "detected": true,
+      "detail": "A serialize and restore round trip changed the hash."
+    }
+  ]
+}

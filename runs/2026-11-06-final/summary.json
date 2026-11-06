@@ -1,0 +1,908 @@
+[
+  {
+    "workload": "long",
+    "variant": "baseline",
+    "warmSamplesPerRun": 60,
+    "warmPositionP50": [
+      0.47,
+      0.478,
+      0.426,
+      0.635,
+      0.477
+    ],
+    "warmPositionsOutOfBand": 1,
+    "warmP50Ms": {
+      "runs": 5,
+      "median": 3.55,
+      "min": 3.25,
+      "max": 4.6,
+      "perRun": [
+        3.55,
+        3.55,
+        3.25,
+        4.6,
+        3.85
+      ]
+    },
+    "warmP95Ms": {
+      "runs": 5,
+      "median": 7.6,
+      "min": 7.4,
+      "max": 8,
+      "perRun": [
+        7.8,
+        7.6,
+        7.4,
+        7.5,
+        8
+      ]
+    },
+    "warmMaxMs": {
+      "runs": 5,
+      "median": 7.9,
+      "min": 7.6,
+      "max": 9.5,
+      "perRun": [
+        8.6,
+        7.9,
+        7.7,
+        7.6,
+        9.5
+      ]
+    },
+    "nextFrameP95Ms": {
+      "runs": 5,
+      "median": 18.1,
+      "min": 17.7,
+      "max": 18.4,
+      "perRun": [
+        17.7,
+        18.4,
+        18.1,
+        18.2,
+        17.8
+      ]
+    },
+    "coldWorstMs": {
+      "runs": 5,
+      "median": 10,
+      "min": 9.6,
+      "max": 11.6,
+      "perRun": [
+        11.6,
+        10.5,
+        9.6,
+        10,
+        10
+      ]
+    },
+    "coldMedianMs": {
+      "runs": 5,
+      "median": 6.8,
+      "min": 6.5,
+      "max": 7.9,
+      "perRun": [
+        7.1,
+        7.9,
+        6.6,
+        6.8,
+        6.5
+      ]
+    },
+    "readyMs": {
+      "runs": 5,
+      "median": 50,
+      "min": 49,
+      "max": 53,
+      "perRun": [
+        53,
+        49,
+        49,
+        50,
+        51
+      ]
+    },
+    "heapMB": {
+      "runs": 5,
+      "median": 4.45,
+      "min": 4.4,
+      "max": 4.57,
+      "perRun": [
+        4.57,
+        4.4,
+        4.42,
+        4.57,
+        4.45
+      ]
+    },
+    "scrubCommits": [
+      "120/120",
+      "120/120",
+      "120/120",
+      "120/120",
+      "120/120"
+    ],
+    "scrubTotalMs": {
+      "runs": 5,
+      "median": 2562.3,
+      "min": 2496.9,
+      "max": 2597,
+      "perRun": [
+        2597,
+        2578.3,
+        2496.9,
+        2560.3,
+        2562.3
+      ]
+    },
+    "coherent": "60/60",
+    "loadAverage1m": {
+      "runs": 5,
+      "median": 6.02,
+      "min": 5.13,
+      "max": 9.99,
+      "perRun": [
+        9.99,
+        5.69,
+        6.02,
+        5.13,
+        6.42
+      ]
+    }
+  },
+  {
+    "workload": "long",
+    "variant": "checkpointed",
+    "warmSamplesPerRun": 300,
+    "warmPositionP50": [
+      0.507,
+      0.492,
+      0.501,
+      0.52,
+      0.477
+    ],
+    "warmPositionsOutOfBand": 0,
+    "warmP50Ms": {
+      "runs": 5,
+      "median": 1.3,
+      "min": 1.2,
+      "max": 1.5,
+      "perRun": [
+        1.5,
+        1.3,
+        1.2,
+        1.4,
+        1.3
+      ]
+    },
+    "warmP95Ms": {
+      "runs": 5,
+      "median": 2.2,
+      "min": 1.9,
+      "max": 2.4,
+      "perRun": [
+        2.4,
+        2.2,
+        1.9,
+        2.2,
+        2.1
+      ]
+    },
+    "warmMaxMs": {
+      "runs": 5,
+      "median": 3.4,
+      "min": 2.6,
+      "max": 4.7,
+      "perRun": [
+        4.7,
+        3.8,
+        3,
+        3.4,
+        2.6
+      ]
+    },
+    "nextFrameP95Ms": {
+      "runs": 5,
+      "median": 18.2,
+      "min": 17.8,
+      "max": 18.5,
+      "perRun": [
+        17.8,
+        18.2,
+        18.5,
+        18.2,
+        18.2
+      ]
+    },
+    "coldWorstMs": {
+      "runs": 5,
+      "median": 4.1,
+      "min": 3.8,
+      "max": 5.2,
+      "perRun": [
+        5.2,
+        3.9,
+        3.8,
+        4.3,
+        4.1
+      ]
+    },
+    "coldMedianMs": {
+      "runs": 5,
+      "median": 3.45,
+      "min": 3.45,
+      "max": 4.3,
+      "perRun": [
+        4.3,
+        3.45,
+        3.45,
+        3.65,
+        3.45
+      ]
+    },
+    "readyMs": {
+      "runs": 5,
+      "median": 50,
+      "min": 46,
+      "max": 57,
+      "perRun": [
+        57,
+        46,
+        47,
+        50,
+        51
+      ]
+    },
+    "heapMB": {
+      "runs": 5,
+      "median": 4.37,
+      "min": 4.35,
+      "max": 4.37,
+      "perRun": [
+        4.36,
+        4.37,
+        4.37,
+        4.35,
+        4.37
+      ]
+    },
+    "scrubCommits": [
+      "120/120",
+      "120/120",
+      "120/120",
+      "120/120",
+      "120/120"
+    ],
+    "scrubTotalMs": {
+      "runs": 5,
+      "median": 2264.8,
+      "min": 2247.2,
+      "max": 2289.9,
+      "perRun": [
+        2278.1,
+        2289.9,
+        2247.2,
+        2262.2,
+        2264.8
+      ]
+    },
+    "coherent": "60/60",
+    "loadAverage1m": {
+      "runs": 5,
+      "median": 5.85,
+      "min": 5.23,
+      "max": 10.6,
+      "perRun": [
+        10.6,
+        5.84,
+        5.85,
+        5.23,
+        6.8
+      ]
+    }
+  },
+  {
+    "workload": "short",
+    "variant": "baseline",
+    "warmSamplesPerRun": 10,
+    "warmPositionP50": [
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "warmPositionsOutOfBand": 0,
+    "warmP50Ms": {
+      "runs": 5,
+      "median": 0.8,
+      "min": 0.75,
+      "max": 1.05,
+      "perRun": [
+        1.05,
+        0.75,
+        0.85,
+        0.75,
+        0.8
+      ]
+    },
+    "warmP95Ms": {
+      "runs": 5,
+      "median": 1.1,
+      "min": 0.9,
+      "max": 1.3,
+      "perRun": [
+        1.3,
+        1,
+        1.1,
+        1.2,
+        0.9
+      ]
+    },
+    "warmMaxMs": {
+      "runs": 5,
+      "median": 1.1,
+      "min": 0.9,
+      "max": 1.3,
+      "perRun": [
+        1.3,
+        1,
+        1.1,
+        1.2,
+        0.9
+      ]
+    },
+    "nextFrameP95Ms": {
+      "runs": 5,
+      "median": 17.8,
+      "min": 16.7,
+      "max": 18.1,
+      "perRun": [
+        16.7,
+        17.6,
+        18.1,
+        17.8,
+        18.1
+      ]
+    },
+    "coldWorstMs": {
+      "runs": 5,
+      "median": 2.7,
+      "min": 2.6,
+      "max": 3.2,
+      "perRun": [
+        3.2,
+        2.7,
+        2.7,
+        2.8,
+        2.6
+      ]
+    },
+    "coldMedianMs": {
+      "runs": 5,
+      "median": 2.5,
+      "min": 2.4,
+      "max": 3.05,
+      "perRun": [
+        3.05,
+        2.4,
+        2.5,
+        2.65,
+        2.45
+      ]
+    },
+    "readyMs": {
+      "runs": 5,
+      "median": 40,
+      "min": 39,
+      "max": 45,
+      "perRun": [
+        45,
+        39,
+        39,
+        41,
+        40
+      ]
+    },
+    "heapMB": {
+      "runs": 5,
+      "median": 3.55,
+      "min": 3.53,
+      "max": 3.56,
+      "perRun": [
+        3.53,
+        3.55,
+        3.53,
+        3.55,
+        3.56
+      ]
+    },
+    "scrubCommits": [
+      "10/10",
+      "10/10",
+      "10/10",
+      "10/10",
+      "10/10"
+    ],
+    "scrubTotalMs": {
+      "runs": 5,
+      "median": 181.8,
+      "min": 179.1,
+      "max": 182.4,
+      "perRun": [
+        181.8,
+        182.2,
+        179.1,
+        181.7,
+        182.4
+      ]
+    },
+    "coherent": "50/50",
+    "loadAverage1m": {
+      "runs": 5,
+      "median": 6.36,
+      "min": 5.12,
+      "max": 9.36,
+      "perRun": [
+        9.36,
+        6.36,
+        6.1,
+        5.12,
+        6.42
+      ]
+    }
+  },
+  {
+    "workload": "short",
+    "variant": "checkpointed",
+    "warmSamplesPerRun": 10,
+    "warmPositionP50": [
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "warmPositionsOutOfBand": 0,
+    "warmP50Ms": {
+      "runs": 5,
+      "median": 0.85,
+      "min": 0.8,
+      "max": 1,
+      "perRun": [
+        1,
+        0.8,
+        0.85,
+        0.85,
+        0.95
+      ]
+    },
+    "warmP95Ms": {
+      "runs": 5,
+      "median": 1.1,
+      "min": 0.9,
+      "max": 1.3,
+      "perRun": [
+        1.2,
+        0.9,
+        1.1,
+        1.3,
+        1.1
+      ]
+    },
+    "warmMaxMs": {
+      "runs": 5,
+      "median": 1.1,
+      "min": 0.9,
+      "max": 1.3,
+      "perRun": [
+        1.2,
+        0.9,
+        1.1,
+        1.3,
+        1.1
+      ]
+    },
+    "nextFrameP95Ms": {
+      "runs": 5,
+      "median": 17.5,
+      "min": 16.7,
+      "max": 18.3,
+      "perRun": [
+        16.7,
+        17.2,
+        18.1,
+        17.5,
+        18.3
+      ]
+    },
+    "coldWorstMs": {
+      "runs": 5,
+      "median": 3,
+      "min": 2.6,
+      "max": 3.1,
+      "perRun": [
+        3.1,
+        3,
+        2.7,
+        3,
+        2.6
+      ]
+    },
+    "coldMedianMs": {
+      "runs": 5,
+      "median": 2.6,
+      "min": 2.4,
+      "max": 2.7,
+      "perRun": [
+        2.7,
+        2.6,
+        2.4,
+        2.65,
+        2.4
+      ]
+    },
+    "readyMs": {
+      "runs": 5,
+      "median": 40,
+      "min": 38,
+      "max": 46,
+      "perRun": [
+        46,
+        38,
+        42,
+        40,
+        39
+      ]
+    },
+    "heapMB": {
+      "runs": 5,
+      "median": 3.55,
+      "min": 3.53,
+      "max": 3.56,
+      "perRun": [
+        3.53,
+        3.55,
+        3.53,
+        3.55,
+        3.56
+      ]
+    },
+    "scrubCommits": [
+      "10/10",
+      "10/10",
+      "10/10",
+      "10/10",
+      "10/10"
+    ],
+    "scrubTotalMs": {
+      "runs": 5,
+      "median": 183.3,
+      "min": 182.1,
+      "max": 184.4,
+      "perRun": [
+        182.1,
+        184.4,
+        182.2,
+        183.3,
+        184.1
+      ]
+    },
+    "coherent": "50/50",
+    "loadAverage1m": {
+      "runs": 5,
+      "median": 6.36,
+      "min": 5.12,
+      "max": 9.36,
+      "perRun": [
+        9.36,
+        6.36,
+        5.76,
+        5.12,
+        6.42
+      ]
+    }
+  },
+  {
+    "workload": "stress",
+    "variant": "baseline",
+    "warmSamplesPerRun": 60,
+    "warmPositionP50": [
+      0.449,
+      0.527,
+      0.433,
+      0.525,
+      0.533
+    ],
+    "warmPositionsOutOfBand": 0,
+    "warmP50Ms": {
+      "runs": 5,
+      "median": 464.2,
+      "min": 330.65,
+      "max": 503,
+      "perRun": [
+        382.55,
+        503,
+        330.65,
+        477.55,
+        464.2
+      ]
+    },
+    "warmP95Ms": {
+      "runs": 5,
+      "median": 973.1,
+      "min": 889,
+      "max": 1046.3,
+      "perRun": [
+        994,
+        973.1,
+        950.6,
+        1046.3,
+        889
+      ]
+    },
+    "warmMaxMs": {
+      "runs": 5,
+      "median": 1105.2,
+      "min": 1021.9,
+      "max": 1154.3,
+      "perRun": [
+        1105.2,
+        1154.3,
+        1021.9,
+        1125.7,
+        1061.3
+      ]
+    },
+    "nextFrameP95Ms": {
+      "runs": 5,
+      "median": 985.1,
+      "min": 899.5,
+      "max": 1050.6,
+      "perRun": [
+        1008.9,
+        985.1,
+        965.2,
+        1050.6,
+        899.5
+      ]
+    },
+    "coldWorstMs": {
+      "runs": 5,
+      "median": 1147.6,
+      "min": 1133.4,
+      "max": 1231.5,
+      "perRun": [
+        1231.5,
+        1147.6,
+        1133.4,
+        1216.7,
+        1140
+      ]
+    },
+    "coldMedianMs": {
+      "runs": 5,
+      "median": 652.9,
+      "min": 615,
+      "max": 683.55,
+      "perRun": [
+        683.55,
+        652.9,
+        615,
+        674.8,
+        648.3
+      ]
+    },
+    "readyMs": {
+      "runs": 5,
+      "median": 121,
+      "min": 117,
+      "max": 122,
+      "perRun": [
+        122,
+        117,
+        118,
+        121,
+        121
+      ]
+    },
+    "heapMB": {
+      "runs": 5,
+      "median": 8.76,
+      "min": 8.65,
+      "max": 9.07,
+      "perRun": [
+        8.87,
+        8.7,
+        8.76,
+        8.65,
+        9.07
+      ]
+    },
+    "scrubCommits": [
+      "24/120",
+      "20/120",
+      "18/120",
+      "21/120",
+      "22/120"
+    ],
+    "scrubTotalMs": {
+      "runs": 5,
+      "median": 5314.1,
+      "min": 4771,
+      "max": 5636,
+      "perRun": [
+        5314.1,
+        5539.2,
+        5636,
+        5112.8,
+        4771
+      ]
+    },
+    "coherent": "60/60",
+    "loadAverage1m": {
+      "runs": 5,
+      "median": 5.76,
+      "min": 4.73,
+      "max": 6.42,
+      "perRun": [
+        6.36,
+        5.76,
+        5.12,
+        6.42,
+        4.73
+      ]
+    }
+  },
+  {
+    "workload": "stress",
+    "variant": "checkpointed",
+    "warmSamplesPerRun": 300,
+    "warmPositionP50": [
+      0.476,
+      0.509,
+      0.496,
+      0.476,
+      0.509
+    ],
+    "warmPositionsOutOfBand": 0,
+    "warmP50Ms": {
+      "runs": 5,
+      "median": 6.9,
+      "min": 6.2,
+      "max": 7.6,
+      "perRun": [
+        6.9,
+        7.6,
+        6.7,
+        6.2,
+        7.5
+      ]
+    },
+    "warmP95Ms": {
+      "runs": 5,
+      "median": 17.4,
+      "min": 16.7,
+      "max": 17.6,
+      "perRun": [
+        17.6,
+        17.4,
+        16.7,
+        17,
+        17.6
+      ]
+    },
+    "warmMaxMs": {
+      "runs": 5,
+      "median": 21,
+      "min": 20.4,
+      "max": 23.5,
+      "perRun": [
+        23.5,
+        20.4,
+        21,
+        23.5,
+        20.8
+      ]
+    },
+    "nextFrameP95Ms": {
+      "runs": 5,
+      "median": 18.5,
+      "min": 18.2,
+      "max": 18.5,
+      "perRun": [
+        18.5,
+        18.2,
+        18.4,
+        18.5,
+        18.5
+      ]
+    },
+    "coldWorstMs": {
+      "runs": 5,
+      "median": 1083.9,
+      "min": 1018,
+      "max": 1137.1,
+      "perRun": [
+        1137.1,
+        1118.5,
+        1083.9,
+        1058.9,
+        1018
+      ]
+    },
+    "coldMedianMs": {
+      "runs": 5,
+      "median": 557.2,
+      "min": 530.75,
+      "max": 608.85,
+      "perRun": [
+        608.85,
+        557.2,
+        566.95,
+        548.7,
+        530.75
+      ]
+    },
+    "readyMs": {
+      "runs": 5,
+      "median": 119,
+      "min": 116,
+      "max": 122,
+      "perRun": [
+        118,
+        119,
+        120,
+        122,
+        116
+      ]
+    },
+    "heapMB": {
+      "runs": 5,
+      "median": 8.63,
+      "min": 8.62,
+      "max": 8.64,
+      "perRun": [
+        8.63,
+        8.64,
+        8.64,
+        8.62,
+        8.62
+      ]
+    },
+    "scrubCommits": [
+      "120/120",
+      "120/120",
+      "120/120",
+      "120/120",
+      "120/120"
+    ],
+    "scrubTotalMs": {
+      "runs": 5,
+      "median": 2953.3,
+      "min": 2928.1,
+      "max": 3003.1,
+      "perRun": [
+        2928.1,
+        2944.9,
+        3003.1,
+        2956,
+        2953.3
+      ]
+    },
+    "coherent": "60/60",
+    "loadAverage1m": {
+      "runs": 5,
+      "median": 6,
+      "min": 5.08,
+      "max": 9.59,
+      "perRun": [
+        9.59,
+        5.45,
+        6,
+        5.08,
+        6.39
+      ]
+    }
+  }
+]

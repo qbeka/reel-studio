@@ -13,10 +13,10 @@ No live demo is published yet. To run one, see below.
 
 | | |
 |---|---|
-| **Seek** | p95 19 ms to a coherent state on a 20,000 command log (17 to 22 across 5 runs), against 1,077 ms replaying from the start. On a real 10 command recording both take 1.2 ms. |
-| **First seek** | Up to 1.1 s on that same log, in a fresh page. The page appears in 122 ms. |
-| **Correctness** | 0 mismatches against replay at 5,332 positions. An independent money model agreed on all four logs. |
-| **Test quality** | 14 of 14 seeded failures caught. 36 of 38 mutants killed, 2 equivalent. |
+| **Seek** | p95 17 ms to a coherent state on a generated 20,000 command log (16.7 to 17.6 across 5 runs), against 973 ms replaying from the start. On a real 10 command recording both take 1.1 ms. |
+| **First seek** | About 1.0 to 1.1 s at worst on that same log, in a fresh page. The page appears in 119 ms. |
+| **Correctness** | 0 mismatches against replay at 5,332 positions. An independent model of each scene agreed on every log. |
+| **Test quality** | 14 of 14 seeded failures caught. 36 of 38 mutants killed, 2 equivalent. Two independent reviews, listed in [docs/REVIEWS.md](docs/REVIEWS.md). |
 | **Viewer size** | 91 KB of JavaScript and CSS with gzip. It needs no backend. |
 
 Measured on one Apple M5 Pro laptop in headless Chromium, with other work running. These are
@@ -105,13 +105,14 @@ Run types, lint and the copy check.
 pnpm check
 ```
 
-Run 232 unit tests, including the oracles, fuzz tests and negative controls.
+Run the unit tests, including the oracles, fuzz tests and negative controls.
 
 ```bash
 pnpm test
 ```
 
-Run 95 browser tests. WebKit and Firefox cover the exported viewer.
+Run the browser tests. Chromium runs all 82. WebKit and Firefox repeat the 9 exported viewer
+tests. On a Mac, keep the display awake, or WebKit clicks fail.
 
 ```bash
 pnpm exec playwright install chromium webkit firefox
@@ -140,6 +141,7 @@ pnpm bench
 | Document | Contents |
 |---|---|
 | [docs/REPORT.md](docs/REPORT.md) | Results, limits, what failed and what changed. |
+| [docs/REVIEWS.md](docs/REVIEWS.md) | Two independent reviews, each finding and its test. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How seeking, branches and export work. |
 | [docs/FORMAT.md](docs/FORMAT.md) | The adapter contract and project file. |
 | [docs/DESIGN.md](docs/DESIGN.md) | The central workflow and the design that was rejected. |

@@ -1,32 +1,32 @@
 [
   {
     "path": "runs/2026-11-06-release/receipt-split-viewer.zip",
-    "bytes": 433137,
-    "sha256": "c1fdcf4f7e5682584c68dc9c075a90dbf4a76ddcf89de52a2eee052782310325",
+    "bytes": 433200,
+    "sha256": "f0474ac03e039e1a849f5b81c68c4237df5b6a94eb608945c1b8b55956b2628e",
     "description": "Exported viewer of the release story, built by the editor in a browser."
   },
   {
     "path": "runs/2026-11-06-release/project.reel.json",
     "bytes": 3515,
-    "sha256": "9338d06fefda3c524db7f286e3c47168a6ebc13e648b0d67db66e01c11e780e9",
+    "sha256": "c1884de43981ca6bf1855480a02a527915256c9afbd4634112c1066da5cdea92",
     "description": "The release story, recorded through the editor."
   },
   {
     "path": "runs/2026-11-06-acceptance/retry-queue-viewer.zip",
-    "bytes": 424899,
-    "sha256": "cf49e4dc8d8fad7966deae18f82aef9c41d2dc26dc47f9b6a6f12b7ba2f190e7",
+    "bytes": 424962,
+    "sha256": "64ad86d7bbbde04bbae42cba5a818ce539ce0539b992f7346a17239db26a8524",
     "description": "Exported viewer from the acceptance run on the second scene."
   },
   {
     "path": "runs/2026-11-06-final/manifest.json",
     "bytes": 3476,
-    "sha256": "5e322171df96a6e7b1a6eb6976f9dd98a8b139f9ec32ccdbac7af9535e298612",
-    "description": "Final benchmark manifest, protocol 2."
+    "sha256": "a50e5be84a52749ea19527e9dc387e6856d209952afa3a4e90f9e4b0c0d920b9",
+    "description": "Final benchmark manifest, protocol 3."
   },
   {
     "path": "runs/2026-11-06-final/summary.json",
-    "bytes": 13732,
-    "sha256": "7b34423abb0adfb0aef92d94e220fec4cbeb7790dad80df8b01c7675c47614cb",
+    "bytes": 13950,
+    "sha256": "68c06bc54700e5c333da54aa4fd9329a81ca35f539990f7a779eba2883d2723a",
     "description": "Run level statistics computed from raw samples."
   },
   {
@@ -55,14 +55,14 @@
   },
   {
     "path": "docs/media/demo.mp4",
-    "bytes": 235684,
-    "sha256": "f74c08dfe26109351e9d7e0e5b925ee79fa5e2834eea71d929aa3b68d94922fe",
+    "bytes": 211286,
+    "sha256": "870111cdca4a97e5e67aedd3f4dc8994dffbb174072a27235e89a18c8e7fe29c",
     "description": "18 second recording of the signature interaction."
   },
   {
     "path": "docs/media/walkthrough.mp4",
-    "bytes": 629825,
-    "sha256": "dfaf5a8e340425e91cfdfa582313d70dcd94286fa77af66d59bc24b78fe3dafa",
+    "bytes": 612477,
+    "sha256": "fb7845e021451099cf99db8ba5eee15210da5c54a015c7565e790db7f0a44bcb",
     "description": "61 second silent technical walkthrough with on-screen notes."
   }
 ]

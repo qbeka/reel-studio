@@ -1,0 +1,230 @@
+[
+  {
+    "id": "seek-no-token",
+    "file": "src/core/seek.ts",
+    "result": "killed",
+    "by": "tests/unit/controls.test.ts > negative controls > the real controller commits only the newest seek"
+  },
+  {
+    "id": "seek-prepare-ignores-pending",
+    "file": "src/core/seek.ts",
+    "result": "killed",
+    "by": "tests/unit/timeline.test.ts > seek controller > prepare waits for a running seek, then skips the work that seek did"
+  },
+  {
+    "id": "seek-close-keeps-walking",
+    "file": "src/core/seek.ts",
+    "result": "killed",
+    "by": "tests/unit/timeline.test.ts > seek controller > close stops the background walk"
+  },
+  {
+    "id": "playback-no-frame-clamp",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/playback.test.ts > Playback > caps a long gap between frames, so a hidden tab does not jump the story"
+  },
+  {
+    "id": "playback-no-resume",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/playback.test.ts > Playback > starts over when played from the end"
+  },
+  {
+    "id": "playback-resume-at-end",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > playback > seeking to the end while playing stays at the end"
+  },
+  {
+    "id": "playback-pause-keeps-resume",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > playback > pausing during a seek cancels the resume"
+  },
+  {
+    "id": "playback-tick-no-end-stop",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/playback.test.ts > Playback > reaches the same state whatever the frame timing"
+  },
+  {
+    "id": "playback-no-round",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > playback > keeps time in whole milliseconds, with each state tied to its own time"
+  },
+  {
+    "id": "playback-no-floor",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > playback > keeps time in whole milliseconds, with each state tied to its own time"
+  },
+  {
+    "id": "playback-skips-start-seek",
+    "file": "src/core/playback.ts",
+    "result": "killed",
+    "by": "tests/unit/fuzz.test.tsx > the real controls, in random order > every snapshot ties its state to its time, and settles o"
+  },
+  {
+    "id": "timeline-stores-stale",
+    "file": "src/core/timeline.ts",
+    "result": "killed",
+    "by": "tests/unit/branch.test.ts > viewer branch > never changes the authored log or the authored states"
+  },
+  {
+    "id": "timeline-no-cap",
+    "file": "src/core/timeline.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > limits > stores a bounded number of states whatever interval a file asks for"
+  },
+  {
+    "id": "session-close-keeps-timers",
+    "file": "src/core/session.ts",
+    "result": "killed",
+    "by": "tests/unit/session.test.ts > LiveSession > drops scheduled outcomes on close"
+  },
+  {
+    "id": "session-closed-guard",
+    "file": "src/core/session.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > sessions > refuses commands after it closes"
+  },
+  {
+    "id": "session-outcome-as-user",
+    "file": "src/core/session.ts",
+    "result": "killed",
+    "by": "tests/unit/branch.test.ts > viewer branch > counts edits, not the outcomes they cause"
+  },
+  {
+    "id": "session-no-rearm",
+    "file": "src/core/session.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > branches > a fork during a save receives the outcome and can go on"
+  },
+  {
+    "id": "branch-shares-state",
+    "file": "src/core/branch.ts",
+    "result": "killed",
+    "by": "tests/unit/branch.test.ts > viewer branch > starts as an exact copy that shares no objects with the story"
+  },
+  {
+    "id": "branch-editcount-all",
+    "file": "src/core/branch.ts",
+    "result": "killed",
+    "by": "tests/unit/branch.test.ts > viewer branch > counts edits, not the outcomes they cause"
+  },
+  {
+    "id": "branch-reopen-new-base",
+    "file": "src/core/branch.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > branches > a reopened copy still counts as changed from the story"
+  },
+  {
+    "id": "receipt-preview-ignores-draft",
+    "file": "src/scenes/receipt/state.ts",
+    "result": "killed",
+    "by": "tests/unit/oracle.test.ts > oracle agreement > matches the receipt scene after every command of a seeded session"
+  },
+  {
+    "id": "receipt-preview-stale-after-save",
+    "file": "src/scenes/receipt/reduce.ts",
+    "result": "equivalent",
+    "by": "After a save the draft equals the saved split, so the preview cannot change."
+  },
+  {
+    "id": "receipt-cancel-noop",
+    "file": "src/scenes/receipt/reduce.ts",
+    "result": "killed",
+    "by": "tests/unit/oracle.test.ts > oracle agreement > matches the receipt scene after every command of a seeded session"
+  },
+  {
+    "id": "receipt-no-pending-outcome",
+    "file": "src/scenes/receipt/adapter.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > branches > a fork during a save receives the outcome and can go on"
+  },
+  {
+    "id": "retry-nextattempt",
+    "file": "src/scenes/retry-queue/state.ts",
+    "result": "killed",
+    "by": "tests/unit/oracle.test.ts > oracle agreement > matches across seeds"
+  },
+  {
+    "id": "retry-attempt-t",
+    "file": "src/scenes/retry-queue/state.ts",
+    "result": "killed",
+    "by": "tests/unit/retry-queue.test.ts > the retry workflow > waits the chosen delay between attempts"
+  },
+  {
+    "id": "retry-createdat",
+    "file": "src/scenes/retry-queue/state.ts",
+    "result": "killed",
+    "by": "tests/unit/oracle.test.ts > oracle agreement > matches across seeds"
+  },
+  {
+    "id": "retry-health-ignored",
+    "file": "src/scenes/retry-queue/adapter.ts",
+    "result": "killed",
+    "by": "tests/unit/retry-queue.test.ts > the retry workflow > delivers once the endpoint recovers"
+  },
+  {
+    "id": "project-no-sort",
+    "file": "src/core/project.ts",
+    "result": "killed",
+    "by": "tests/unit/project.test.ts > parseProject > sorts commands, keeping equal times in seq order"
+  },
+  {
+    "id": "project-trim-equal",
+    "file": "src/core/project.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > limits > refuses an empty trim range"
+  },
+  {
+    "id": "project-viewer-keeps-tail",
+    "file": "src/core/project.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > trim > sends a viewer nothing past the end, and keeps the prologue"
+  },
+  {
+    "id": "location-no-range",
+    "file": "src/core/location.ts",
+    "result": "killed",
+    "by": "tests/unit/branch.test.ts > links > ignores #t=99999"
+  },
+  {
+    "id": "transcript-ignores-trim",
+    "file": "src/core/transcript.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > trim > leaves later steps out of the transcript"
+  },
+  {
+    "id": "drafts-no-previous",
+    "file": "src/storage/drafts.ts",
+    "result": "killed",
+    "by": "tests/unit/storage.test.ts > DraftStore > keeps the previous save and can restore it"
+  },
+  {
+    "id": "edit-undo-keeps-future",
+    "file": "src/core/edit.ts",
+    "result": "killed",
+    "by": "tests/unit/edit.test.ts > undo history > moves back and forward and clears redo on a new edit"
+  },
+  {
+    "id": "bundle-no-escape",
+    "file": "src/export/bundle.ts",
+    "result": "killed",
+    "by": "tests/unit/export.test.ts > assembleBundle > escapes project text in every page"
+  },
+  {
+    "id": "bundle-replace-pattern",
+    "file": "src/export/bundle.ts",
+    "result": "killed",
+    "by": "tests/unit/regressions.test.ts > export > keeps replacement patterns in the title as plain text"
+  },
+  {
+    "id": "canonical-neg-zero",
+    "file": "src/core/canonical.ts",
+    "result": "equivalent",
+    "by": "JSON.stringify already writes -0 as 0, so the output is the same."
+  }
+]
