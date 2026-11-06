@@ -9,36 +9,26 @@ story at a chapter.
 
 [Watch the 18 second demo](docs/media/demo.mp4) or the
 [61 second walkthrough](docs/media/walkthrough.mp4), which is silent with on-screen notes.
-No live demo is published yet. To run one, see below.
 
-| | |
-|---|---|
-| **Seek** | p95 17 ms to a coherent state on a generated 20,000 command log (16.7 to 17.6 across 5 runs), against 973 ms replaying from the start. On a real 10 command recording both take 1.1 ms. |
-| **First seek** | About 1.0 to 1.1 s at worst on that same log, in a fresh page. The page appears in 119 ms. |
-| **Correctness** | 0 mismatches against replay at 5,332 positions. An independent model of each scene agreed on every log. |
-| **Test quality** | 14 of 14 seeded failures caught. 36 of 38 mutants killed, 2 equivalent. Two independent reviews, listed in [docs/REVIEWS.md](docs/REVIEWS.md). |
-| **Viewer size** | 91 KB of JavaScript and CSS with gzip. It needs no backend. |
+## Quick start
 
-Measured on one Apple M5 Pro laptop in headless Chromium, with other work running. These are
-lab numbers. [What they leave out](docs/REPORT.md#what-the-headline-leaves-out).
-
-## Run it
-
-You need Node 22.16 and pnpm 12.
+You need Node 22 and pnpm 12. If you have Node, `corepack enable` gives you the right pnpm.
 
 ```bash
-pnpm install --frozen-lockfile
+git clone https://github.com/qbeka/reel-studio.git
 ```
 
-See a finished demo. This exports the release story and serves it on a plain file server.
+```bash
+cd reel-studio && pnpm install --frozen-lockfile
+```
+
+Run a finished demo, then open <http://127.0.0.1:4173/projects/reel/>.
 
 ```bash
 pnpm demo
 ```
 
-Open <http://127.0.0.1:4173/projects/reel/>.
-
-Open the editor on port 5174.
+Or open the editor on port 5174.
 
 ```bash
 pnpm dev
@@ -62,6 +52,19 @@ application running and a viewer can take over at any moment.
 
 Reel works with scenes you register at build time. It cannot record arbitrary websites. For
 that, use a tool like [rrweb](https://github.com/rrweb-io/rrweb).
+
+## Results
+
+| | |
+|---|---|
+| **Seek** | p95 17 ms on a generated 20,000 command log, against 973 ms replaying from the start. On a real 10 command recording both take 1.1 ms. |
+| **First seek** | About 1.1 s at worst on that same log, in a fresh page. The page appears in 119 ms. |
+| **Correctness** | 0 mismatches against replay at 5,332 positions. An independent model of each scene agreed on every log. |
+| **Test quality** | 14 of 14 seeded failures caught. 36 of 38 mutants killed, 2 equivalent. |
+| **Viewer size** | 91 KB of JavaScript and CSS with gzip. It needs no backend. |
+
+Measured on one Apple M5 Pro laptop in headless Chromium, with other work running. These are
+lab numbers. [What they leave out](docs/REPORT.md#what-the-headline-leaves-out).
 
 ## Add a scene
 
@@ -130,7 +133,7 @@ A quick engine timing, in about 30 seconds.
 pnpm bench:smoke
 ```
 
-The full protocol, in about 15 minutes. It writes to `runs/`.
+The full protocol, in about 15 minutes.
 
 ```bash
 pnpm bench
@@ -141,13 +144,11 @@ pnpm bench
 | Document | Contents |
 |---|---|
 | [docs/REPORT.md](docs/REPORT.md) | Results, limits, what failed and what changed. |
-| [docs/REVIEWS.md](docs/REVIEWS.md) | Two independent reviews, each finding and its test. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How seeking, branches and export work. |
 | [docs/FORMAT.md](docs/FORMAT.md) | The adapter contract and project file. |
 | [docs/DESIGN.md](docs/DESIGN.md) | The central workflow and the design that was rejected. |
 | [docs/EMBED.md](docs/EMBED.md) | Hosting and embedding. |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Sources and pinned versions. |
-| [docs/USABILITY.md](docs/USABILITY.md) | A task script and heuristic review. No study has been run. |
 | [bench/PROTOCOL.md](bench/PROTOCOL.md) | How the numbers are measured. |
 
 ## License
