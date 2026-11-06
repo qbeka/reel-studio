@@ -104,13 +104,18 @@ function expectedTokens(state: ReceiptState): string[] {
   return tokens;
 }
 
-/** The same list, read from the live page. */
-function pageTokens(): string[] {
-  const root = document.querySelector('.rs')!;
-  const tokens: string[] = [];
-  const walk = (node: Node) => {
+/** React writes `2 Mar · $64.18` as three DOM text nodes, so compare the joined text. */
+function visibleText(tokens: readonly string[]): string {
+  return tokens.join('').replace(/\s+/g, '');
+}
+
+const pageHelpers = `
+// The same list as expectedTokens, read from the live page.
+window.__tokens = () => {
+  const tokens = [];
+  const walk = (node) => {
     if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent!.trim();
+      const text = node.textContent.trim();
       if (text !== '') tokens.push(text);
       return;
     }
@@ -119,11 +124,9 @@ function pageTokens(): string[] {
     if (node instanceof HTMLInputElement && node.type !== 'radio') tokens.push(node.value);
     node.childNodes.forEach(walk);
   };
-  root.childNodes.forEach(walk);
+  document.querySelector('.rs').childNodes.forEach(walk);
   return tokens;
-}
-
-const pageHelpers = `
+};
 window.__seek = (value) => new Promise((resolve) => {
   const slider = document.querySelector('.reel-slider');
   const bar = document.querySelector('.reel-bar');
@@ -305,12 +308,12 @@ for (let run = 1; run <= RUNS; run++) {
       for (const t of coherence) {
         await page.evaluate((v) => (window as any).__seek(v), t);
         const count = check.countAt(t);
-        const expected = JSON.stringify(expectedTokens(check.stateAfter(count)));
-        if (count > 0 && JSON.stringify(expectedTokens(check.stateAfter(count - 1))) !== expected) {
+        const expected = visibleText(expectedTokens(check.stateAfter(count)));
+        if (count > 0 && visibleText(expectedTokens(check.stateAfter(count - 1))) !== expected) {
           staleVisible++;
         }
-        const shown = await page.evaluate(`(${pageTokens.toString()})()`);
-        if (JSON.stringify(shown) === expected) coherent++;
+        const shown: string[] = await page.evaluate(() => (window as any).__tokens());
+        if (visibleText(shown) === expected) coherent++;
       }
 
       await session.send('HeapProfiler.collectGarbage');
