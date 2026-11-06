@@ -636,3 +636,20 @@
     flex-wrap: wrap;
   }
 }
+
+/* The editor's own transport button. The viewer's controls come from foundation.css. */
+.reel-button-ghost {
+  min-height: 36px;
+  padding: 7px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.reel-button-ghost:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
