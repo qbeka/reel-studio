@@ -1,0 +1,189 @@
+{
+  "format": "reel-project",
+  "formatVersion": 1,
+  "id": "receipt-split-release",
+  "title": "Fix a shared receipt",
+  "disclosure": "Synthetic data. No real people, receipts or balances.",
+  "scene": {
+    "id": "receipt-split",
+    "version": 1
+  },
+  "seed": 1,
+  "checkpointEvery": 256,
+  "trim": null,
+  "posterT": 12874,
+  "commands": [
+    {
+      "type": "selectExpense",
+      "payload": {
+        "id": "e2"
+      },
+      "seq": 1,
+      "t": 1818,
+      "source": "user"
+    },
+    {
+      "type": "setSplitMode",
+      "payload": {
+        "mode": "percent"
+      },
+      "seq": 2,
+      "t": 4229,
+      "source": "user"
+    },
+    {
+      "type": "setSplit",
+      "payload": {
+        "member": "mina",
+        "value": 5000
+      },
+      "seq": 3,
+      "t": 5737,
+      "source": "user"
+    },
+    {
+      "type": "setSplit",
+      "payload": {
+        "member": "theo",
+        "value": 4000
+      },
+      "seq": 4,
+      "t": 6843,
+      "source": "user"
+    },
+    {
+      "type": "setSplit",
+      "payload": {
+        "member": "ana",
+        "value": 3000
+      },
+      "seq": 5,
+      "t": 7950,
+      "source": "user"
+    },
+    {
+      "type": "confirmEdit",
+      "payload": {},
+      "seq": 6,
+      "t": 9567,
+      "source": "user"
+    },
+    {
+      "type": "setSplit",
+      "payload": {
+        "member": "ana",
+        "value": 1000
+      },
+      "seq": 7,
+      "t": 12574,
+      "source": "user"
+    },
+    {
+      "type": "confirmEdit",
+      "payload": {},
+      "seq": 8,
+      "t": 14199,
+      "source": "user"
+    },
+    {
+      "type": "saveResult",
+      "payload": {
+        "requestId": 1,
+        "ok": true
+      },
+      "seq": 9,
+      "t": 14652,
+      "source": "outcome"
+    },
+    {
+      "type": "setView",
+      "payload": {
+        "view": "balances"
+      },
+      "seq": 10,
+      "t": 16816,
+      "source": "user"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "chapter-1",
+      "t": 0,
+      "title": "Open the receipt"
+    },
+    {
+      "id": "chapter-2",
+      "t": 4229,
+      "title": "Adjust the split"
+    },
+    {
+      "id": "chapter-3",
+      "t": 9567,
+      "title": "Hit a validation error"
+    },
+    {
+      "id": "chapter-4",
+      "t": 12174,
+      "title": "Correct the shares"
+    },
+    {
+      "id": "chapter-5",
+      "t": 16816,
+      "title": "Inspect the balances"
+    }
+  ],
+  "captions": [
+    {
+      "id": "caption-1",
+      "start": 200,
+      "end": 4000,
+      "text": "Theo paid for dinner, split equally. Open that receipt.",
+      "target": "expense-list"
+    },
+    {
+      "id": "caption-2",
+      "start": 4329,
+      "end": 9400,
+      "text": "Mina had more. Switch to percent and adjust the shares.",
+      "target": "split-editor"
+    },
+    {
+      "id": "caption-3",
+      "start": 9667,
+      "end": 12200,
+      "text": "The shares add up to 120%, so the save is refused.",
+      "target": "save"
+    },
+    {
+      "id": "caption-4",
+      "start": 12274,
+      "end": 16600,
+      "text": "Lower Ana to 10% and the same save goes through.",
+      "target": "split-editor"
+    },
+    {
+      "id": "caption-5",
+      "start": 16816,
+      "end": 20000,
+      "text": "Balances are recomputed from every receipt.",
+      "target": "balances"
+    }
+  ],
+  "camera": [
+    {
+      "id": "shot-1",
+      "t": 0,
+      "target": null
+    },
+    {
+      "id": "shot-2",
+      "t": 4229,
+      "target": "split-editor"
+    },
+    {
+      "id": "shot-3",
+      "t": 16816,
+      "target": null
+    }
+  ]
+}

@@ -121,7 +121,7 @@ function git(args: string): string {
 
 const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
 const runtime = await readTree('dist/viewer');
-const parsedShort = parseProject(JSON.parse(await readFile('projects/receipt-split.reel.json', 'utf8')));
+const parsedShort = parseProject(JSON.parse(await readFile('projects/receipt-split-release.reel.json', 'utf8')));
 if (!parsedShort.ok) throw new Error(parsedShort.errors.join(' '));
 
 const stamp = new Date().toISOString().slice(0, 10);

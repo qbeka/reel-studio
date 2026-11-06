@@ -142,7 +142,7 @@ export function Inspector(props: InspectorProps) {
             .sort((a, b) => a.t - b.t),
         });
       return (
-        <Panel title="Chapter">
+        <Panel title="Chapter" onBack={onClearSelection}>
           <TextField label="Title" value={chapter.title} onCommit={(title) => update({ title })} />
           <TimeField label="Starts at (seconds)" value={chapter.t} onCommit={(value) => update({ t: value })} />
           <Remove
@@ -168,7 +168,7 @@ export function Inspector(props: InspectorProps) {
             .sort((a, b) => a.start - b.start),
         });
       return (
-        <Panel title="Caption">
+        <Panel title="Caption" onBack={onClearSelection}>
           <TextField label="Text" multiline value={caption.text} onCommit={(text) => update({ text })} />
           <TimeField
             label="Starts at (seconds)"
@@ -214,7 +214,7 @@ export function Inspector(props: InspectorProps) {
             .sort((a, b) => a.t - b.t),
         });
       return (
-        <Panel title="Camera shot">
+        <Panel title="Camera shot" onBack={onClearSelection}>
           <TargetField
             adapter={adapter}
             value={shot.target}
@@ -307,6 +307,7 @@ function CommandInspector({
   onEditPayload,
   onRemoveCommand,
   onSelect,
+  onClearSelection,
 }: InspectorProps & { seq: number }) {
   const index = project.commands.findIndex((c) => c.seq === seq);
   const entry = project.commands[index]!;
@@ -343,7 +344,7 @@ function CommandInspector({
   };
 
   return (
-    <Panel title="Command">
+    <Panel title="Command" onBack={onClearSelection}>
       <div className="ed-row">
         <button
           type="button"
@@ -371,7 +372,7 @@ function CommandInspector({
         <dt>Source</dt>
         <dd>{entry.source === 'user' ? 'Recorded input' : 'Recorded outcome'}</dd>
       </dl>
-      <TimeField label="Time (seconds)" value={entry.t} onCommit={(t) => onRetimeCommand(entry.seq, t)} />
+      <TimeField key={entry.seq} label="Time (seconds)" value={entry.t} onCommit={(t) => onRetimeCommand(entry.seq, t)} />
       <label className="ed-field">
         <span>Payload</span>
         <textarea
@@ -393,10 +394,26 @@ function CommandInspector({
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  onBack,
+  children,
+}: {
+  title: string;
+  /** Returns to the project settings. Absent on that panel itself. */
+  onBack?: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <aside className="ed-inspector" aria-label={title}>
-      <h2>{title}</h2>
+      <div className="ed-panel-head">
+        <h2>{title}</h2>
+        {onBack !== undefined && (
+          <button type="button" className="ed-text" onClick={onBack}>
+            Project settings
+          </button>
+        )}
+      </div>
       {children}
     </aside>
   );

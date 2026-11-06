@@ -212,6 +212,13 @@
   }
 }
 
+.ed-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .ed-field {
   display: grid;
   gap: 4px;

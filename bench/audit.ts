@@ -10,7 +10,13 @@ import { ReceiptOracle } from '../tests/oracle/receipt-oracle';
 import { RetryOracle } from '../tests/oracle/retry-oracle';
 
 /** Replays a log, comparing the scene with the oracle after every command. */
-export function auditReceipt(adapter: AnyAdapter, log: readonly LogEntry[], seed: number): string[] {
+export function auditReceipt(
+  adapter: AnyAdapter,
+  log: readonly LogEntry[],
+  seed: number,
+  /** The oracle steps through every command and compares after every Nth one. */
+  compareEvery = 1,
+): string[] {
   const problems: string[] = [];
   const oracle = new ReceiptOracle(seed);
   let state: ReceiptState = adapter.init(seed);
@@ -18,6 +24,7 @@ export function auditReceipt(adapter: AnyAdapter, log: readonly LogEntry[], seed
     try {
       oracle.step(entry);
       state = adapter.apply(state, entry, { t: entry.t });
+      if (entry.seq % compareEvery !== 0) continue;
       const expected = oracle.predict();
       const ids = state.members.map((m) => m.id);
       if (JSON.stringify(sorted(state.balances)) !== JSON.stringify(sorted(expected.balances))) {

@@ -271,7 +271,9 @@ export function Workspace({
         return;
       }
       if (isTyping(event.target)) return;
-      if (command && event.key.toLowerCase() === 'z') {
+      if (event.key === 'Escape') {
+        setSelection(null);
+      } else if (command && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         setHistory((h) => (event.shiftKey ? redo(h) : undo(h)));
       } else if (!command && event.key === ' ' && event.target === document.body && recording === null) {

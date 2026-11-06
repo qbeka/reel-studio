@@ -144,7 +144,12 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
         : `Back in the story at ${label}. Nothing was lost.`,
     );
     history.replaceState(null, '', momentHash(t));
-    requestAnimationFrame(() => tryButton.current?.focus());
+    // The panel sat below the stage. Without this the viewer picks a chapter and is left
+    // looking at the bottom of the page with the story above the fold.
+    requestAnimationFrame(() => {
+      document.querySelector('.reel-stage')?.scrollIntoView({ block: 'nearest' });
+      tryButton.current?.focus({ preventScroll: true });
+    });
   };
 
   const restoreCopy = () => {

@@ -68,6 +68,17 @@ test('deleting a command that others need shows a repair step, and undo restores
   await expect(lane(page)).toHaveCount(count);
 });
 
+test('the project settings stay reachable after selecting an item', async ({ page }) => {
+  await recordReceipt(page);
+  await lane(page).first().click();
+  await page.getByRole('button', { name: 'Project settings' }).click();
+  await expect(page.getByRole('complementary', { name: 'Project' })).toBeVisible();
+  await lane(page).first().click();
+  await page.locator('h1').click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('complementary', { name: 'Project' })).toBeVisible();
+});
+
 test('moving a command before its cause is refused with a repair step', async ({ page }) => {
   await recordReceipt(page);
   await lane(page).nth(2).click();

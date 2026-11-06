@@ -191,6 +191,20 @@ test.describe('branching', () => {
     await expect(page.getByRole('status')).toContainText('Nothing was lost');
   });
 
+  test('choosing a chapter brings the story back into view', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+    const page = await context.newPage();
+    await page.goto(`${host.url}#t=9000`);
+    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByLabel('Ana share').fill('10');
+    await page.getByRole('button', { name: 'Return to story' }).click();
+    const panel = page.getByRole('group', { name: 'Return to the story' });
+    await panel.getByRole('button', { name: /Inspect the balances/ }).click();
+    await expect(page.locator('.reel-frame')).toBeInViewport({ ratio: 0.9 });
+    await expect(page.getByRole('button', { name: 'Try it' })).toBeFocused();
+    await context.close();
+  });
+
   test('the address never holds viewer content', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
     await page.getByRole('button', { name: 'Try it' }).click();
@@ -353,7 +367,7 @@ test.describe('embed', () => {
     await page.goto(`${host.url}transcript.html`);
     await page.setContent(`<!doctype html><main><p>Host page</p>
       <iframe title="Demo" src="${host.url}embed.html" loading="lazy"
-        style="width:100%;aspect-ratio:880/660;min-height:560px;border:0"></iframe></main>`);
+        style="width:720px;aspect-ratio:880/700;border:0"></iframe></main>`);
     const frame = page.frameLocator('iframe');
     await frame.getByRole('link', { name: /Play interactive demo/ }).waitFor();
     expect(seen.filter((u) => u.endsWith('.js'))).toEqual([]);

@@ -104,9 +104,9 @@ export class SeekController<S> {
    * warm, and it checks every command against the scene. The page paints first, and input
    * stays responsive because the walk gives way after each slice.
    *
-   * A viewer's seek matters more, so the walk waits while one is running. Measured on the
-   * stress log, letting them share the thread made the first seek take 2.8 s instead of
-   * 1.1 s. A seek also fills checkpoints, so the walk resumes past whatever it covered.
+   * A viewer's seek matters more, so the walk waits while one is running. On the stress
+   * log, sharing the thread made the first seek take over twice as long. A seek also
+   * fills checkpoints, so the walk resumes past whatever it covered.
    */
   async prepare(): Promise<void> {
     const cursor = { state: this.timeline.stateAfter(0), count: 0 };
