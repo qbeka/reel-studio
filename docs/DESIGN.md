@@ -81,6 +81,16 @@ quiet: no gradients, no metric tiles, no background motion.
 - Motion is limited to the camera and the fork. Reduced motion removes both transitions
   and uses a static full view.
 
+## What an independent review changed
+
+A review on a clean clone found defects the tests had missed. Three changed the design:
+
+- A branch needs its own base. Bringing a copy back reused the edited state as the base, so
+  edited work looked unchanged and could be cleared with no warning.
+- A fork can start inside a pending outcome, so `pendingEffects` joined the adapter contract.
+- The return panel locks the scene and reads the live state, because a stored answer can
+  go stale between showing it and acting on it.
+
 ## Decisions that shaped the architecture
 
 See [FORMAT.md](FORMAT.md) for the formats and [ARCHITECTURE.md](ARCHITECTURE.md) for the

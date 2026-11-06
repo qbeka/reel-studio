@@ -187,7 +187,7 @@ describe('playback', () => {
     expect(playback.getSnapshot()).toMatchObject({ t: 0, count: 1 });
   });
 
-  it('pausing during a seek cancels the resume', () => {
+  it('pausing during a seek cancels the resume', async () => {
     const waiting: (() => void)[] = [];
     const timeline = new Timeline(scene, log, { seed: 1, checkpointEvery: 100000 });
     const playback = new Playback(timeline, { start: 0, end }, noFrames, {
@@ -199,7 +199,12 @@ describe('playback', () => {
     playback.seek(end - 500);
     expect(playback.getSnapshot().seeking).toBe(true);
     playback.pause();
-    expect(playback.getSnapshot().playing).toBe(false);
+    while (playback.getSnapshot().seeking) {
+      for (const resume of waiting.splice(0)) resume();
+      await Promise.resolve();
+      await Promise.resolve();
+    }
+    expect(playback.getSnapshot()).toMatchObject({ t: end - 500, playing: false });
   });
 
   it('keeps time in whole milliseconds, with each state tied to its own time', () => {

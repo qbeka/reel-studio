@@ -25,6 +25,7 @@ Defined in [`src/core/adapter.ts`](../src/core/adapter.ts).
 | `precondition(state, command)` | Why this command is impossible now, or null. |
 | `apply(state, command, clock)` | Pure transition. Returns a new state and never mutates the old one. |
 | `effects(state, command)` | Optional. Outcomes a local fake service will report later. Runs only live. |
+| `pendingEffects(state, t)` | Required with `effects`. Outcomes a state is still owed, so a fork during a save can finish. |
 | `serialize(state)` | State as canonical JSON. Excludes transient presentation fields. |
 | `restore(json, fromVersion)` | Rebuilds state from `serialize` output, migrating older versions. |
 | `migrateCommand(command, fromVersion)` | Optional. Rewrites an older recorded command. |
@@ -87,8 +88,15 @@ A `.reel.json` file holds data and nothing that can execute.
 The four tracks stay separate. `commands` decide scene state. `chapters`, `captions` and
 `camera` only decide presentation, so editing them can never change a state hash.
 
-`trim` is not destructive. Commands before `trim.start` still run, as a silent prologue.
-Commands after `trim.end` are not played or exported to the viewer's reachable range.
+`trim` is not destructive in the project file. Commands before `trim.start` still run, as a
+silent prologue, and they ship in the export because they build the state at the start.
+Commands, chapters and captions after `trim.end` are removed from the export. If a prologue
+must not ship, record it again without that part.
+
+Limits on a file: 100,000 commands, 64 chapters, 512 captions, 512 camera shots, 400
+characters of text, and a `seq` up to 2^40. A timeline stores at most 1,024 states, widening
+the interval if a file asks for more. The receipt scene holds at most 5,000 receipts and the
+retry queue at most 2,000 jobs, which keeps the cost of every command bounded.
 
 ## Scene resolution
 

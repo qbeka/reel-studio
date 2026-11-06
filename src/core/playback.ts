@@ -101,8 +101,7 @@ export class Playback<S = any> {
   getSnapshot = (): PlaybackSnapshot<S> => this.snapshot;
 
   play(): void {
-    // A story with no length has nothing to play, and restarting it would never end.
-    if (this.snapshot.playing || this.range.end <= this.range.start) return;
+    if (this.snapshot.playing) return;
     if (this.snapshot.seeking) {
       this.resumeAfterSeek = true;
       return;

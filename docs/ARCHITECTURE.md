@@ -41,8 +41,8 @@ state, and applies the commands in between.
 `Timeline` stores the state after every Nth command, by reference. This is safe because
 `apply` must return new objects, and the tests deep-freeze every state to enforce it.
 Unchanged parts of a state are shared, so a checkpoint costs about what changed since the
-last one. A warm seek applies at most N - 1 commands and at most ceil(L / N) + 1 states
-exist for a log of length L. `parseProject` caps L.
+last one. A warm seek applies at most N - 1 commands, and at most 1,024 states exist. If a
+log would need more, the interval widens to fit. `parseProject` caps the log length.
 
 `SeekController` runs work in slices limited by time. A newer request abandons an older
 one at its next slice boundary, and only the newest complete state reaches `onCommit`.
@@ -65,17 +65,25 @@ it. Outcomes reached the log during recording as ordinary entries with `source: 
 A branch never merges. Returning always restores a recorded state. The panel compares the
 canonical hash of the viewer's state with the authored state at each chapter. An exact
 match means nothing is lost, and the panel says so. Everything else clears the branch, and
-the panel says that too. The last copy is held in memory so the viewer can bring it back
+the panel says that too. The scene is locked while the panel is open, and the answer is
+computed from the live state, so a late outcome cannot leave a stale promise on screen.
+
+A cleared copy stays in memory, with its original base, so the viewer can bring it back
 until they next press Try it or leave the page. Nothing in a branch is written to storage,
 the URL or the project.
+
+A state can be waiting for an outcome when a branch starts, such as a fork during a save.
+The timer that would have delivered it belonged to the recording, so `pendingEffects` re-arms
+it for the new session.
 
 ## Export
 
 `assembleBundle` is a pure function of the project, the adapter and the prebuilt viewer.
 The command line writes the result to a temporary folder and renames it into place, so an
-interrupted export leaves the previous one untouched. The editor builds the same files in
+failure while writing leaves the previous one untouched. The editor builds the same files in
 memory and offers a zip only when every file is ready. All URLs are relative, so a bundle
-works under any path. `bundle-manifest.json` lists the hash of every file.
+works under any path. `bundle-manifest.json` lists the hash of every file and the final state
+hash, and `scripts/verify-bundle.ts` checks both, including a full replay.
 
 ## Adding a scene
 
