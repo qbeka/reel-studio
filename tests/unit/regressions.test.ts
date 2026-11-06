@@ -1,5 +1,5 @@
 /**
- * Defects found by an independent review on a clean clone. Each test here failed before
+ * Defects found by a code review on a clean clone. Each test here failed before
  * its fix, so none of these can quietly return.
  */
 import { readFile } from 'node:fs/promises';

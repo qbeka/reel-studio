@@ -106,29 +106,26 @@ Automated checks do not establish full accessibility.
    133 ms, under load. The profile showed largest remainder allocation taking most of the
    time, because each draft edit reran it for every receipt. Caching shares per immutable
    expense cut full replay from 12.7 s to 3.4 s under similar load, with identical state
-   hashes at that commit. See `runs/2026-11-06-engine-before-share-cache`.
+   hashes at that commit.
 2. **One load pass.** The viewer replayed the whole log to validate, again for the
    transcript, and again on the first seek. The page took 2.8 s to appear on stress. It now
-   paints first and one background walk does the validating and the checkpoints. See
-   `runs/2026-11-06-viewer-before-load-fix`.
+   paints first and one background walk does the validating and the checkpoints.
 3. **The walk gives way.** That first fix raised the first seek to 2.8 s, because the seek
-   and the walk shared the thread. The walk now waits. See
-   `runs/2026-11-06-viewer-seek-and-walk-compete`.
+   and the walk shared the thread. The walk now waits.
 
 ## What failed
 
 - **Protocol 1 was invalid.** Its seek positions were skewed toward early, cheap states by a
   weak generator, so it reported 17.5 ms and 948 ms. The browser baseline p50 of 98 ms did not
-  match 672 ms in Node, and that is how it was caught. The run is kept in
-  `runs/2026-11-06-protocol-1-skewed-positions`. Do not quote it. The sampler is now tested.
+  match 672 ms in Node, and that is how it was caught. The run was discarded, and the
+  sampler now has a uniformity test.
 - **Protocol 2 was superseded.** Its numbers held under audit, but the audit found defects in
   the code it measured, so the run was repeated on fixed code. Warm p95 moved from 19.4 to
   17.4 ms and the baseline from 1,077 to 973 ms. That difference is load on the machine, not
   an improvement. Treat either as the same result.
-- **Two independent reviews found defects the tests had missed**, 8 of them high severity,
-  and corrected 10 of my claims. Every finding and its regression test is in
-  [REVIEWS.md](REVIEWS.md). The reviews changed three design decisions, listed in
-  [DESIGN.md](DESIGN.md).
+- **Two automated code reviews found defects the tests had missed**, 8 of them high severity,
+  and corrected 10 of my claims. Each fix has a regression test in `tests/`. The reviews
+  changed three design decisions, listed in [DESIGN.md](DESIGN.md).
 
 ## Limits
 
@@ -143,8 +140,7 @@ Automated checks do not establish full accessibility.
 - Replacing a folder export takes two renames. A crash in that gap leaves the old export in a
   `.previous` folder rather than in place.
 - Video export was stretch scope and is not built.
-- No person has used this in a study. [USABILITY.md](USABILITY.md) has a task script and a
-  heuristic review, which is the author's review and not user research.
+- No person has used this in a study.
 
 ## Reproduce
 

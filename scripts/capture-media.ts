@@ -1,5 +1,5 @@
 /**
- * Captures the README cover, the portfolio poster and two screen recordings from the real
+ * Captures the README cover, the poster and two screen recordings from the real
  * exported viewer and the real editor. Run after `pnpm build` and an export of the release
  * project to exports/release.
  *

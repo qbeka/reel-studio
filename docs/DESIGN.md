@@ -81,7 +81,7 @@ quiet: no gradients, no metric tiles, no background motion.
 - Motion is limited to the camera and the fork. Reduced motion removes both transitions
   and uses a static full view.
 
-## What an independent review changed
+## What a code review changed
 
 A review on a clean clone found defects the tests had missed. Three changed the design:
 

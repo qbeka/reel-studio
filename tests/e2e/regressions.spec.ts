@@ -1,5 +1,5 @@
 /**
- * Browser defects found by an independent review on a clean clone. Each of these failed
+ * Browser defects found by a code review on a clean clone. Each of these failed
  * before its fix.
  */
 import { execFileSync } from 'node:child_process';

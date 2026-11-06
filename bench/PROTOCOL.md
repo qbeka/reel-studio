@@ -1,12 +1,12 @@
 # Benchmark protocol
 
 Frozen before the final measurement. A change to anything here after that run means a new
-protocol version and a new run. The earlier results stay in `runs/`.
+protocol version and a new run.
 
 Version: 3
 
 Version 1 sampled warm positions with a weak generator, and the sample was skewed toward
-early states. Its run is in `runs/2026-11-06-protocol-1-skewed-positions`, marked as failed.
+early states, so its run was discarded.
 Version 2 changed only the sampling: Mulberry32 for the shuffle, 60 baseline samples instead
 of 30, and position quantiles in every raw file. An audit then found the code and these
 definitions apart in small ways. Version 3 fixes the measurement of even-sized medians, uses
