@@ -17,7 +17,7 @@
   font-size: 14px;
   line-height: 1.35;
 
-  & h3,
+  & h2,
   & p,
   & ul {
     margin: 0;
@@ -44,7 +44,7 @@
     padding: 18px 16px;
     border-right: 1px solid var(--rq-line);
 
-    & h3 {
+    & h2 {
       font-family: 'Geist Serif', Georgia, serif;
       font-size: 22px;
     }

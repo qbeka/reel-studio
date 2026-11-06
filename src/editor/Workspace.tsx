@@ -287,12 +287,12 @@ export function Workspace({
   const empty = project.commands.length === 0 && !isRecording;
 
   return (
-    <div className="ed" data-recording={isRecording}>
+    <main className="ed" data-recording={isRecording}>
       <header className="ed-top">
         <button type="button" className="ed-wordmark" onClick={onClose}>
           Reel
         </button>
-        <span className="ed-title">{project.title}</span>
+        <h1 className="ed-title">{project.title}</h1>
         <span className="ed-scene">{adapter.title}</span>
         <span className="ed-spacer" />
         <SaveLabel status={save} />
@@ -407,6 +407,7 @@ export function Workspace({
           onRetimeCommand={(seq, t) => applyCommandEdit(retimeCommand(project, seq, t))}
           onEditPayload={(seq, payload) => applyCommandEdit(setCommandPayload(project, seq, payload))}
           onRemoveCommand={removeCommand}
+          onSelect={setSelection}
           onClearSelection={() => setSelection(null)}
         />
       </div>
@@ -454,7 +455,7 @@ export function Workspace({
           onClose={() => setExporting(false)}
         />
       )}
-    </div>
+    </main>
   );
 }
 

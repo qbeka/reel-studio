@@ -18,7 +18,7 @@ function ExpenseList({ state, send, interactive }: SceneProps<ReceiptState>) {
   const visible = visibleExpenses(state);
   return (
     <section className="rs-list" data-reel-target="expense-list" aria-label="Receipts">
-      <h3>Receipts</h3>
+      <h2>Receipts</h2>
       <ul>
         {visible.map((expense) => (
           <li key={expense.id}>
@@ -109,7 +109,7 @@ function SplitEditor({ state, send, interactive }: SceneProps<ReceiptState>) {
     <div className="rs-detail">
       <header className="rs-receipt" data-reel-target="receipt">
         <div>
-          <h3>{expense.merchant}</h3>
+          <h2>{expense.merchant}</h2>
           <p>
             {expense.date}. Paid by {payer.name}.
           </p>
@@ -262,7 +262,7 @@ export function Render(props: SceneProps<ReceiptState>) {
           <SplitEditor {...props} />
         ) : (
           <section className="rs-panel" data-reel-target="balances" aria-label="Balances">
-            <h3>Who owes what</h3>
+            <h2>Who owes what</h2>
             <BalanceRows state={state} balances={state.balances} />
             <p className="rs-muted">
               Computed from all {state.expenses.length} receipts. Amounts add up to zero.
@@ -271,7 +271,7 @@ export function Render(props: SceneProps<ReceiptState>) {
         )}
         {showPreview && (
           <section className="rs-preview" data-reel-target="preview" aria-label="Balances after this split">
-            <h4>Balances with this split</h4>
+            <h3>Balances with this split</h3>
             <BalanceRows state={state} balances={state.preview!} />
           </section>
         )}

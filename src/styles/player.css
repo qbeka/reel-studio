@@ -516,3 +516,20 @@
     color: var(--body);
   }
 }
+
+.reel-viewer[data-embedded='true'] {
+  max-width: none;
+  padding: 8px 10px 12px;
+
+  & .reel-disclosure {
+    margin-bottom: 6px;
+  }
+}
+
+.reel-exit a + a {
+  margin-left: 14px;
+}
+
+.reel-lower[hidden] {
+  display: none;
+}

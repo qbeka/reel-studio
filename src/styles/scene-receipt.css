@@ -19,8 +19,8 @@
   font-size: 14px;
   line-height: 1.35;
 
+  & h2,
   & h3,
-  & h4,
   & p,
   & ul {
     margin: 0;
@@ -55,7 +55,7 @@
     border-right: 1px solid var(--rs-line);
     min-height: 0;
 
-    & h3 {
+    & h2 {
       font-family: 'Geist Serif', Georgia, serif;
       font-size: 19px;
       padding: 0 8px 6px;
@@ -147,7 +147,7 @@
     gap: 8px 12px;
     align-content: start;
 
-    & h3 {
+    & h2 {
       font-family: 'Geist Serif', Georgia, serif;
       font-size: 22px;
       line-height: 1.15;
@@ -249,7 +249,7 @@
     padding-top: 10px;
     border-top: 1px solid var(--rs-line);
 
-    & h4 {
+    & h3 {
       color: var(--rs-muted);
       font-size: 12px;
       margin-bottom: 6px;
@@ -259,7 +259,7 @@
     display: grid;
     gap: 14px;
 
-    & h3 {
+    & h2 {
       font-family: 'Geist Serif', Georgia, serif;
       font-size: 22px;
     }
@@ -309,7 +309,7 @@
       border-bottom: 1px solid var(--rs-line);
       padding: 10px 12px;
 
-      & h3,
+      & h2,
       & .rs-list-foot {
         display: none;
       }

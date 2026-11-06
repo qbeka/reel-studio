@@ -90,6 +90,7 @@ export class DraftStore {
     const transaction = this.db.transaction(STORE, 'readwrite');
     const done = committed(transaction);
     const store = transaction.objectStore(STORE);
+    let failure: unknown;
     const request = store.get(project.id);
     request.onsuccess = () => {
       const old = request.result as DraftRecord | undefined;
@@ -103,9 +104,17 @@ export class DraftStore {
         current,
         previous: old?.current ?? null,
       };
-      store.put(record);
+      try {
+        store.put(record);
+      } catch (error) {
+        // `put` can throw here, inside an event handler where nothing would catch it.
+        failure = error;
+        transaction.abort();
+      }
     };
-    await done;
+    await done.catch((error) => {
+      throw failure ?? error;
+    });
   }
 
   async list(): Promise<DraftSummary[]> {

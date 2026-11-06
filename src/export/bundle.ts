@@ -115,12 +115,12 @@ function renderEmbedPage(
 <link rel="stylesheet" href="./${stylesheet}">
 <style>
   html, body { height: 100%; }
-  body { display: flex; flex-direction: column; background: #fbf8f4; }
-  .embed { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; }
-  .poster { display: block; width: 100%; height: auto; max-height: 100%; }
+  body { margin: 0; background: #fbf8f4; }
+  .embed { position: relative; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; overflow: hidden; }
+  .poster { display: block; width: 100%; height: 100%; min-height: 0; }
   .poster-narrow { display: none; }
   @media (max-width: 559px) { .poster-wide { display: none; } .poster-narrow { display: block; } }
-  .start { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; display: inline-flex; align-items: center;
+  .start { position: absolute; left: 50%; bottom: 44px; translate: -50% 0; display: inline-flex; align-items: center;
     min-height: 44px; padding: 10px 22px; border-radius: 999px; background: #121412; color: #fff;
     font: 16px/1.2 'Geist Sans', system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
   .start:focus-visible { outline: 2px solid #1d3a2a; outline-offset: 3px; }
@@ -129,12 +129,13 @@ function renderEmbedPage(
 </style>
 </head>
 <body>
-<div class="embed">
+<main class="embed">
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">${title}</h1>
 ${posterLayer(adapter, posterState, 'wide')}
 ${posterLayer(adapter, posterState, 'narrow')}
-<a class="start" href="./index.html?embed=1&amp;play=1">Play interactive demo<span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">: ${title}</span></a>
-</div>
+<a class="start" href="./index.html?embed=1&amp;play=1">Play interactive demo</a>
 <p class="note">${escapeHtml(project.disclosure)} <a href="./transcript.html">Read the transcript</a></p>
+</main>
 </body>
 </html>
 `;

@@ -118,6 +118,7 @@ export interface InspectorProps {
   onRetimeCommand: (seq: number, t: number) => void;
   onEditPayload: (seq: number, payload: Payload) => void;
   onRemoveCommand: (seq: number) => void;
+  onSelect: (selection: Selection) => void;
   onClearSelection: () => void;
 }
 
@@ -304,8 +305,12 @@ function CommandInspector({
   onRetimeCommand,
   onEditPayload,
   onRemoveCommand,
+  onSelect,
 }: InspectorProps & { seq: number }) {
-  const entry = project.commands.find((c) => c.seq === seq)!;
+  const index = project.commands.findIndex((c) => c.seq === seq);
+  const entry = project.commands[index]!;
+  const previous = project.commands[index - 1];
+  const next = project.commands[index + 1];
   const shown = JSON.stringify(entry.payload, null, 2);
   const [text, setText] = useState(shown);
   const [problem, setProblem] = useState<string | null>(null);
@@ -338,6 +343,27 @@ function CommandInspector({
 
   return (
     <Panel title="Command">
+      <div className="ed-row">
+        <button
+          type="button"
+          className="ed-small"
+          disabled={previous === undefined}
+          onClick={() => onSelect({ kind: 'command', seq: previous!.seq })}
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          className="ed-small"
+          disabled={next === undefined}
+          onClick={() => onSelect({ kind: 'command', seq: next!.seq })}
+        >
+          Next
+        </button>
+        <span className="ed-hint">
+          {index + 1} of {project.commands.length}
+        </span>
+      </div>
       <dl className="ed-facts">
         <dt>Type</dt>
         <dd>{entry.type}</dd>

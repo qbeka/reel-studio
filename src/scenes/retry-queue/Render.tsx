@@ -79,7 +79,7 @@ export function Render({ state, send, layout }: SceneProps<RetryState>) {
   return (
     <div className="rq" data-layout={layout}>
       <section className="rq-side" aria-label="Controls">
-        <h3>Delivery queue</h3>
+        <h2>Delivery queue</h2>
         <button type="button" className="rq-primary" data-reel-target="send" onClick={() => send('enqueue')}>
           Send an event
         </button>

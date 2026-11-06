@@ -12,6 +12,8 @@ export type Selection =
 /** Commands drawn outside the visible window would only cost time, so they are skipped. */
 const OVERSCAN_PX = 200;
 const END_PADDING_MS = 1500;
+const MIN_ZOOM = 2;
+const MAX_ZOOM = 240;
 
 function visibleCommands(commands: readonly LogEntry[], fromT: number, toT: number): LogEntry[] {
   let low = 0;
@@ -46,7 +48,8 @@ export interface TimelineProps {
 export function Timeline({ project, end, t, selection, onSelect, onSeek, onMove }: TimelineProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ left: 0, width: 800 });
-  const [zoom, setZoom] = useState(60);
+  /** Pixels per second. Null means fit the whole story to the width. */
+  const [chosenZoom, setChosenZoom] = useState<number | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
 
   useEffect(() => {
@@ -62,6 +65,8 @@ export function Timeline({ project, end, t, selection, onSelect, onSeek, onMove 
     };
   }, []);
 
+  const fit = Math.floor((view.width - 8) / ((end + END_PADDING_MS) / 1000));
+  const zoom = chosenZoom ?? Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fit));
   const pxPerMs = zoom / 1000;
   const x = (time: number) => time * pxPerMs;
   const contentWidth = Math.max(view.width, x(end + END_PADDING_MS));
@@ -240,10 +245,10 @@ export function Timeline({ project, end, t, selection, onSelect, onSeek, onMove 
         Zoom
         <input
           type="range"
-          min={4}
-          max={160}
+          min={MIN_ZOOM}
+          max={MAX_ZOOM}
           value={zoom}
-          onChange={(event) => setZoom(Number(event.target.value))}
+          onChange={(event) => setChosenZoom(Number(event.target.value))}
         />
       </label>
     </section>

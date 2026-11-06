@@ -234,11 +234,19 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
   }
 
   return (
-    <main className="reel-viewer" data-mode={inBranch ? 'branch' : 'story'}>
-      <header className="reel-head">
-        <h1>{project.title}</h1>
+    <main
+      className="reel-viewer"
+      data-mode={inBranch ? 'branch' : 'story'}
+      data-embedded={embedded}
+    >
+      {embedded ? (
         <p className="reel-disclosure">{project.disclosure}</p>
-      </header>
+      ) : (
+        <header className="reel-head">
+          <h1>{project.title}</h1>
+          <p className="reel-disclosure">{project.disclosure}</p>
+        </header>
+      )}
 
       <Stage
         adapter={adapter}
@@ -340,11 +348,11 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
 
       {embedded && (
         <p className="reel-exit">
-          <a href="./embed.html">Close the demo</a>
+          <a href="./embed.html">Close the demo</a> <a href="./transcript.html">Transcript</a>
         </p>
       )}
 
-      <div className="reel-lower">
+      <div className="reel-lower" hidden={embedded}>
         <Transcript lines={transcript} disabled={inBranch} onSeek={seekTo} />
 
         <details className="reel-keys">
