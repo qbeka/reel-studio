@@ -1,0 +1,68 @@
+[
+  {
+    "path": "runs/2026-11-06-release/receipt-split-viewer.zip",
+    "bytes": 433137,
+    "sha256": "c1fdcf4f7e5682584c68dc9c075a90dbf4a76ddcf89de52a2eee052782310325",
+    "description": "Exported viewer of the release story, built by the editor in a browser."
+  },
+  {
+    "path": "runs/2026-11-06-release/project.reel.json",
+    "bytes": 3515,
+    "sha256": "9338d06fefda3c524db7f286e3c47168a6ebc13e648b0d67db66e01c11e780e9",
+    "description": "The release story, recorded through the editor."
+  },
+  {
+    "path": "runs/2026-11-06-acceptance/retry-queue-viewer.zip",
+    "bytes": 424899,
+    "sha256": "cf49e4dc8d8fad7966deae18f82aef9c41d2dc26dc47f9b6a6f12b7ba2f190e7",
+    "description": "Exported viewer from the acceptance run on the second scene."
+  },
+  {
+    "path": "runs/2026-11-06-final/manifest.json",
+    "bytes": 3476,
+    "sha256": "5e322171df96a6e7b1a6eb6976f9dd98a8b139f9ec32ccdbac7af9535e298612",
+    "description": "Final benchmark manifest, protocol 2."
+  },
+  {
+    "path": "runs/2026-11-06-final/summary.json",
+    "bytes": 13732,
+    "sha256": "7b34423abb0adfb0aef92d94e220fec4cbeb7790dad80df8b01c7675c47614cb",
+    "description": "Run level statistics computed from raw samples."
+  },
+  {
+    "path": "runs/2026-11-06-final/correctness.json",
+    "bytes": 5164,
+    "sha256": "84875b5934ab01702d9e8302403dd882e53853d03e2af5271265da0706f575b0",
+    "description": "Seek, oracle and negative control results."
+  },
+  {
+    "path": "runs/2026-11-06-final/mutants.json",
+    "bytes": 7948,
+    "sha256": "3d967a48d9f9044797f15b0819c89126484f4b73b83aeed14d94021ad602c4c6",
+    "description": "Mutation results with the test that killed each mutant."
+  },
+  {
+    "path": "docs/media/cover.png",
+    "bytes": 192321,
+    "sha256": "45975bd3192de4e0bb01edbe4ce8299c23dd9af2ef4a2f5140a08111d194bbbc",
+    "description": "Cover, from the real viewer."
+  },
+  {
+    "path": "docs/media/poster.png",
+    "bytes": 201127,
+    "sha256": "4d42da6bef7e4a2e72adf229bf71aa446bba05b6da677824bb01ffe4b2d2bf77",
+    "description": "Embed poster, from the real export."
+  },
+  {
+    "path": "docs/media/demo.mp4",
+    "bytes": 235684,
+    "sha256": "f74c08dfe26109351e9d7e0e5b925ee79fa5e2834eea71d929aa3b68d94922fe",
+    "description": "18 second recording of the signature interaction."
+  },
+  {
+    "path": "docs/media/walkthrough.mp4",
+    "bytes": 629825,
+    "sha256": "dfaf5a8e340425e91cfdfa582313d70dcd94286fa77af66d59bc24b78fe3dafa",
+    "description": "61 second silent technical walkthrough with on-screen notes."
+  }
+]

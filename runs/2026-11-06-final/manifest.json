@@ -1,0 +1,131 @@
+{
+  "label": "final",
+  "protocol": "2",
+  "commit": "4556b127fad47797439bcafd14725f415511f6ab",
+  "dirty": false,
+  "command": "/Users/qendrimbeka/Coding_Projects/reel-studio/bench/run-browser.ts --label final --runs 5 --protocol 2",
+  "date": "2026-11-06T08:30:02.862Z",
+  "browser": {
+    "name": "chromium",
+    "version": "158.0.8127.18",
+    "headless": true
+  },
+  "node": "v22.16.0",
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "@axe-core/playwright": "4.14.0",
+    "@biomejs/biome": "2.6.5",
+    "@playwright/test": "1.65.0",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "fake-indexeddb": "6.2.7",
+    "geist": "1.9.1",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.6",
+    "vitest": "5.1.0"
+  },
+  "lockfileSha256": "54a79442c78aa31b1507cd755e0c852a7b98e49bb978641213db2e55b09c5e56",
+  "os": {
+    "platform": "darwin",
+    "release": "25.6.0",
+    "arch": "arm64"
+  },
+  "hardware": {
+    "cpu": "Apple M5 Pro",
+    "logicalCores": 18,
+    "memoryBytes": 51539607552
+  },
+  "power": "Now drawing from 'AC Power'",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 1
+  },
+  "seedBases": {
+    "warmup": 1000,
+    "warm": 2000,
+    "scrub": 3000,
+    "coherence": 4000
+  },
+  "repetitions": 5,
+  "samples": {
+    "warm": 300,
+    "warmBaseline": 60,
+    "warmup": 40,
+    "coldPositions": [
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "scrub": 120
+  },
+  "exclusions": "None. Every sample is kept in raw/.",
+  "inputs": {
+    "short": {
+      "commands": 10,
+      "receipts": 3,
+      "stateBytes": 1180,
+      "projectBytes": 2222,
+      "projectHash": "24b274abfce9be60af5ade93d264a31da25727ecfdad39bdf043d183b783c991",
+      "finalStateHash": "781e3b344a4734c4642495411700de2b7a49b2ac3de8c4e7e8bedfb0cf3c21c8",
+      "checkpointEvery": 256,
+      "commandMix": {
+        "selectExpense": 1,
+        "setSplitMode": 1,
+        "setSplit": 4,
+        "confirmEdit": 2,
+        "saveResult": 1,
+        "setView": 1
+      },
+      "sampledChangeRate": 1,
+      "bundleBytes": 431475
+    },
+    "long": {
+      "commands": 2000,
+      "receipts": 120,
+      "stateBytes": 28300,
+      "projectBytes": 181883,
+      "projectHash": "caaa0d7f003d2b7611adac9054c60392ef1878040001ec060d3b690991a382ef",
+      "finalStateHash": "57e761ce468cffe347e6ff7a9af4033312af61f4d1df7d234c39d67b7f323414",
+      "checkpointEvery": 256,
+      "commandMix": {
+        "selectExpense": 234,
+        "setSplit": 895,
+        "confirmEdit": 299,
+        "saveResult": 225,
+        "setView": 62,
+        "setSplitMode": 159,
+        "addReceipt": 117,
+        "cancelEdit": 9
+      },
+      "sampledChangeRate": 1,
+      "bundleBytes": 1000374
+    },
+    "stress": {
+      "commands": 20000,
+      "receipts": 2000,
+      "stateBytes": 452188,
+      "projectBytes": 1842849,
+      "projectHash": "7c8d5375d99f3c967371063b88594baedc4a2f9d34d63b347d27b3538cfb1cce",
+      "finalStateHash": "78e0db9090a065a931dde62409b035d81e35fcf779ae6b4dcabce25cc3eb4889",
+      "checkpointEvery": 256,
+      "commandMix": {
+        "selectExpense": 2240,
+        "setSplit": 8490,
+        "confirmEdit": 2830,
+        "saveResult": 2141,
+        "setSplitMode": 1658,
+        "setView": 546,
+        "addReceipt": 1997,
+        "cancelEdit": 98
+      },
+      "sampledChangeRate": 1,
+      "bundleBytes": 6286819
+    }
+  }
+}

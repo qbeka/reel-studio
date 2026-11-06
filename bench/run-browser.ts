@@ -14,7 +14,6 @@ import { type Browser, chromium } from '@playwright/test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { serveStatic } from '../scripts/static-server';
-import type { LogEntry } from '../src/core/adapter';
 import type { ReelProject } from '../src/core/project';
 import { parseProject, validateProject } from '../src/core/project';
 import { Timeline } from '../src/core/timeline';
