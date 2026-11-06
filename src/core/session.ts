@@ -52,6 +52,11 @@ export class LiveSession<S = any> {
     return this.options.startT + Math.max(0, Math.round(elapsed));
   }
 
+  /** Outcomes scheduled but not delivered yet. */
+  get pendingOutcomes(): number {
+    return this.timers.size;
+  }
+
   send(type: string, payload: Payload = {}): SendResult {
     return this.accept({ type, payload }, 'user');
   }
