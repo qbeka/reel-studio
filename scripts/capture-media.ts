@@ -91,7 +91,7 @@ const browser = await chromium.launch();
 {
   const page = await browser.newPage({ viewport: { width: 1280, height: 640 }, deviceScaleFactor: 2 });
   await page.goto(`${viewerUrl}#t=8500`);
-  await page.getByRole('button', { name: 'Try it' }).click();
+  await page.getByRole('button', { name: 'Take over' }).click();
   await page.getByLabel('Ana share').fill('10');
   await page.getByLabel('Theo share').fill('30');
   await page.getByLabel('Mina share').fill('60');
@@ -118,11 +118,11 @@ const browser = await chromium.launch();
 /* Signature interaction, 15 to 25 seconds ----------------------------------------------- */
 await record(browser, 'demo', async (page) => {
   await page.goto(`${viewerUrl}#t=5800`);
-  await page.getByRole('button', { name: 'Try it' }).waitFor();
+  await page.getByRole('button', { name: 'Take over' }).waitFor();
   await page.waitForTimeout(700);
   await click(page, page.getByRole('button', { name: 'Play', exact: true }));
   await page.waitForTimeout(2300);
-  await click(page, page.getByRole('button', { name: 'Try it' }));
+  await click(page, page.getByRole('button', { name: 'Take over' }));
   await page.waitForTimeout(1200);
   await type(page, 'Mina share', '60');
   await page.waitForTimeout(500);
@@ -130,9 +130,9 @@ await record(browser, 'demo', async (page) => {
   await page.waitForTimeout(500);
   await type(page, 'Ana share', '10');
   await page.waitForTimeout(1800);
-  await click(page, page.getByRole('button', { name: 'Return to story' }));
+  await click(page, page.getByRole('button', { name: 'Choose a moment' }));
   await page.waitForTimeout(1600);
-  await click(page, page.getByRole('group', { name: 'Return to the story' }).getByRole('button', { name: /Inspect the balances/ }));
+  await click(page, page.getByRole('group', { name: 'Choose a moment' }).getByRole('button', { name: /Inspect the balances/ }));
   await page.waitForTimeout(1800);
   await click(page, page.getByRole('button', { name: 'Play', exact: true }));
   await page.waitForTimeout(2500);
@@ -162,7 +162,7 @@ await record(browser, 'walkthrough', async (page) => {
   await note(page, 'Later commands depend on this one, so Reel shows the repair step.', 4000);
   await click(page, page.getByRole('button', { name: 'Cancel the edit' }));
   await page.goto(`${viewerUrl}`);
-  await page.getByRole('button', { name: 'Try it' }).waitFor();
+  await page.getByRole('button', { name: 'Take over' }).waitFor();
   await note(page, 'The export is a static folder, here on a plain file server.', 3200);
   await page.getByRole('slider', { name: 'Story position' }).fill('10500');
   await note(page, 'Seeking restores a checkpoint and replays to the exact time.', 3200);
@@ -172,13 +172,13 @@ await record(browser, 'walkthrough', async (page) => {
   await page.waitForTimeout(700);
   await page.getByRole('slider', { name: 'Story position' }).fill('8500');
   await note(page, 'Each state is checked against a full replay and an independent money model.', 3600);
-  await click(page, page.getByRole('button', { name: 'Try it' }));
-  await note(page, 'Try it forks the state in place. Nothing here touches the recording.', 3600);
+  await click(page, page.getByRole('button', { name: 'Take over' }));
+  await note(page, 'Take over forks the state in place. Nothing here touches the recording.', 3600);
   await type(page, 'Ana share', '10');
   await note(page, 'The balances recompute from the whole ledger.', 3400);
-  await click(page, page.getByRole('button', { name: 'Return to story' }));
-  await note(page, 'Return restores a recorded moment, and says what it clears. States are never merged.', 4400);
-  await click(page, page.getByRole('group', { name: 'Return to the story' }).getByRole('button', { name: /Correct the shares/ }));
+  await click(page, page.getByRole('button', { name: 'Choose a moment' }));
+  await note(page, 'Return restores a recorded moment, and says what happens to the copy. States are never merged.', 4400);
+  await click(page, page.getByRole('group', { name: 'Choose a moment' }).getByRole('button', { name: /Correct the shares/ }));
   await note(page, 'The story resumes from a chapter, and the viewer can still bring their copy back.', 5500);
 });
 
