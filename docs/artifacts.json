@@ -19,8 +19,8 @@
   },
   {
     "path": "runs/2026-11-06-final/manifest.json",
-    "bytes": 3476,
-    "sha256": "7df63f00dddba78568f2b13289e057b3a575e7b888c8b1703b714063e4445a2d",
+    "bytes": 3429,
+    "sha256": "7c8a82816ab99704952c5bf6c6d09adc27b0d2ae523faac98e07c89218a9f4bd",
     "description": "Final benchmark manifest, protocol 3."
   },
   {

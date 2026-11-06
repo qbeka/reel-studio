@@ -3,7 +3,7 @@
   "protocol": "3",
   "commit": "91696b95041792eb120b85b2c5339d77c6c69db4",
   "dirty": false,
-  "command": "/Users/qendrimbeka/Coding_Projects/reel-studio/bench/run-browser.ts --label final --runs 5 --protocol 3",
+  "command": "bench/run-browser.ts --label final --runs 5 --protocol 3",
   "date": "2026-11-06T09:21:18.218Z",
   "browser": {
     "name": "chromium",
