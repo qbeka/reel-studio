@@ -13,7 +13,7 @@
   height: 100%;
   background: #fffdfa;
   color: var(--rq-ink);
-  font-family: 'Geist Sans', system-ui, sans-serif;
+  font-family: var(--sans);
   font-size: 14px;
   line-height: 1.35;
 
@@ -45,7 +45,7 @@
     border-right: 1px solid var(--rq-line);
 
     & h2 {
-      font-family: 'Geist Serif', Georgia, serif;
+      font-family: var(--serif);
       font-size: 22px;
     }
   }
@@ -186,7 +186,7 @@
     display: grid;
     place-items: center;
     height: 100%;
-    font-family: 'Geist Serif', Georgia, serif;
+    font-family: var(--serif);
     font-size: 18px !important;
   }
   & .rq-foot {

@@ -6,16 +6,17 @@
   --rs-line: #1115111f;
   --rs-line-strong: #1115113d;
   --rs-forest: #1d3a2a;
-  --rs-wash: #6040200e;
+  --rs-wash: #1115110a;
+  --rs-wash-strong: #11151117;
   --rs-error: #8c2f1b;
 
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
   width: 100%;
   height: 100%;
-  background: #fffdfa;
+  background: var(--surface, #fffdfa);
   color: var(--rs-ink);
-  font-family: 'Geist Sans', system-ui, sans-serif;
+  font-family: var(--sans);
   font-size: 14px;
   line-height: 1.35;
 
@@ -40,7 +41,7 @@
   }
   & button:disabled {
     cursor: default;
-    opacity: 0.6;
+    color: #8d918e;
   }
   & :focus-visible {
     outline: 2px solid var(--rs-forest);
@@ -56,13 +57,19 @@
     min-height: 0;
 
     & h2 {
-      font-family: 'Geist Serif', Georgia, serif;
+      font-family: var(--serif);
       font-size: 19px;
       padding: 0 8px 6px;
     }
     & ul {
       display: grid;
       gap: 2px;
+      min-height: 0;
+      overflow: hidden auto;
+      scrollbar-width: thin;
+    }
+    & > :not(ul) {
+      flex: none;
     }
   }
   & .rs-list-foot {
@@ -80,12 +87,17 @@
     border: 1px solid transparent;
     border-radius: 8px;
 
-    &:hover {
-      background: var(--rs-wash);
+    transition: background-color 0.12s, border-color 0.12s;
+
+    &:active {
+      background: var(--rs-wash-strong);
     }
     &[data-selected='true'] {
       border-color: var(--rs-line-strong);
       background: var(--rs-wash);
+    }
+    &[data-selected='true']:active {
+      background: var(--rs-wash-strong);
     }
     &[data-flash='true'] {
       border-color: var(--rs-forest);
@@ -103,8 +115,17 @@
     border: 0;
     color: var(--rs-muted);
     text-decoration: underline;
+    text-decoration-color: var(--rs-line-strong);
     text-underline-offset: 3px;
     font-size: 13px;
+    border-radius: 7px;
+
+    &[data-idle='true'] {
+      visibility: hidden;
+    }
+    &:active {
+      color: var(--rs-ink);
+    }
   }
 
   & .rs-main {
@@ -130,6 +151,11 @@
     cursor: pointer;
     font-size: 13px;
 
+    transition: background-color 0.12s, color 0.12s;
+
+    &:active {
+      background: var(--rs-wash-strong);
+    }
     &[data-active='true'] {
       color: var(--rs-ink);
       border-color: var(--rs-line-strong);
@@ -172,7 +198,7 @@
     align-content: start;
 
     & h2 {
-      font-family: 'Geist Serif', Georgia, serif;
+      font-family: var(--serif);
       font-size: 22px;
       line-height: 1.15;
     }
@@ -206,13 +232,19 @@
     gap: 8px;
     align-content: start;
   }
+  /* Fixed columns, so the fields stay put when the amounts appear. */
   & .rs-shares {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 
     & th {
+      width: 28%;
       text-align: left;
       font-weight: 400;
+    }
+    & td.rs-num {
+      width: 34%;
     }
     & th,
     & td {
@@ -233,6 +265,7 @@
     background: #fff;
     text-align: right;
     font-variant-numeric: tabular-nums;
+    transition: border-color 0.12s;
   }
   & .rs-num {
     text-align: right;
@@ -261,12 +294,25 @@
     gap: 10px;
     align-items: center;
   }
+  /* An outline, because Take over is the one filled control on the stage. */
   & .rs-primary {
-    padding: 7px 16px;
-    border: 0;
-    border-radius: 999px;
-    background: #121412;
-    color: #fff;
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--rs-line-strong);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--rs-ink);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.12s, border-color 0.12s;
+
+    &:active {
+      background: var(--rs-wash-strong);
+    }
+    &:disabled,
+    &:disabled:active {
+      background: none;
+    }
   }
   & .rs-preview {
     margin-top: auto;
@@ -284,7 +330,7 @@
     gap: 14px;
 
     & h2 {
-      font-family: 'Geist Serif', Georgia, serif;
+      font-family: var(--serif);
       font-size: 22px;
     }
   }
@@ -318,8 +364,55 @@
     place-items: center;
     flex: 1;
     color: var(--rs-muted);
-    font-family: 'Geist Serif', Georgia, serif;
+    font-family: var(--serif);
     font-size: 18px;
+  }
+
+  @media (hover: hover) {
+    & .rs-expense:hover {
+      background: var(--rs-wash);
+    }
+    & .rs-expense[data-selected='true']:hover {
+      background: var(--rs-wash-strong);
+    }
+    & .rs-expense:active {
+      background: var(--rs-wash-strong);
+    }
+    & .rs-tabs button:hover,
+    & .rs-modes label:hover {
+      background: var(--rs-wash);
+      color: var(--rs-ink);
+    }
+    & .rs-tabs button:active,
+    & .rs-modes label:active {
+      background: var(--rs-wash-strong);
+    }
+    & .rs-share:hover {
+      border-color: #11151166;
+    }
+    & .rs-primary:hover:not(:disabled) {
+      background: var(--surface, #fffdfa);
+      border-color: #11151166;
+    }
+    & .rs-primary:active:not(:disabled) {
+      background: var(--rs-wash-strong);
+    }
+    & .rs-quiet:hover:not(:disabled) {
+      color: var(--rs-ink);
+      text-decoration-color: currentColor;
+    }
+  }
+  @media (pointer: coarse) {
+    & .rs-primary {
+      min-height: 44px;
+    }
+    & .rs-quiet {
+      min-height: 44px;
+    }
+    & .rs-share {
+      min-height: 36px;
+      font-size: 16px;
+    }
   }
 
   /* The narrow layout is a separate coordinate system. Camera shots name targets, so they keep working here. */
@@ -334,7 +427,8 @@
       padding: 10px 12px;
 
       & h2,
-      & .rs-list-foot {
+      & .rs-list-foot,
+      & .rs-quiet {
         display: none;
       }
       & ul {
