@@ -70,21 +70,21 @@ function describe(_before: RetryState, command: Command, after: RetryState): str
   const job = after.jobs.find((j) => j.id === command.payload.job);
   switch (command.type) {
     case 'enqueue':
-      return `Sent ${after.jobs.at(-1)!.label}.`;
+      return `Sent ${after.jobs.at(-1)!.label}`;
     case 'setHealthy':
-      return command.payload.healthy ? 'The endpoint recovered.' : 'The endpoint started failing.';
+      return command.payload.healthy ? 'The endpoint recovered' : 'The endpoint started failing';
     case 'setPolicy':
-      return `Changed the policy to ${after.policy.maxAttempts} attempts with a base delay of ${after.policy.baseDelayMs} ms.`;
+      return `Changed the policy to ${after.policy.maxAttempts} attempts with a base delay of ${after.policy.baseDelayMs} ms`;
     case 'attemptResult': {
       const attempt = job!.attempts.at(-1)!;
-      if (job!.status === 'delivered') return `${job!.label} was delivered on attempt ${attempt.n}.`;
+      if (job!.status === 'delivered') return `${job!.label} was delivered on attempt ${attempt.n}`;
       if (job!.status === 'dead') {
-        return `${job!.label} failed attempt ${attempt.n} with ${attempt.status} and moved to dead letters.`;
+        return `${job!.label} failed attempt ${attempt.n} with ${attempt.status} and moved to dead letters`;
       }
-      return `${job!.label} failed attempt ${attempt.n} with ${attempt.status}. Next try in ${attempt.delayMs} ms.`;
+      return `${job!.label} failed attempt ${attempt.n} with ${attempt.status}, and the next try is in ${attempt.delayMs} ms`;
     }
     case 'requeue':
-      return `Requeued ${job!.label}.`;
+      return `Requeued ${job!.label}`;
     default:
       return null;
   }

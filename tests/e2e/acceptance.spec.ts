@@ -87,7 +87,7 @@ test('a second scene goes from recording to a hosted interactive demo', async ({
 
   const stage = viewer.getByRole('figure');
   await seekTo(viewer, 0);
-  await expect(stage.getByText('Send an event to watch it retry.')).toBeVisible();
+  await expect(stage.getByText('Send an event to watch it retry')).toBeVisible();
 
   const raw = JSON.parse(before.toString());
   const parsed = parseProject(raw);

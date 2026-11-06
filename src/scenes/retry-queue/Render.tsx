@@ -27,12 +27,12 @@ function AttemptLine({ job, span }: { job: Job; span: number }) {
 
 function describeJob(job: Job): string {
   const last = job.attempts.at(-1);
-  if (last === undefined) return 'First attempt in flight.';
+  if (last === undefined) return 'First attempt in flight';
   const tries = `${job.attempts.length} ${job.attempts.length === 1 ? 'attempt' : 'attempts'}`;
-  if (job.status === 'waiting') return `${tries}. Got ${last.status}. Waiting ${last.delayMs} ms.`;
-  if (job.status === 'sending') return `${tries}. Retrying now.`;
-  if (job.status === 'delivered') return `Delivered after ${tries}.`;
-  return `Gave up after ${tries}. Last status ${last.status}.`;
+  if (job.status === 'waiting') return `${tries}, last got ${last.status}, waiting ${last.delayMs} ms`;
+  if (job.status === 'sending') return `${tries}, retrying now`;
+  if (job.status === 'delivered') return `Delivered after ${tries}`;
+  return `Gave up after ${tries}, with last status ${last.status}`;
 }
 
 function NumberField({
@@ -126,7 +126,7 @@ export function Render({ state, send, layout }: SceneProps<RetryState>) {
 
       <section className="rq-jobs" data-reel-target="jobs" aria-label="Jobs">
         {recent.length === 0 ? (
-          <p className="rq-empty">Send an event to watch it retry.</p>
+          <p className="rq-empty">Send an event to watch it retry</p>
         ) : (
           <ul>
             {recent.map((job) => (
@@ -148,7 +148,7 @@ export function Render({ state, send, layout }: SceneProps<RetryState>) {
         )}
         {state.jobs.length > recent.length && (
           <p className="rq-foot">
-            Showing {recent.length} of {state.jobs.length} jobs.
+            Showing {recent.length} of {state.jobs.length} jobs
           </p>
         )}
       </section>
