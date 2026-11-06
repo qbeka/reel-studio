@@ -5,8 +5,7 @@ import { resolveScene } from './core/registry';
 import { type TranscriptLine, parseTranscript } from './core/transcript';
 import { Viewer } from './player/Viewer';
 import { SCENES } from './scenes/registry';
-import './styles/fonts.css';
-import './styles/tokens.css';
+import './styles/foundation.css';
 import './styles/player.css';
 import './styles/scenes.css';
 
@@ -68,7 +67,7 @@ async function start() {
         adapter={resolved.adapter}
         project={resolved.project}
         transcript={transcript}
-        embedded={params.get('embed') === '1'}
+        variant={params.get('embed') === '1' ? 'embed' : 'full'}
         autoplay={params.get('play') === '1'}
       />
     </StrictMode>,
