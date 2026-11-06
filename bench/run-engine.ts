@@ -52,6 +52,22 @@ for (const [name, spec] of Object.entries(WORKLOADS)) {
     replay.push(performance.now() - start);
   }
 
+  // A fairer player with no checkpoints: it keeps its position and only restarts to go
+  // backward. Forward seeks are cheap for it and backward seeks cost a full replay.
+  const resumer = new Timeline(receiptAdapter, log, {
+    seed: spec.seed,
+    checkpointEvery: Number.POSITIVE_INFINITY,
+  });
+  let cursor = resumer.startFor(0);
+  const resuming: number[] = [];
+  for (const t of positions.slice(0, smoke ? 20 : 100)) {
+    const start = performance.now();
+    const target = resumer.countAt(t);
+    if (target < cursor.count) cursor = resumer.startFor(0);
+    resumer.advance(cursor, target);
+    resuming.push(performance.now() - start);
+  }
+
   const bytes = JSON.stringify(receiptAdapter.serialize(final)).length;
   console.log(
     JSON.stringify({
@@ -63,6 +79,7 @@ for (const [name, spec] of Object.entries(WORKLOADS)) {
       checkpoints: full.checkpointCount,
       warmSeekMs: summarize(warm),
       replaySeekMs: summarize(replay),
+      forwardResumeSeekMs: summarize(resuming),
       finalHash: fastHash(receiptAdapter, final).slice(0, 12),
     }),
   );

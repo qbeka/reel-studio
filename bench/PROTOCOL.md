@@ -32,6 +32,7 @@ p95 of **each** of 5 independent runs is below 100 ms on the reference machine.
 | Scrub | Seek requests sent every 16 ms without waiting. Reports requests, distinct states committed (`data-state-t`) and total time. |
 | Export time | `pnpm export` wall time, 5 repetitions, one process each. |
 | Bundle size | Total bytes in the export, and gzip bytes of JS and CSS. |
+| Forward resume | Node engine only, one process. A player with no checkpoints that keeps its position and restarts only to go backward. Same positions as the Node baseline. |
 
 ## Workloads
 
@@ -96,7 +97,7 @@ number. Consecutive equal times are skipped, because a seek to the current time 
 
 ## Reference machine
 
-Apple M5 Pro, 15 logical cores or as reported in the manifest, 48 GB, macOS, on AC power.
+Apple M5 Pro, cores and memory as reported in the manifest, macOS, on AC power.
 Viewport 1440 by 900 at device scale 1. Headless Chromium from Playwright, version in the
 manifest.
 
