@@ -1,0 +1,211 @@
+/* All rules are nested under .rq so the scene cannot leak into a host page. */
+.rq {
+  --rq-ink: #111511;
+  --rq-muted: #5a5e5a;
+  --rq-line: #1115111f;
+  --rq-line-strong: #1115113d;
+  --rq-forest: #1d3a2a;
+  --rq-error: #8c2f1b;
+
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  background: #fffdfa;
+  color: var(--rq-ink);
+  font-family: 'Geist Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+
+  & h3,
+  & p,
+  & ul {
+    margin: 0;
+    padding: 0;
+    font-weight: 400;
+  }
+  & ul {
+    list-style: none;
+  }
+  & button,
+  & input {
+    font: inherit;
+    color: inherit;
+  }
+  & :focus-visible {
+    outline: 2px solid var(--rq-forest);
+    outline-offset: 1px;
+  }
+
+  & .rq-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 16px;
+    border-right: 1px solid var(--rq-line);
+
+    & h3 {
+      font-family: 'Geist Serif', Georgia, serif;
+      font-size: 22px;
+    }
+  }
+  & .rq-primary {
+    align-self: flex-start;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #121412;
+    color: #fff;
+    cursor: pointer;
+  }
+  & .rq-endpoint {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    & legend {
+      padding: 0 0 4px;
+      color: var(--rq-muted);
+      font-size: 13px;
+    }
+    & label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    & input {
+      margin: 0;
+      accent-color: var(--rq-forest);
+    }
+  }
+  & .rq-policy {
+    display: grid;
+    gap: 8px;
+  }
+  & .rq-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--rq-muted);
+    font-size: 13px;
+
+    & input {
+      width: 76px;
+      padding: 4px 6px;
+      background: #fff;
+      border: 1px solid var(--rq-line-strong);
+      border-radius: 6px;
+      color: var(--rq-ink);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+  }
+
+  & .rq-jobs {
+    min-width: 0;
+    min-height: 0;
+    padding: 18px 22px;
+
+    & ul {
+      display: grid;
+      gap: 14px;
+    }
+    & li {
+      display: grid;
+      gap: 4px;
+      padding-left: 10px;
+      border-left: 2px solid transparent;
+
+      &[data-pulse='true'] {
+        border-left-color: var(--rq-forest);
+      }
+    }
+    & p {
+      color: var(--rq-muted);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+  & .rq-job-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  & .rq-status {
+    color: var(--rq-muted);
+    font-size: 13px;
+  }
+  & li[data-status='delivered'] .rq-status {
+    color: var(--rq-forest);
+  }
+  & li[data-status='dead'] .rq-status {
+    color: var(--rq-error);
+  }
+  & .rq-line {
+    position: relative;
+    height: 13px;
+    margin-right: 8px;
+    background: linear-gradient(var(--rq-line-strong), var(--rq-line-strong)) center / 100% 1px no-repeat;
+  }
+  & .rq-mark,
+  & .rq-next {
+    position: absolute;
+    top: 2px;
+    width: 9px;
+    height: 9px;
+    margin-left: -4px;
+    border-radius: 50%;
+  }
+  & .rq-mark {
+    background: var(--rq-error);
+
+    &[data-ok='true'] {
+      background: var(--rq-forest);
+    }
+  }
+  & .rq-next {
+    background: #fffdfa;
+    border: 1px solid var(--rq-muted);
+  }
+  & .rq-quiet {
+    justify-self: start;
+    padding: 2px 0;
+    background: none;
+    border: 0;
+    color: var(--rq-forest);
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  & .rq-empty {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    font-family: 'Geist Serif', Georgia, serif;
+    font-size: 18px !important;
+  }
+  & .rq-foot {
+    margin-top: 12px;
+  }
+
+  &[data-layout='narrow'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    font-size: 15px;
+
+    & .rq-side {
+      gap: 10px;
+      padding: 12px 14px;
+      border-right: 0;
+      border-bottom: 1px solid var(--rq-line);
+    }
+    & .rq-jobs {
+      padding: 12px 14px;
+    }
+  }
+}

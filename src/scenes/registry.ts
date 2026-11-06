@@ -11,4 +11,10 @@ export const SCENES: readonly SceneEntry[] = [
     title: 'Receipt split',
     load: () => import('./receipt/adapter').then((m) => m.receiptAdapter),
   },
+  {
+    id: 'retry-queue',
+    version: 1,
+    title: 'Retry queue',
+    load: () => import('./retry-queue/adapter').then((m) => m.retryAdapter),
+  },
 ];
