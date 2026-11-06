@@ -39,3 +39,10 @@ export async function seekTo(page: Page, seconds: number) {
   const slider = page.getByRole('slider', { name: 'Story position' });
   await slider.fill(String(seconds * 1000));
 }
+
+/** Starts a new project and waits for the workspace. */
+export async function newProject(page: Page, scene: string) {
+  await page.goto('/');
+  await page.getByRole('button', { name: new RegExp(`^${scene}`) }).click();
+  await page.getByRole('button', { name: 'Record' }).waitFor();
+}

@@ -44,10 +44,24 @@ export interface TimelineBarProps {
   fork: { t: number; edits: number } | null;
 }
 
+/** Keyboard steps for the slider, in milliseconds. */
+const SLIDER_KEYS: Record<string, number> = {
+  ArrowRight: 1000,
+  ArrowUp: 1000,
+  ArrowLeft: -1000,
+  ArrowDown: -1000,
+  PageUp: 5000,
+  PageDown: -5000,
+};
+
 /**
- * A native range input carries the keyboard behaviour from the WAI-ARIA slider pattern:
- * arrows, Home, End, Page Up and Page Down. `aria-valuetext` reads time and chapter, since
- * a raw millisecond count means nothing when spoken.
+ * A native range input with the keyboard behaviour of the WAI-ARIA slider pattern.
+ * `aria-valuetext` reads time and chapter, since a raw millisecond count means nothing
+ * when spoken.
+ *
+ * `step` is 1 because a browser snaps a range value to multiples of its step, and an end
+ * time like 3637 ms would be unreachable with a coarser one. The final state must be
+ * reachable. Key presses would then move by 1 ms, so they are handled here instead.
  */
 export function TimelineBar({ range, t, chapters, onSeek, disabled, fork }: TimelineBarProps) {
   const span = Math.max(1, range.end - range.start);
@@ -74,10 +88,16 @@ export function TimelineBar({ range, t, chapters, onSeek, disabled, fork }: Time
           aria-valuetext={sliderText(t, chapters)}
           min={range.start}
           max={range.end}
-          step={100}
-          value={t}
+          step={1}
+          value={Math.round(t)}
           disabled={disabled}
           onChange={(event) => onSeek(Number(event.target.value))}
+          onKeyDown={(event) => {
+            const step = SLIDER_KEYS[event.key];
+            if (step === undefined) return;
+            event.preventDefault();
+            onSeek(t + step);
+          }}
         />
       </div>
       {fork !== null && <Fork at={percent(fork.t)} edits={fork.edits} />}
