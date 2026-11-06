@@ -102,6 +102,26 @@ export function memberIds(state: Pick<ReceiptState, 'members'>): string[] {
 }
 
 /**
+ * Shares of a saved expense, kept per expense object.
+ *
+ * Profiling the 20,000 command log showed allocation taking most of replay, because each
+ * draft edit reran it for every receipt. Expenses are immutable, so a saved expense can
+ * never need different shares, and the member list never changes in this scene. The cache
+ * holds no state of its own: it changes speed, not results, and entries are released with
+ * their expense. Restored states simply fill it again.
+ */
+const savedShares = new WeakMap<Expense, number[]>();
+
+function sharesOfSaved(expense: Expense, ids: readonly string[]): number[] {
+  let shares = savedShares.get(expense);
+  if (shares === undefined) {
+    shares = sharesFor(expense.totalCents, expense.split, ids);
+    savedShares.set(expense, shares);
+  }
+  return shares;
+}
+
+/**
  * Net balances from the whole ledger. Deliberately recomputed from every expense rather
  * than patched, because a viewer sees this result after each draft change and it must
  * never drift from the ledger. Cost is O(expenses x members) per call.
@@ -115,12 +135,12 @@ export function computeBalances(
   const balances: Record<string, number> = {};
   for (const id of ids) balances[id] = 0;
   for (const expense of expenses) {
-    const split = override?.expenseId === expense.id ? override.split : expense.split;
-    const shares = sharesFor(expense.totalCents, split, ids);
+    const shares =
+      override?.expenseId === expense.id
+        ? sharesFor(expense.totalCents, override.split, ids)
+        : sharesOfSaved(expense, ids);
     balances[expense.paidBy]! += expense.totalCents;
-    shares.forEach((share, i) => {
-      balances[ids[i]!]! -= share;
-    });
+    for (let i = 0; i < ids.length; i++) balances[ids[i]!]! -= shares[i]!;
   }
   return balances;
 }
