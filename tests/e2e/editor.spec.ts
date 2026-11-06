@@ -218,12 +218,12 @@ test.describe('importing', () => {
     [
       'an unknown scene',
       async () => JSON.stringify({ ...(await project()), scene: { id: 'payroll', version: 2 } }),
-      'needs the scene payroll v2, which is not installed. Installed scenes: receipt-split v1, retry-queue v1.',
+      'needs the scene payroll v2, but this build only has receipt-split v1, retry-queue v1',
     ],
     [
       'a newer scene version',
       async () => JSON.stringify({ ...(await project()), scene: { id: 'receipt-split', version: 7 } }),
-      'recorded with receipt-split v7. This build has v1',
+      'recorded with receipt-split v7, but this build has v1',
     ],
     [
       'a log that cannot play',

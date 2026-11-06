@@ -282,7 +282,7 @@ describe('what a file may hold', () => {
   it('finds an edit that could not be read back', () => {
     expect(fileProblems(base)).toEqual([]);
     expect(fileProblems({ ...base, chapters: titled(64) })).toEqual([]);
-    expect(fileProblems({ ...base, chapters: titled(65) })[0]).toMatch(/limit is 64/);
+    expect(fileProblems({ ...base, chapters: titled(65) })[0]).toMatch(/limit of 64/);
   });
 
   it('finds a payload nested deeper than a file allows', () => {

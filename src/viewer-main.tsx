@@ -38,7 +38,7 @@ async function start() {
     // The transcript is a convenience. The story still plays without it.
     if (lines.ok) transcript = parseTranscript(await lines.json());
   } catch (error) {
-    showProblem('This demo could not load', `The project file could not be read. ${String(error)}`);
+    showProblem('This demo could not load', `The project file could not be read: ${String(error)}`);
     return;
   }
 

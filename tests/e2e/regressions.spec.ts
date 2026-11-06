@@ -254,7 +254,7 @@ test.describe('editor', () => {
     });
     await page.getByRole('button', { name: 'Record' }).waitFor();
     await page.getByRole('button', { name: 'Chapter', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('limit is 64');
+    await expect(page.getByRole('alert')).toContainText('limit of 64');
     await expect(page.locator('.ed-chapter')).toHaveCount(64);
   });
 

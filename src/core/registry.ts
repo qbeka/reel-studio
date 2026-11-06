@@ -28,14 +28,14 @@ export async function resolveScene(
     return {
       ok: false,
       code: 'unknown-scene',
-      message: `This project needs the scene ${id} v${version}, which is not installed. Installed scenes: ${names}.`,
+      message: `This project needs the scene ${id} v${version}, but this build only has ${names}`,
     };
   }
   if (version > entry.version) {
     return {
       ok: false,
       code: 'newer-version',
-      message: `This project was recorded with ${id} v${version}. This build has v${entry.version}. Update Reel to open it.`,
+      message: `This project was recorded with ${id} v${version}, but this build has v${entry.version}, so update Reel to open it`,
     };
   }
   const adapter = await entry.load();
@@ -44,7 +44,7 @@ export async function resolveScene(
     return {
       ok: false,
       code: 'no-migration',
-      message: `This project was recorded with ${id} v${version}. This build has v${entry.version} and no way to upgrade it.`,
+      message: `This project was recorded with ${id} v${version}, but this build has v${entry.version} and no way to upgrade it`,
     };
   }
   return {

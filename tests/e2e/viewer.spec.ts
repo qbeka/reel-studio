@@ -346,7 +346,7 @@ test.describe('failure pages', () => {
 
   test('a newer scene version is refused', async ({ page }) => {
     await page.goto(await bundleWith('newer', (p) => (p.scene.version = 5)));
-    await expect(page.getByRole('alert')).toContainText('This build has v1');
+    await expect(page.getByRole('alert')).toContainText('this build has v1');
   });
 
   test('a command that cannot run stops the story with a message, not a guess', async ({ page }) => {

@@ -99,7 +99,7 @@ export function parseProject(input: unknown): ParseResult {
     return {
       ok: false,
       errors: [
-        `This project uses format version ${String(input.formatVersion)}. This build reads version ${FORMAT_VERSION}.`,
+        `This project uses format version ${String(input.formatVersion)}, but this build reads version ${FORMAT_VERSION}`,
       ],
     };
   }
@@ -145,7 +145,7 @@ export function parseProject(input: unknown): ParseResult {
       return [];
     }
     if (value.length > limit) {
-      fail(`${label} has ${value.length} items. The limit is ${limit}.`);
+      fail(`${label} has ${value.length} items, over the limit of ${limit}`);
       return [];
     }
     return value;
