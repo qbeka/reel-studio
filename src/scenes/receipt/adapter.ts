@@ -116,6 +116,7 @@ export const receiptAdapter: SceneAdapter<ReceiptState> = {
     wide: { width: 880, height: 560 },
     narrow: { width: 360, height: 580 },
   },
+  compactHeight: 440,
   init: initialState,
   parse,
   precondition,
@@ -146,6 +147,10 @@ export const receiptAdapter: SceneAdapter<ReceiptState> = {
       default:
         return null;
     }
+  },
+  handoffTarget(state) {
+    if (state.view === 'balances') return 'balances';
+    return state.draft === null ? null : 'save';
   },
   Render,
 };

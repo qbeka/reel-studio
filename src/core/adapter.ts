@@ -60,6 +60,8 @@ export interface SceneAdapter<S> {
   targets: readonly TargetDefinition[];
   /** Each layout is its own stable coordinate system for target bounds. */
   layouts: Record<LayoutName, Size>;
+  /** The shortest wide height at which every state still fits. Defaults to the layout's. */
+  compactHeight?: number;
 
   init(seed: number): S;
   /** Validates payload shape, independent of state. Returns an error message or null. */
@@ -91,6 +93,8 @@ export interface SceneAdapter<S> {
   describe(before: S, command: Command, after: S): string | null;
   /** The named target a command acts on, or null. */
   targetOf(command: Command): string | null;
+  /** The target that Take over sits beside in this state, or null for the stage's corner. */
+  handoffTarget?(state: S): string | null;
 
   Render: ComponentType<SceneProps<S>>;
 }
