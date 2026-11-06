@@ -58,6 +58,7 @@ function TextField({
     else if (text !== value) onCommit(text.slice(0, LIMITS.textLength));
   };
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: both branches below render a control.
     <label className="ed-field">
       <span>{label}</span>
       {multiline ? (

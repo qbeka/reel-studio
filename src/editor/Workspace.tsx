@@ -48,11 +48,13 @@ const isTyping = (target: EventTarget | null) =>
 export function Workspace({
   adapter,
   initial,
+  notice,
   drafts,
   onClose,
 }: {
   adapter: AnyAdapter;
   initial: ReelProject;
+  notice: string | null;
   drafts: DraftStore | null;
   onClose: () => void;
 }) {
@@ -320,6 +322,12 @@ export function Workspace({
         </button>
       </header>
 
+      {notice !== null && (
+        <p className="ed-notice" role="status">
+          {notice}
+        </p>
+      )}
+
       {save.kind === 'failed' && (
         <p className="ed-banner" role="alert">
           {save.message} Your work is still open here.{' '}
@@ -328,6 +336,10 @@ export function Workspace({
           </button>
         </p>
       )}
+
+      <p className="ed-narrow-note">
+        Reel fits a wider screen better. Recording and editing still work here.
+      </p>
 
       <div className="ed-main">
         <div className="ed-stagecol">

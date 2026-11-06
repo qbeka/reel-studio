@@ -121,17 +121,41 @@
     gap: 2px;
   }
   & .rs-tabs button,
-  & .rs-modes button {
+  & .rs-modes label {
     padding: 5px 12px;
     background: none;
     border: 1px solid transparent;
     border-radius: 999px;
     color: var(--rs-muted);
+    cursor: pointer;
     font-size: 13px;
 
     &[data-active='true'] {
       color: var(--rs-ink);
       border-color: var(--rs-line-strong);
+    }
+  }
+  & .rs-modes {
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    & legend {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    /* The input stays in the page, so arrow keys and screen readers work as usual. */
+    & input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    & label:has(input:focus-visible) {
+      outline: 2px solid var(--rs-forest);
+      outline-offset: 1px;
     }
   }
 
@@ -320,8 +344,8 @@
       }
     }
     & .rs-main {
-      padding: 10px 14px 12px;
-      gap: 8px;
+      padding: 8px 14px 10px;
+      gap: 6px;
     }
     & .rs-detail {
       grid-template-columns: minmax(0, 1fr);

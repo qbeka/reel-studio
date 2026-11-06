@@ -1,5 +1,5 @@
-import { type Cursor, type Timeline } from './timeline';
 import { SeekController, type SeekOptions } from './seek';
+import type { Cursor, Timeline } from './timeline';
 
 /** The rendering clock. Injected so tests can step frames by hand. */
 export interface FrameHost {

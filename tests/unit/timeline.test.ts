@@ -11,18 +11,18 @@ const seed = 5;
 /** A cycle of real edits. Every pass changes the ledger. */
 function realisticLog(rounds: number): LogEntry[] {
   const log: LogEntry[] = [];
-  let t = 0;
   let requestId = 1;
+  const nextT = () => 3 * (log.length + 1);
   for (let round = 0; round < rounds; round++) {
     const mina = 2000 + (round % 50) * 100;
-    log.push(entry((t += 3), 'addReceipt'));
-    log.push(entry((t += 3), 'selectExpense', { id: `e${(round % 3) + 1}` }));
-    log.push(entry((t += 3), 'setSplitMode', { mode: 'percent' }));
-    log.push(entry((t += 3), 'setSplit', { member: 'mina', value: mina }));
-    log.push(entry((t += 3), 'setSplit', { member: 'theo', value: 10000 - mina - 1000 }));
-    log.push(entry((t += 3), 'setSplit', { member: 'ana', value: 1000 }));
-    log.push(entry((t += 3), 'confirmEdit'));
-    log.push(outcome((t += 3), 'saveResult', { requestId: requestId++, ok: true }));
+    log.push(entry(nextT(), 'addReceipt'));
+    log.push(entry(nextT(), 'selectExpense', { id: `e${(round % 3) + 1}` }));
+    log.push(entry(nextT(), 'setSplitMode', { mode: 'percent' }));
+    log.push(entry(nextT(), 'setSplit', { member: 'mina', value: mina }));
+    log.push(entry(nextT(), 'setSplit', { member: 'theo', value: 10000 - mina - 1000 }));
+    log.push(entry(nextT(), 'setSplit', { member: 'ana', value: 1000 }));
+    log.push(entry(nextT(), 'confirmEdit'));
+    log.push(outcome(nextT(), 'saveResult', { requestId: requestId++, ok: true }));
   }
   return log;
 }

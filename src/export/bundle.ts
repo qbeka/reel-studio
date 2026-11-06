@@ -91,7 +91,7 @@ function posterLayer(adapter: AnyAdapter, state: unknown, layout: LayoutName): s
     layout,
   });
   const markup = renderToStaticMarkup(element);
-  return `<svg class="poster poster-${layout}" viewBox="0 0 ${size.width} ${size.height}" aria-hidden="true"><foreignObject width="${size.width}" height="${size.height}"><div xmlns="http://www.w3.org/1999/xhtml" inert="" style="width:${size.width}px;height:${size.height}px">${markup}</div></foreignObject></svg>`;
+  return `<svg class="poster poster-${layout}" viewBox="0 0 ${size.width} ${size.height}" preserveAspectRatio="xMidYMin meet" aria-hidden="true"><foreignObject width="${size.width}" height="${size.height}"><div xmlns="http://www.w3.org/1999/xhtml" inert="" style="width:${size.width}px;height:${size.height}px">${markup}</div></foreignObject></svg>`;
 }
 
 /**

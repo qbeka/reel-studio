@@ -4,7 +4,9 @@ import { join } from 'node:path';
 
 const roots = ['src', 'docs', 'scripts', 'bench', 'tests', 'projects'];
 const top = ['README.md', 'NOTICE.md', 'viewer.html', 'index.html'];
-const banned = /[–—]|\p{Extended_Pictographic}/u;
+// Built from code points, so this file does not contain the characters it bans.
+const dashes = String.fromCodePoint(0x2013, 0x2014);
+const banned = new RegExp(`[${dashes}]|\\p{Extended_Pictographic}`, 'u');
 const skip = /\.(woff2|png|mp4|webm|lock)$/;
 
 const paths: string[] = [...top];

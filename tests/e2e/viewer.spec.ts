@@ -146,7 +146,7 @@ test.describe('branching', () => {
     page.on('request', (r) => requests.push(r.url()));
     await page.getByRole('button', { name: 'Save split' }).click();
     await expect(stage(page).getByRole('button', { name: 'Save split' })).toBeEnabled();
-    await stage(page).getByRole('tab', { name: 'Balances' }).click();
+    await stage(page).getByRole('button', { name: 'Balances' }).click();
     await expect(stage(page).getByText('Who owes what')).toBeVisible();
     expect(requests).toEqual([]);
   });
@@ -182,7 +182,7 @@ test.describe('branching', () => {
   test('the viewer can return by making the exact authored edit, and is told it matches', async ({ page }) => {
     await page.goto(`${host.url}#t=4000`);
     await page.getByRole('button', { name: 'Try it' }).click();
-    await page.getByRole('radio', { name: 'Percent' }).click();
+    await page.getByRole('radio', { name: 'Percent' }).check({ force: true });
     await page.getByRole('button', { name: 'Return to story' }).click();
     const panel = page.getByRole('group', { name: 'Return to the story' });
     await expect(panel.getByRole('button', { name: /Adjust the split/ })).toContainText('Matches your copy exactly.');
@@ -361,6 +361,7 @@ test.describe('embed', () => {
     await frame.getByRole('link', { name: /Play interactive demo/ }).click();
     await expect(frame.getByRole('button', { name: 'Pause' })).toBeVisible();
     await expect(frame.getByRole('heading', { level: 1 })).toHaveCount(0);
+    await expect(frame.getByRole('link', { name: 'Close the demo' })).toBeInViewport();
 
     await frame.getByRole('link', { name: 'Close the demo' }).click();
     await expect(frame.getByRole('link', { name: /Play interactive demo/ })).toBeVisible();

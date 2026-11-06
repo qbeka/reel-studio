@@ -78,7 +78,7 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
   const [kept, setKept] = useState<KeptCopy | null>(null);
 
   const playButton = useRef<HTMLButtonElement>(null);
-  const returnPanel = useRef<HTMLDivElement>(null);
+  const returnPanel = useRef<HTMLFieldSetElement>(null);
   const tryButton = useRef<HTMLButtonElement>(null);
   const branchStatus = useRef<HTMLParagraphElement>(null);
 
@@ -162,7 +162,8 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
       playback.seek(project.chapters.find((c) => c.id === moment.id)!.t);
     }
     if (autoplay && !prefersReducedMotion()) playback.play();
-    if (autoplay) playButton.current?.focus();
+    // Activating an embed must not make the host page jump.
+    if (autoplay) playButton.current?.focus({ preventScroll: true });
   }, [playback, project, range, autoplay]);
 
   const inBranch = branch !== null;
@@ -240,7 +241,11 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
       data-embedded={embedded}
     >
       {embedded ? (
-        <p className="reel-disclosure">{project.disclosure}</p>
+        <p className="reel-embed-head">
+          <span className="reel-disclosure">{project.disclosure}</span>
+          <a href="./embed.html">Close the demo</a>
+          <a href="./transcript.html">Transcript</a>
+        </p>
       ) : (
         <header className="reel-head">
           <h1>{project.title}</h1>
@@ -346,12 +351,6 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
         </p>
       )}
 
-      {embedded && (
-        <p className="reel-exit">
-          <a href="./embed.html">Close the demo</a> <a href="./transcript.html">Transcript</a>
-        </p>
-      )}
-
       <div className="reel-lower" hidden={embedded}>
         <Transcript lines={transcript} disabled={inBranch} onSeek={seekTo} />
 
@@ -382,7 +381,7 @@ function ReturnPanel({
   onChoose,
   onCancel,
 }: {
-  panelRef: React.RefObject<HTMLDivElement | null>;
+  panelRef: React.RefObject<HTMLFieldSetElement | null>;
   options: ReturnOption[];
   pausedAt: number;
   hasEdits: boolean;
@@ -393,7 +392,7 @@ function ReturnPanel({
     matches ? 'Matches your copy exactly.' : hasEdits ? 'Clears your changes.' : 'Nothing to clear.';
   const describeChapter = (chapter: Chapter) => `${formatTime(chapter.t)}, ${chapter.title}`;
   return (
-    <div className="reel-return" ref={panelRef} tabIndex={-1} role="group" aria-label="Return to the story">
+    <fieldset className="reel-return" ref={panelRef} tabIndex={-1} aria-label="Return to the story">
       <h2>Where should the story resume?</h2>
       <p>
         The story always restores a recorded moment. Your copy is not merged into it.
@@ -417,6 +416,6 @@ function ReturnPanel({
       <button type="button" className="reel-button-quiet" onClick={onCancel}>
         Keep experimenting
       </button>
-    </div>
+    </fieldset>
   );
 }

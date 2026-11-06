@@ -315,7 +315,8 @@
 }
 
 .reel-return {
-  margin-top: 14px;
+  min-width: 0;
+  margin: 14px 0 0;
   padding: 16px 18px;
   background: #fff;
   border: 1px solid var(--line-strong);
@@ -367,15 +368,6 @@
   }
 }
 
-.reel-exit {
-  margin: 12px 0 0;
-  font-size: 14px;
-
-  & a {
-    color: var(--body);
-  }
-}
-
 .reel-lower {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 220px;
@@ -397,7 +389,7 @@
   }
   & button {
     display: grid;
-    grid-template-columns: 3.2em minmax(0, 1fr);
+    grid-template-columns: 52px minmax(0, 1fr);
     align-items: baseline;
     width: 100%;
     padding: 5px 0;
@@ -475,6 +467,21 @@
   .reel-viewer {
     padding: 18px 16px 40px;
   }
+  /* Keeps Try it beside Play, inside the first screen of a phone. */
+  .reel-controls .reel-spacer {
+    order: 1;
+  }
+  .reel-controls .reel-button {
+    order: 2;
+  }
+  .reel-chapter {
+    order: 3;
+    flex: 1 1 55%;
+    max-width: none;
+  }
+  .reel-toggle {
+    order: 4;
+  }
   .reel-lower {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -519,15 +526,23 @@
 
 .reel-viewer[data-embedded='true'] {
   max-width: none;
-  padding: 8px 10px 12px;
-
-  & .reel-disclosure {
-    margin-bottom: 6px;
-  }
+  padding: 6px 10px 12px;
 }
 
-.reel-exit a + a {
-  margin-left: 14px;
+.reel-embed-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0 0 6px;
+  font-size: 13px;
+
+  & .reel-disclosure {
+    flex: 1;
+    min-width: 200px;
+  }
+  & a {
+    color: var(--body);
+  }
 }
 
 .reel-lower[hidden] {

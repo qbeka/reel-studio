@@ -109,7 +109,7 @@ export const receiptAdapter: SceneAdapter<ReceiptState> = {
   ],
   layouts: {
     wide: { width: 880, height: 560 },
-    narrow: { width: 360, height: 620 },
+    narrow: { width: 360, height: 580 },
   },
   init: initialState,
   parse,

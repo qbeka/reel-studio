@@ -22,7 +22,8 @@ export const Transcript = memo(function Transcript({
       {open ? (
         <ol>
           {lines.map((line, index) => (
-            <li key={`${line.t}-${index}`} className={line.kind === 'chapter' ? 'reel-transcript-chapter' : undefined}>
+            // biome-ignore lint/suspicious/noArrayIndexKey: the list never changes after load.
+            <li key={index} className={line.kind === 'chapter' ? 'reel-transcript-chapter' : undefined}>
               <button type="button" disabled={disabled} onClick={() => onSeek(line.t)}>
                 <span>{formatTime(line.t)}</span>
                 {line.kind === 'chapter' ? line.title : line.text}

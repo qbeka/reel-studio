@@ -1,6 +1,6 @@
 .ed {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   height: 100dvh;
   min-height: 640px;
 
@@ -109,6 +109,15 @@
   background: #8c2f1b14;
   border-bottom: 1px solid var(--line);
   color: var(--problem);
+  font-size: 14px;
+}
+
+.ed-notice {
+  margin: 0;
+  padding: 8px 16px;
+  background: var(--wash);
+  border-bottom: 1px solid var(--line);
+  color: var(--body);
   font-size: 14px;
 }
 
@@ -293,7 +302,6 @@
 
 .ed-scroller {
   overflow: auto hidden;
-  padding-bottom: 28px;
 }
 
 .ed-content {
@@ -394,8 +402,8 @@
 
 .ed-zoom {
   position: absolute;
+  top: -33px;
   right: 16px;
-  bottom: 4px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -574,9 +582,27 @@
   font-size: 15px;
 }
 
+.ed-narrow-note {
+  display: none;
+}
+
 @media (max-width: 900px) {
+  .ed-narrow-note {
+    display: block;
+    margin: 0;
+    padding: 6px 16px;
+    background: var(--wash);
+    color: var(--body);
+    font-size: 13px;
+  }
+  .ed-zoom {
+    position: static;
+    grid-column: 1 / -1;
+    justify-self: end;
+    padding: 4px 16px;
+  }
   .ed {
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto;
     height: auto;
   }
   .ed-main {

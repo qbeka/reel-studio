@@ -126,20 +126,20 @@ function SplitEditor({ state, send, interactive }: SceneProps<ReceiptState>) {
       </header>
 
       <section className="rs-split" data-reel-target="split-editor" aria-label="Split">
-        <div className="rs-modes" role="radiogroup" aria-label="Split method">
+        <fieldset className="rs-modes">
+          <legend>Split method</legend>
           {(['equal', 'percent', 'amount'] as SplitMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              role="radio"
-              aria-checked={split.mode === mode}
-              data-active={split.mode === mode}
-              onClick={() => send('setSplitMode', { mode })}
-            >
+            <label key={mode} data-active={split.mode === mode}>
+              <input
+                type="radio"
+                name="rs-split-mode"
+                checked={split.mode === mode}
+                onChange={() => send('setSplitMode', { mode })}
+              />
               {mode === 'equal' ? 'Equal' : mode === 'percent' ? 'Percent' : 'Amount'}
-            </button>
+            </label>
           ))}
-        </div>
+        </fieldset>
 
         <table className="rs-shares">
           <tbody>
@@ -233,20 +233,19 @@ function BalanceRows({
 
 function Tabs({ state, send }: SceneProps<ReceiptState>) {
   return (
-    <div className="rs-tabs" role="tablist" aria-label="Receipt view">
+    <nav className="rs-tabs" aria-label="Receipt view">
       {(['receipt', 'balances'] as const).map((view) => (
         <button
           key={view}
           type="button"
-          role="tab"
-          aria-selected={state.view === view}
+          aria-pressed={state.view === view}
           data-active={state.view === view}
           onClick={() => send('setView', { view })}
         >
           {view === 'receipt' ? 'Receipt' : 'Balances'}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }
 

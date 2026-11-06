@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { AnyAdapter } from '../../src/core/adapter';
 import { LIMITS, type ReelProject, parseProject, validateProject } from '../../src/core/project';
 import { type SceneEntry, resolveScene } from '../../src/core/registry';
+import { buildTranscript, parseTranscript } from '../../src/core/transcript';
 import { receiptAdapter } from '../../src/scenes/receipt/adapter';
 
 let base: ReelProject;
@@ -155,5 +156,30 @@ describe('resolveScene', () => {
       // The input must not change.
       expect(base.commands.find((c) => c.type === 'setSplit')?.payload).toHaveProperty('value');
     }
+  });
+});
+
+describe('transcript', () => {
+  it('describes what the scene did, with outcomes', () => {
+    const text = buildTranscript(receiptAdapter, base)
+      .map((line) => (line.kind === 'chapter' ? line.title : line.text))
+      .join(' ');
+    expect(text).toContain('Shares add up to 120%');
+    expect(text).toContain('Mina owes $60.96, Theo is owed $1.11, Ana is owed $59.85.');
+  });
+
+  it('leaves out what a trim hides, and still computes later steps correctly', () => {
+    const lines = buildTranscript(receiptAdapter, { ...base, trim: { start: 15000, end: 19000 } });
+    const text = lines.map((line) => (line.kind === 'chapter' ? line.title : line.text)).join(' ');
+    expect(text).not.toContain('Opened Harbor Noodle Bar');
+    expect(text).toContain('Inspect the balances');
+    expect(text).toContain('Mina owes $60.96');
+  });
+
+  it('survives a round trip and drops unexpected entries', () => {
+    const lines = buildTranscript(receiptAdapter, base);
+    expect(parseTranscript(JSON.parse(JSON.stringify(lines)))).toEqual(lines);
+    expect(parseTranscript('nope')).toEqual([]);
+    expect(parseTranscript([{ kind: 'script', t: 1 }, { kind: 'step', t: 'x', text: 'y' }, null])).toEqual([]);
   });
 });

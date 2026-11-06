@@ -17,7 +17,7 @@ async function recordReceipt(page: import('@playwright/test').Page) {
   const pause = () => page.waitForTimeout(150);
   await page.getByRole('button', { name: /Harbor Noodle Bar/ }).click();
   await pause();
-  await page.getByRole('radio', { name: 'Percent' }).click();
+  await page.getByRole('radio', { name: 'Percent' }).check({ force: true });
   await pause();
   await page.getByLabel('Mina share').fill('50');
   await pause();
@@ -114,7 +114,7 @@ test('a second recording pass continues after the first', async ({ page }) => {
   await recordReceipt(page);
   const count = await lane(page).count();
   await page.getByRole('button', { name: 'Record' }).click();
-  await page.getByRole('tab', { name: 'Balances' }).click();
+  await page.getByRole('button', { name: 'Balances' }).click();
   await page.getByRole('button', { name: 'Stop' }).click();
   await expect(lane(page)).toHaveCount(count + 1);
 });
@@ -299,6 +299,7 @@ test.describe('drafts', () => {
     );
     await page.getByRole('button', { name: /Receipt split demo/ }).click();
     await expect(page.getByRole('button', { name: 'Record' })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'The latest save was damaged' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Timeline' }).locator('.ed-chapter')).toHaveCount(0);
   });
 });

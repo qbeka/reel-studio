@@ -20,6 +20,8 @@ const CHECKPOINT_EVERY = 256;
 interface Open {
   adapter: AnyAdapter;
   project: ReelProject;
+  /** Shown once in the workspace, such as after a recovery. */
+  notice: string | null;
 }
 
 function newProject(adapter: AnyAdapter): ReelProject {
@@ -82,27 +84,26 @@ export function App() {
     };
   }, [refresh]);
 
-  const openProject = async (project: ReelProject): Promise<boolean> => {
+  const openProject = async (project: ReelProject, openNotice: string | null = null) => {
     const resolved = await resolveScene(project, SCENES);
     if (!resolved.ok) {
       setProblems([resolved.message]);
-      return false;
+      return;
     }
     const issues = validateProject(resolved.adapter, resolved.project);
     if (issues.length > 0) {
       setProblems(['This project cannot play.', ...issues.slice(0, 6).map((i) => i.message)]);
-      return false;
+      return;
     }
     setProblems([]);
-    setOpen({ adapter: resolved.adapter, project: resolved.project });
-    return true;
+    setOpen({ adapter: resolved.adapter, project: resolved.project, notice: openNotice });
   };
 
   const createProject = async (id: string) => {
     const entry = SCENES.find((scene) => scene.id === id)!;
     const adapter = await entry.load();
     setProblems([]);
-    setOpen({ adapter, project: newProject(adapter) });
+    setOpen({ adapter, project: newProject(adapter), notice: null });
   };
 
   const importFile = async (file: File) => {
@@ -135,9 +136,10 @@ export function App() {
         setProblems(['This draft is damaged and has no earlier save to recover.']);
         return;
       }
-      if (await openProject(loaded.project)) {
-        if (loaded.recovered) setNotice('The latest save was damaged. Reel opened the save before it.');
-      }
+      await openProject(
+        loaded.project,
+        loaded.recovered ? 'The latest save was damaged. Reel opened the save before it.' : null,
+      );
     } catch (error) {
       setProblems([storageMessage(error)]);
     }
@@ -169,6 +171,7 @@ export function App() {
         key={open.project.id}
         adapter={open.adapter}
         initial={open.project}
+        notice={open.notice}
         drafts={drafts}
         onClose={() => {
           setOpen(null);

@@ -22,5 +22,17 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
+    // Other engines run the exported viewer. The editor is a desktop authoring tool, and
+    // the claim about reach applies to what viewers open.
+    {
+      name: 'webkit',
+      testMatch: /export\.spec/,
+      use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: 'firefox',
+      testMatch: /export\.spec/,
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } },
+    },
   ],
 });
