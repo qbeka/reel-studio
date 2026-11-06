@@ -45,3 +45,8 @@ export function entry(t: number, type: string, payload: LogEntry['payload'] = {}
 export function outcome(t: number, type: string, payload: LogEntry['payload'] = {}): LogEntry {
   return { seq: nextSeq++, t, type, payload, source: 'outcome' };
 }
+
+/** Hash of any JSON value, for comparing fixtures. */
+export function fastHashOf(value: unknown): string {
+  return hashJson(value);
+}
