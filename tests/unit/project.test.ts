@@ -110,7 +110,7 @@ describe('resolveScene', () => {
     const result = await resolveScene({ ...base, scene: { id: 'payroll', version: 3 } }, installed(receiptAdapter));
     expect(result).toMatchObject({ ok: false, code: 'unknown-scene' });
     expect(!result.ok && result.message).toBe(
-      'This project needs the scene payroll v3, which is not installed. Installed scenes: receipt-split v1.',
+      'This project needs the scene payroll v3, but this build only has receipt-split v1',
     );
   });
 
@@ -165,7 +165,7 @@ describe('transcript', () => {
       .map((line) => (line.kind === 'chapter' ? line.title : line.text))
       .join(' ');
     expect(text).toContain('Shares add up to 120%');
-    expect(text).toContain('Mina owes $60.96, Theo is owed $1.11, Ana is owed $59.85.');
+    expect(text).toContain('Mina owes $60.96, Theo is owed $1.11, Ana is owed $59.85');
   });
 
   it('leaves out what a trim hides, and still computes later steps correctly', () => {

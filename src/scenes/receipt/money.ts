@@ -45,7 +45,7 @@ export function splitProblem(
     if (sum !== FULL_BPS) {
       return {
         code: 'percent-total',
-        message: `Shares add up to ${formatPercent(sum)}. They need to add up to 100%.`,
+        message: `Shares add up to ${formatPercent(sum)} but need to add up to 100%`,
       };
     }
     return null;
@@ -53,7 +53,7 @@ export function splitProblem(
   if (sum !== totalCents) {
     return {
       code: 'amount-total',
-      message: `Shares add up to ${formatCents(sum)}. They need to add up to ${formatCents(totalCents)}.`,
+      message: `Shares add up to ${formatCents(sum)} but need to add up to ${formatCents(totalCents)}`,
     };
   }
   return null;

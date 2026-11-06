@@ -122,7 +122,7 @@ export function apply(state: ReceiptState, command: Command, _clock: LogicalCloc
         return {
           ...state,
           pendingSave: null,
-          validation: { code: 'save-failed', message: 'The save failed. Your draft is unchanged.' },
+          validation: { code: 'save-failed', message: 'The save failed and your draft is unchanged' },
         };
       }
       const draft = state.draft!;

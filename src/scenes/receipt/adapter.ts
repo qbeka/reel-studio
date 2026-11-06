@@ -48,34 +48,34 @@ function describe(before: ReceiptState, command: Command, after: ReceiptState): 
     case 'selectExpense': {
       const e = after.expenses.find((x) => x.id === after.selectedId)!;
       const payer = after.members.find((m) => m.id === e.paidBy)!;
-      return `Opened ${e.merchant}: ${formatCents(e.totalCents)}, paid by ${payer.name}.`;
+      return `Opened ${e.merchant} for ${formatCents(e.totalCents)}, paid by ${payer.name}`;
     }
     case 'setSplitMode':
-      return `Switched the split to ${command.payload.mode}.`;
+      return `Switched the split to ${command.payload.mode}`;
     case 'confirmEdit':
       return after.validation !== null
-        ? `Tried to save. Error: ${after.validation.message}`
-        : 'Saved the split.';
+        ? `Tried to save with this error: ${after.validation.message}`
+        : 'Saved the split';
     case 'saveResult': {
-      if (command.payload.ok !== true) return 'The save failed. The draft was kept.';
+      if (command.payload.ok !== true) return 'The save failed and the draft was kept';
       const expense = after.expenses.find((e) => e.id === before.pendingSave?.expenseId)!;
       const ids = memberIds(after);
       const shares = sharesFor(expense.totalCents, expense.split, ids);
       const parts = after.members.map((m, i) => `${m.name} ${formatCents(shares[i]!)}`).join(', ');
-      return `Save confirmed. ${expense.merchant} is now ${parts}. ${balanceLine(after, after.balances)}.`;
+      return `Save confirmed, so ${expense.merchant} splits as ${parts}, and now ${balanceLine(after, after.balances)}`;
     }
     case 'setView':
       return command.payload.view === 'balances'
-        ? `Balances: ${balanceLine(after, after.balances)}.`
-        : 'Went back to the receipt.';
+        ? `Balances: ${balanceLine(after, after.balances)}`
+        : 'Went back to the receipt';
     case 'addReceipt': {
       const e = after.expenses.at(-1)!;
-      return `Added ${e.merchant} for ${formatCents(e.totalCents)}.`;
+      return `Added ${e.merchant} for ${formatCents(e.totalCents)}`;
     }
     case 'setSplit': {
       if (after.draft?.split.mode !== 'percent') return null;
       const member = after.members.find((m) => m.id === command.payload.member)!;
-      return `Set ${member.name} to ${formatPercent(command.payload.value as number)}.`;
+      return `Set ${member.name} to ${formatPercent(command.payload.value as number)}`;
     }
     default:
       return null;

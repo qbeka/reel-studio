@@ -97,7 +97,7 @@ function SplitEditor({ state, send, interactive }: SceneProps<ReceiptState>) {
   if (expense === null || state.draft === null) {
     return (
       <div className="rs-empty">
-        <p>Pick a receipt to see how it is split.</p>
+        <p>Pick a receipt to see how it is split</p>
       </div>
     );
   }
@@ -115,7 +115,7 @@ function SplitEditor({ state, send, interactive }: SceneProps<ReceiptState>) {
         <div>
           <h2>{expense.merchant}</h2>
           <p>
-            {expense.date}. Paid by {payer.name}.
+            {expense.date}, paid by {payer.name}
           </p>
         </div>
         <strong className="rs-total">{formatCents(expense.totalCents)}</strong>
@@ -272,7 +272,7 @@ export function Render(props: SceneProps<ReceiptState>) {
             <h2>Who owes what</h2>
             <BalanceRows state={state} balances={state.balances} />
             <p className="rs-muted">
-              Computed from all {state.expenses.length} receipts. Amounts add up to zero.
+              Computed from all {state.expenses.length} receipts, and the amounts add up to zero
             </p>
           </section>
         )}

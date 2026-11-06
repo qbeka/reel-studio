@@ -29,12 +29,12 @@ describe('splitProblem', () => {
 
   it('names the actual percent total', () => {
     const problem = splitProblem(1000, { mode: 'percent', values: { a: 6000, b: 5000 } }, ids);
-    expect(problem?.message).toBe('Shares add up to 110%. They need to add up to 100%.');
+    expect(problem?.message).toBe('Shares add up to 110% but need to add up to 100%');
   });
 
   it('names the actual amount total', () => {
     const problem = splitProblem(1000, { mode: 'amount', values: { a: 400, b: 500 } }, ids);
-    expect(problem?.message).toBe('Shares add up to $9.00. They need to add up to $10.00.');
+    expect(problem?.message).toBe('Shares add up to $9.00 but need to add up to $10.00');
   });
 
   it('treats a member with no value as zero', () => {
