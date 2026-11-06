@@ -1,2 +1,7 @@
 allowBuilds:
   esbuild: true
+# These three are newer than pnpm's one day release age check. Remove this after 2026-11-07.
+minimumReleaseAgeExclude:
+  - playwright@1.65.0
+  - playwright-core@1.65.0
+  - '@playwright/test@1.65.0'
