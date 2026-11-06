@@ -156,4 +156,16 @@ machines. The state hashes in `manifest.json` should not.
 
 ## Clean checkout
 
-CLEAN_CHECKOUT_RESULT
+A fresh `git clone` of commit `2fc2deb`, on the same machine, with a frozen lockfile.
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile` | Passed |
+| `pnpm check` | Passed |
+| `pnpm test` | 232 of 232 passed |
+| `pnpm build` | Passed |
+| `pnpm exec playwright test` | 95 of 95 passed on Chromium, WebKit and Firefox |
+| `pnpm export` and `scripts/verify-bundle.ts` | 13 files matched, and the replay reproduced the final state |
+| `pnpm demo` | Served the viewer and the embed at `/projects/reel/` |
+
+This shows a clean checkout works here. It was not repeated on a second machine.
