@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "id": "receipt-split-demo",
   "title": "Fix a shared receipt",
-  "disclosure": "Synthetic data. No real people, receipts or balances.",
+  "disclosure": "Synthetic data with no real people, receipts or balances",
   "scene": {
     "id": "receipt-split",
     "version": 1
@@ -137,35 +137,35 @@
       "id": "cap-open",
       "start": 300,
       "end": 4300,
-      "text": "Theo paid for dinner, split equally. Open that receipt.",
+      "text": "Theo paid for dinner and split it equally, so open that receipt",
       "target": "expense-list"
     },
     {
       "id": "cap-adjust",
       "start": 4700,
       "end": 10200,
-      "text": "Mina had more. Switch to percent and adjust the shares.",
+      "text": "Mina had more, so switch to percent and adjust the shares",
       "target": "split-editor"
     },
     {
       "id": "cap-error",
       "start": 10500,
       "end": 13000,
-      "text": "The shares add up to 120%, so the save is refused.",
+      "text": "The shares add up to 120%, so the save is refused",
       "target": "save"
     },
     {
       "id": "cap-correct",
       "start": 13100,
       "end": 18000,
-      "text": "Lower Ana to 10% and the same save goes through.",
+      "text": "Lower Ana to 10% and the same save goes through",
       "target": "split-editor"
     },
     {
       "id": "cap-balances",
       "start": 18300,
       "end": 22000,
-      "text": "Balances are recomputed from every receipt.",
+      "text": "Balances are recomputed from every receipt",
       "target": "balances"
     }
   ],

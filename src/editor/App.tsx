@@ -31,7 +31,7 @@ function newProject(adapter: AnyAdapter): ReelProject {
     formatVersion: FORMAT_VERSION,
     id: `${adapter.id}-${suffix}`,
     title: `${adapter.title} demo`,
-    disclosure: 'Synthetic data. No real people or accounts.',
+    disclosure: 'Synthetic data with no real people or accounts',
     scene: { id: adapter.id, version: adapter.version },
     seed: 1,
     checkpointEvery: CHECKPOINT_EVERY,

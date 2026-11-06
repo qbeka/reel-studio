@@ -70,7 +70,7 @@ A `.reel.json` file holds data and nothing that can execute.
   "formatVersion": 1,
   "id": "receipt-split-demo",
   "title": "Fix a receipt split",
-  "disclosure": "Synthetic data. No real people, receipts or balances.",
+  "disclosure": "Synthetic data with no real people, receipts or balances",
   "scene": { "id": "receipt-split", "version": 1 },
   "seed": 7,
   "checkpointEvery": 256,
@@ -80,7 +80,7 @@ A `.reel.json` file holds data and nothing that can execute.
     { "seq": 1, "t": 900, "type": "selectExpense", "payload": { "id": "e2" }, "source": "user" }
   ],
   "chapters": [{ "id": "open", "t": 0, "title": "Open the receipt" }],
-  "captions": [{ "id": "c1", "start": 0, "end": 3000, "text": "Pick a receipt.", "target": "expense-list" }],
+  "captions": [{ "id": "c1", "start": 0, "end": 3000, "text": "Pick a receipt", "target": "expense-list" }],
   "camera": [{ "id": "s1", "t": 0, "target": null }]
 }
 ```

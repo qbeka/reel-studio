@@ -121,11 +121,11 @@ try {
   await addChapter(page, fix - 400, 'Correct the shares');
   await addChapter(page, balances, 'Inspect the balances');
 
-  await addCaption(page, 200, percent - 200, 'Theo paid for dinner, split equally. Open that receipt.', 'Receipt list');
-  await addCaption(page, percent + 100, bad - 200, 'Mina had more. Switch to percent and adjust the shares.', 'Split editor');
-  await addCaption(page, bad + 100, fix - 400, 'The shares add up to 120%, so the save is refused.', 'Save button');
-  await addCaption(page, fix - 300, balances - 200, 'Lower Ana to 10% and the same save goes through.', 'Split editor');
-  await addCaption(page, balances + 100, end, 'Balances are recomputed from every receipt.', 'Balances');
+  await addCaption(page, 200, percent - 200, 'Theo paid for dinner and split it equally, so open that receipt', 'Receipt list');
+  await addCaption(page, percent + 100, bad - 200, 'Mina had more, so switch to percent and adjust the shares', 'Split editor');
+  await addCaption(page, bad + 100, fix - 400, 'The shares add up to 120%, so the save is refused', 'Save button');
+  await addCaption(page, fix - 300, balances - 200, 'Lower Ana to 10% and the same save goes through', 'Split editor');
+  await addCaption(page, balances + 100, end, 'Balances are recomputed from every receipt', 'Balances');
 
   await addShot(page, 0, null);
   await addShot(page, percent, 'Split editor');
@@ -152,7 +152,7 @@ try {
   const project = JSON.parse(await readFile(projectPath, 'utf8'));
   project.id = 'receipt-split-release';
   project.title = 'Fix a shared receipt';
-  project.disclosure = 'Synthetic data. No real people, receipts or balances.';
+  project.disclosure = 'Synthetic data with no real people, receipts or balances';
   await writeFile('projects/receipt-split-release.reel.json', `${JSON.stringify(project, null, 2)}\n`);
   await copyFile('projects/receipt-split-release.reel.json', join(run, 'project.reel.json'));
   console.log(`${commands.length} commands recorded through the editor. Saved to ${run}.`);
