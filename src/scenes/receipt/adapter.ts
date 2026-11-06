@@ -9,6 +9,11 @@ const MAX_VALUE = 100_000_000;
 
 export const SAVE_DELAY_MS = 450;
 
+const saveOutcome = (requestId: number): Effect => ({
+  delayMs: SAVE_DELAY_MS,
+  command: { type: 'saveResult', payload: { requestId, ok: true } },
+});
+
 function parse(type: string, payload: Payload): string | null {
   switch (type) {
     case 'selectExpense':
@@ -117,15 +122,10 @@ export const receiptAdapter: SceneAdapter<ReceiptState> = {
   apply,
   effects(state, command): readonly Effect[] {
     if (command.type !== 'confirmEdit' || state.pendingSave === null) return [];
-    return [
-      {
-        delayMs: SAVE_DELAY_MS,
-        command: {
-          type: 'saveResult',
-          payload: { requestId: state.pendingSave.requestId, ok: true },
-        },
-      },
-    ];
+    return [saveOutcome(state.pendingSave.requestId)];
+  },
+  pendingEffects(state) {
+    return state.pendingSave === null ? [] : [saveOutcome(state.pendingSave.requestId)];
   },
   serialize,
   restore(json) {

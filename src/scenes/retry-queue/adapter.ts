@@ -116,6 +116,18 @@ export const retryAdapter: SceneAdapter<RetryState> = {
   precondition,
   apply,
   effects,
+  pendingEffects(state, t) {
+    return state.jobs.flatMap((job): Effect[] => {
+      if (job.status === 'sending') return [attemptEffect(state, job.id)];
+      if (job.status !== 'waiting') return [];
+      return [
+        {
+          delayMs: Math.max(0, job.nextAttemptAt! - t),
+          command: { type: 'attemptDue', payload: { job: job.id } },
+        },
+      ];
+    });
+  },
   serialize,
   restore(json) {
     return { ...(json as unknown as Omit<RetryState, 'presentation'>), presentation: { pulse: null } };

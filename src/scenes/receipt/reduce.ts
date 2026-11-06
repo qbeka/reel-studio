@@ -10,6 +10,12 @@ import {
   previewBalances,
 } from './state';
 
+/**
+ * Each command recomputes balances over the ledger, so an unbounded ledger makes a log
+ * cost quadratic time. This limit keeps every command, and so every file, bounded.
+ */
+export const MAX_RECEIPTS = 5000;
+
 const NEW_RECEIPTS = [
   { merchant: 'Linden Bakery', items: ['Bread', 'Pastries'] },
   { merchant: 'Northline Transit', items: ['Passes', 'Top up'] },
@@ -56,6 +62,8 @@ export function precondition(state: ReceiptState, command: Command): string | nu
       return state.members.some((m) => m.id === payload.member) ? null : 'Unknown member.';
     case 'saveResult':
       return state.pendingSave?.requestId === payload.requestId ? null : 'No save is waiting for this result.';
+    case 'addReceipt':
+      return state.expenses.length < MAX_RECEIPTS ? null : 'This ledger is full.';
     default:
       return null;
   }

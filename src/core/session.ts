@@ -1,4 +1,4 @@
-import type { AnyAdapter, Command, LogEntry, Payload } from './adapter';
+import type { AnyAdapter, Command, Effect, LogEntry, Payload } from './adapter';
 
 /** Time and timers, injected so tests can run a live session without real waiting. */
 export interface SessionHost {
@@ -44,6 +44,9 @@ export class LiveSession<S = any> {
     this.state = options.state;
     this.nextSeq = options.startSeq;
     this.startedAt = options.host.now();
+    for (const effect of options.adapter.pendingEffects?.(options.state, options.startT) ?? []) {
+      this.schedule(effect);
+    }
   }
 
   /** Current logical time. Whole milliseconds, as stored in the log. */
@@ -70,7 +73,7 @@ export class LiveSession<S = any> {
 
   private accept(command: Command, source: LogEntry['source']): SendResult {
     if (this.closed) return { ok: false, reason: 'This session has ended.' };
-    const { adapter, host, onChange } = this.options;
+    const { adapter, onChange } = this.options;
     if (!adapter.commandTypes.includes(command.type)) {
       return { ok: false, reason: `Unknown command ${command.type}.` };
     }
@@ -83,14 +86,16 @@ export class LiveSession<S = any> {
     this.state = adapter.apply(before, entry, { t: entry.t });
     this.log.push(entry);
 
-    for (const effect of adapter.effects?.(this.state, entry) ?? []) {
-      const handle: unknown = host.setTimer(() => {
-        this.timers.delete(handle);
-        this.accept(effect.command, 'outcome');
-      }, effect.delayMs);
-      this.timers.add(handle);
-    }
+    for (const effect of adapter.effects?.(this.state, entry) ?? []) this.schedule(effect);
     onChange(this.state, entry);
     return { ok: true, entry };
+  }
+
+  private schedule(effect: Effect): void {
+    const handle: unknown = this.options.host.setTimer(() => {
+      this.timers.delete(handle);
+      this.accept(effect.command, 'outcome');
+    }, effect.delayMs);
+    this.timers.add(handle);
   }
 }

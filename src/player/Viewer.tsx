@@ -2,15 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import type { AnyAdapter, Payload } from '../core/adapter';
 import {
   type Branch,
+  type BranchCopy,
   type ReturnOption,
   editCount,
   isUnchanged,
+  matchesStory,
   openBranch,
+  reopenBranch,
   returnOptions,
 } from '../core/branch';
 import { momentHash, parseMoment } from '../core/location';
 import { Playback } from '../core/playback';
-import { type Chapter, type ReelProject, formatTime, playRange } from '../core/project';
+import { type Chapter, type ReelProject, forViewer, formatTime, playRange } from '../core/project';
 import { browserHost } from '../core/session';
 import { Timeline } from '../core/timeline';
 import { captionAt, chapterIndexAt, shotAt } from '../core/tracks';
@@ -34,9 +37,8 @@ function ownsKeys(target: EventTarget | null): boolean {
   );
 }
 
-interface KeptCopy {
-  state: unknown;
-  base: Branch['base'];
+/** A cleared branch, held in memory until the viewer presses Try it or leaves the page. */
+interface KeptCopy extends BranchCopy {
   edits: number;
 }
 
@@ -73,7 +75,9 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
   const [branchState, setBranchState] = useState<unknown>(null);
   const [branchEdits, setBranchEdits] = useState(0);
   const [rejected, setRejected] = useState<string | null>(null);
-  const [returning, setReturning] = useState<ReturnOption[] | null>(null);
+  const [returning, setReturning] = useState(false);
+  /** Try it was pressed during a seek. It runs once the seek has a state to fork. */
+  const [controlWanted, setControlWanted] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [kept, setKept] = useState<KeptCopy | null>(null);
 
@@ -82,9 +86,9 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
   const tryButton = useRef<HTMLButtonElement>(null);
   const branchStatus = useRef<HTMLParagraphElement>(null);
 
-  const startBranch = useCallback(
-    (state: unknown, t: number, edits: number) => {
-      const next: Branch = openBranch(adapter, state, t, browserHost, (changed) => {
+  const enterBranch = useCallback(
+    (make: (onChange: (state: unknown) => void) => Branch, edits: number) => {
+      const next: Branch = make((changed) => {
         setBranchState(changed);
         setBranchEdits(editCount(next.session.log) + edits);
         setRejected(null);
@@ -94,19 +98,31 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
       setBranchState(next.session.state);
       setBranchEdits(edits);
       setRejected(null);
-      setReturning(null);
+      setReturning(false);
       setNotice(null);
       setKept(null);
-      return next;
     },
-    [adapter, playback],
+    [playback],
   );
 
   const takeControl = useCallback(() => {
-    const { state, t } = playback.getSnapshot();
-    startBranch(state, t, 0);
+    const { state, t, seeking } = playback.getSnapshot();
+    // During a seek the snapshot pairs the requested time with the previous state, and a
+    // fork from that pair would be wrong. The fork waits for the seek to finish.
+    if (seeking) {
+      setControlWanted(true);
+      return;
+    }
+    enterBranch((onChange) => openBranch(adapter, state, t, browserHost, onChange), 0);
     requestAnimationFrame(() => branchStatus.current?.focus());
-  }, [playback, startBranch]);
+  }, [adapter, playback, enterBranch]);
+
+  useEffect(() => {
+    if (controlWanted && !story.seeking) {
+      setControlWanted(false);
+      takeControl();
+    }
+  }, [controlWanted, story.seeking, takeControl]);
 
   const send = useCallback(
     (type: string, payload?: Payload) => {
@@ -119,23 +135,38 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
 
   const resetBranch = () => {
     if (branch === null) return;
+    const { t } = branch.base;
     branch.session.close();
-    startBranch(story.state, branch.base.t, 0);
+    enterBranch(
+      (onChange) => openBranch(adapter, timeline.stateAt(t), t, browserHost, onChange),
+      0,
+    );
   };
 
   const askToReturn = () => {
     if (branch === null) return;
-    setReturning(returnOptions(adapter, timeline, project.chapters, branch.session.state));
+    setReturning(true);
     requestAnimationFrame(() => returnPanel.current?.focus());
   };
 
-  const leaveBranch = (t: number, label: string, matches: boolean) => {
+  const chapters = useMemo(() => forViewer(project).chapters, [project]);
+
+  // Computed from the live state, so an outcome arriving while the panel is open cannot
+  // leave a promise on screen that is no longer true.
+  const options = useMemo(
+    () => (returning ? returnOptions(adapter, timeline, chapters, branchState) : []),
+    [returning, adapter, timeline, chapters, branchState],
+  );
+
+  const leaveBranch = (t: number, label: string) => {
     if (branch === null) return;
-    const lost = !matches && !isUnchanged(adapter, branch);
-    const copy: KeptCopy = { state: branch.session.state, base: branch.base, edits: branchEdits };
+    const state = branch.session.state;
+    const lost =
+      branchEdits > 0 && !isUnchanged(adapter, branch) && !matchesStory(adapter, timeline, t, state);
+    const copy: KeptCopy = { state, base: branch.base, t: branch.session.t, edits: branchEdits };
     branch.session.close();
     setBranch(null);
-    setReturning(null);
+    setReturning(false);
     playback.seek(t);
     setKept(lost ? copy : null);
     setNotice(
@@ -154,25 +185,25 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
 
   const restoreCopy = () => {
     if (kept === null) return;
-    playback.seek(kept.base.t);
-    startBranch(kept.state, kept.base.t, kept.edits);
+    const copy = kept;
+    playback.seek(copy.base.t);
+    enterBranch((onChange) => reopenBranch(adapter, copy, browserHost, onChange), copy.edits);
     requestAnimationFrame(() => branchStatus.current?.focus());
   };
 
   // Follow a shared link once, on load. `parseMoment` refuses anything unexpected.
   useEffect(() => {
-    const moment = parseMoment(location.hash, project.chapters, range);
+    const moment = parseMoment(location.hash, chapters, range);
     if (moment?.kind === 'time') playback.seek(moment.t);
     if (moment?.kind === 'chapter') {
-      playback.seek(project.chapters.find((c) => c.id === moment.id)!.t);
+      playback.seek(chapters.find((c) => c.id === moment.id)!.t);
     }
     if (autoplay && !prefersReducedMotion()) playback.play();
     // Activating an embed must not make the host page jump.
     if (autoplay) playButton.current?.focus({ preventScroll: true });
-  }, [playback, project, range, autoplay]);
+  }, [playback, chapters, range, autoplay]);
 
   const inBranch = branch !== null;
-  const chapters = project.chapters;
   const chapterIndex = chapterIndexAt(chapters, story.t);
 
   const jumpChapter = useCallback(
@@ -261,7 +292,7 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
       <Stage
         adapter={adapter}
         state={inBranch ? branchState : story.state}
-        interactive={inBranch}
+        interactive={inBranch && !returning}
         send={send}
         cameraTarget={inBranch ? null : (shotAt(project.camera, story.t)?.target ?? null)}
         framing={framing}
@@ -271,7 +302,12 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
         label={`${project.title}, ${inBranch ? 'your copy' : 'recorded story'}`}
       />
 
-      <div className="reel-bar" data-seeking={story.seeking} data-t={Math.round(story.t)}>
+      <div
+        className="reel-bar"
+        data-seeking={story.seeking}
+        data-t={story.t}
+        data-state-t={story.stateT}
+      >
         <TimelineBar
           range={range}
           t={inBranch ? branch.base.t : story.t}
@@ -334,14 +370,15 @@ export function Viewer({ adapter, project, transcript, embedded, autoplay }: Vie
         )}
       </div>
 
-      {returning !== null && branch !== null && (
+      {returning && branch !== null && (
         <ReturnPanel
           panelRef={returnPanel}
-          options={returning}
+          options={options}
           pausedAt={branch.base.t}
-          hasEdits={!isUnchanged(adapter, branch)}
+          pausedMatches={matchesStory(adapter, timeline, branch.base.t, branchState)}
+          hasEdits={branchEdits > 0 && !isUnchanged(adapter, branch)}
           onChoose={leaveBranch}
-          onCancel={() => setReturning(null)}
+          onCancel={() => setReturning(false)}
         />
       )}
 
@@ -382,6 +419,7 @@ function ReturnPanel({
   panelRef,
   options,
   pausedAt,
+  pausedMatches,
   hasEdits,
   onChoose,
   onCancel,
@@ -389,8 +427,9 @@ function ReturnPanel({
   panelRef: React.RefObject<HTMLFieldSetElement | null>;
   options: ReturnOption[];
   pausedAt: number;
+  pausedMatches: boolean;
   hasEdits: boolean;
-  onChoose: (t: number, label: string, matches: boolean) => void;
+  onChoose: (t: number, label: string) => void;
   onCancel: () => void;
 }) {
   const consequence = (matches: boolean) =>
@@ -404,14 +443,14 @@ function ReturnPanel({
       </p>
       <ul>
         <li>
-          <button type="button" onClick={() => onChoose(pausedAt, formatTime(pausedAt), false)}>
+          <button type="button" onClick={() => onChoose(pausedAt, formatTime(pausedAt))}>
             <span>{formatTime(pausedAt)}, where you paused</span>
-            <small>{consequence(false)}</small>
+            <small>{consequence(pausedMatches)}</small>
           </button>
         </li>
         {options.map(({ chapter, matches }) => (
           <li key={chapter.id}>
-            <button type="button" onClick={() => onChoose(chapter.t, describeChapter(chapter), matches)}>
+            <button type="button" onClick={() => onChoose(chapter.t, describeChapter(chapter))}>
               <span>{describeChapter(chapter)}</span>
               <small data-match={matches}>{consequence(matches)}</small>
             </button>

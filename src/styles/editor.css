@@ -197,6 +197,10 @@
   font-size: 14px;
 }
 
+.ed-inspector-wrap {
+  display: contents;
+}
+
 .ed-inspector {
   display: flex;
   flex-direction: column;

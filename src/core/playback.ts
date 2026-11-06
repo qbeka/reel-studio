@@ -13,8 +13,10 @@ export const browserFrames: FrameHost = {
 };
 
 export interface PlaybackSnapshot<S> {
-  /** Logical time to display. During a seek this is the requested time. */
+  /** Logical time to display, in whole milliseconds. During a seek this is the request. */
   t: number;
+  /** Logical time of `state`. It differs from `t` only while a seek is running. */
+  stateT: number;
   /** A complete state. It always belongs to a finished seek or to played commands. */
   state: S;
   /** Commands included in `state`. */
@@ -44,6 +46,11 @@ export class Playback<S = any> {
   private frame: number | null = null;
   private lastFrame: number | null = null;
   private resumeAfterSeek = false;
+  /**
+   * Time with its fraction, advanced by frames. The snapshot holds whole milliseconds, so
+   * a viewer who pauses gets a time that names exactly the state on screen.
+   */
+  private exactT: number;
   /** Resolves when every command has been checked and every checkpoint exists. */
   readonly ready: Promise<void>;
 
@@ -54,8 +61,10 @@ export class Playback<S = any> {
     seekOptions: Partial<SeekOptions> = {},
   ) {
     this.cursor = { state: timeline.stateAfter(0), count: 0 };
+    this.exactT = range.start;
     this.snapshot = {
       t: range.start,
+      stateT: range.start,
       state: this.cursor.state,
       count: 0,
       playing: false,
@@ -66,9 +75,11 @@ export class Playback<S = any> {
       timeline,
       ({ time, count, state }) => {
         this.cursor = { state, count };
-        const resume = this.resumeAfterSeek;
+        // At the end there is nothing left to resume. Restarting is a choice, made by play().
+        const resume = this.resumeAfterSeek && time < range.end;
         this.resumeAfterSeek = false;
-        this.update({ t: time, state, count, seeking: false });
+        this.exactT = time;
+        this.update({ t: time, stateT: time, state, count, seeking: false });
         if (resume) this.play();
       },
       seekOptions,
@@ -77,7 +88,8 @@ export class Playback<S = any> {
         this.update({ seeking: false, playing: false, error: String((error as Error).message) });
       },
     );
-    if (range.start > 0) this.seek(range.start);
+    // Also needed at time 0: a command at exactly the start has already happened.
+    this.seek(range.start);
     this.ready = this.seeker.prepare();
   }
 
@@ -89,7 +101,8 @@ export class Playback<S = any> {
   getSnapshot = (): PlaybackSnapshot<S> => this.snapshot;
 
   play(): void {
-    if (this.snapshot.playing) return;
+    // A story with no length has nothing to play, and restarting it would never end.
+    if (this.snapshot.playing || this.range.end <= this.range.start) return;
     if (this.snapshot.seeking) {
       this.resumeAfterSeek = true;
       return;
@@ -132,7 +145,8 @@ export class Playback<S = any> {
     this.frame = null;
     const elapsed = this.lastFrame === null ? 0 : Math.min(now - this.lastFrame, MAX_FRAME_MS);
     this.lastFrame = now;
-    const t = Math.min(this.range.end, this.snapshot.t + elapsed);
+    this.exactT = Math.min(this.range.end, this.exactT + elapsed);
+    const t = Math.floor(this.exactT);
     const target = this.timeline.countAt(t);
     try {
       this.timeline.advance(this.cursor, target);
@@ -141,7 +155,7 @@ export class Playback<S = any> {
       return;
     }
     const playing = t < this.range.end;
-    this.update({ t, state: this.cursor.state, count: this.cursor.count, playing });
+    this.update({ t, stateT: t, state: this.cursor.state, count: this.cursor.count, playing });
     if (playing) this.frame = this.frames.request(this.tick);
   };
 

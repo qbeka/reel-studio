@@ -42,6 +42,9 @@ export interface RetryState {
   presentation: { pulse: string | null };
 }
 
+/** Jobs are searched per command, so this keeps every command bounded. */
+export const MAX_JOBS = 2000;
+
 export function initialState(seed: number): RetryState {
   return {
     policy: { maxAttempts: 4, baseDelayMs: 400, jitterPercent: 25 },
@@ -77,6 +80,8 @@ export function precondition(state: RetryState, command: Command): string | null
     case 'requeue':
       if (job === undefined) return 'That job does not exist.';
       return job.status === 'dead' ? null : 'Only a dead letter can be requeued.';
+    case 'enqueue':
+      return state.jobs.length < MAX_JOBS ? null : 'This queue is full.';
     default:
       return null;
   }

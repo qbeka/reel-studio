@@ -73,6 +73,12 @@ export interface SceneAdapter<S> {
    * Called only live, never during playback.
    */
   effects?(state: S, command: Command): readonly Effect[];
+  /**
+   * Outcomes still owed by a state at logical time `t`. A live session can start from a
+   * state that is waiting for one, such as a fork during a save, and the timer that would
+   * have delivered it belonged to the recording. Required with `effects`.
+   */
+  pendingEffects?(state: S, t: number): readonly Effect[];
 
   /** Canonical data for hashing and storage. Excludes presentation fields. */
   serialize(state: S): Json;

@@ -18,10 +18,35 @@ export interface Branch<S = any> {
 
 const stateHash = (adapter: AnyAdapter, state: unknown) => hashJson(adapter.serialize(state));
 
+/** The state, its base and its clock, as a branch left them. Enough to reopen it. */
+export interface BranchCopy<S = any> {
+  state: S;
+  base: BranchBase;
+  /** Logical time when the branch closed. */
+  t: number;
+}
+
+function startSession<S>(
+  adapter: AnyAdapter,
+  state: S,
+  t: number,
+  host: SessionHost,
+  onChange: (state: S) => void,
+): LiveSession<S> {
+  return new LiveSession<S>({
+    adapter,
+    host,
+    // Through `serialize` and `restore`, so the branch shares nothing with its source.
+    state: adapter.restore(structuredClone(adapter.serialize(state)), adapter.version) as S,
+    startT: t,
+    startSeq: 1,
+    onChange: (next) => onChange(next),
+  });
+}
+
 /**
- * Starts a viewer's own copy of the scene. The state goes through `serialize` and
- * `restore`, so the branch shares nothing with the authored timeline. Its log is separate
- * from the project's commands, and nothing here can write to either.
+ * Starts a viewer's own copy of the scene. Its log is separate from the project's
+ * commands, and nothing here can write to either.
  */
 export function openBranch<S>(
   adapter: AnyAdapter,
@@ -30,22 +55,37 @@ export function openBranch<S>(
   host: SessionHost,
   onChange: (state: S) => void,
 ): Branch<S> {
-  const copy = adapter.restore(structuredClone(adapter.serialize(storyState)), adapter.version) as S;
   return {
     base: { t, hash: stateHash(adapter, storyState) },
-    session: new LiveSession<S>({
-      adapter,
-      host,
-      state: copy,
-      startT: t,
-      startSeq: 1,
-      onChange: (state) => onChange(state),
-    }),
+    session: startSession(adapter, storyState, t, host, onChange),
   };
+}
+
+/**
+ * Reopens a closed branch. It keeps the original base, because "unchanged" must mean
+ * unchanged from the story, not from the edited copy being brought back.
+ */
+export function reopenBranch<S>(
+  adapter: AnyAdapter,
+  copy: BranchCopy<S>,
+  host: SessionHost,
+  onChange: (state: S) => void,
+): Branch<S> {
+  return { base: copy.base, session: startSession(adapter, copy.state, copy.t, host, onChange) };
 }
 
 export function isUnchanged(adapter: AnyAdapter, branch: Branch): boolean {
   return stateHash(adapter, branch.session.state) === branch.base.hash;
+}
+
+/** True when `state` is exactly the authored state at time `t`. */
+export function matchesStory<S>(
+  adapter: AnyAdapter,
+  timeline: Timeline<S>,
+  t: number,
+  state: S,
+): boolean {
+  return stateHash(adapter, timeline.stateAt(t)) === stateHash(adapter, state);
 }
 
 /** Edits the viewer made. Delayed outcomes are the scene's replies, so they do not count. */
