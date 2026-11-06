@@ -57,7 +57,7 @@ test('there is one default way back, and it says what happens to the copy', asyn
   await page.getByRole('button', { name: 'Back to demo' }).click();
 
   await expect(page.locator('.reel-narration')).toHaveText(
-    'Back at 0:10, with your copy set aside until you take over or leave.',
+    'Back at 0:10, with your copy set aside until you take over or leave',
   );
   await expect(page.getByLabel('Ana share')).toHaveValue('30');
   await page.getByRole('button', { name: 'Bring my copy back' }).click();

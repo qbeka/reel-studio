@@ -141,10 +141,10 @@ export function Author({
           Reset
         </button>
       </div>
-      <p>Your changes stay in this page until you export a zip of the static viewer with them in it.</p>
+      <p>Your changes stay in this page until you export a zip of the static viewer with them in it</p>
       <div className="sr-only" role="status">
-        {exportState === 'saved' ? `Saved ${project.id}.zip.` : ''}
-        {exportState === 'failed' ? 'The export failed, so nothing was saved.' : ''}
+        {exportState === 'saved' ? `Saved ${project.id}.zip` : ''}
+        {exportState === 'failed' ? 'The export failed, so nothing was saved' : ''}
       </div>
     </div>
   );

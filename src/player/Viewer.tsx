@@ -164,7 +164,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       setNotice(null);
       setKept(null);
       setAuthoring(false);
-      setAnnouncement('Your own copy is open, and the recording will not change.');
+      setAnnouncement('Your own copy is open, and the recording will not change');
       requestAnimationFrame(() => line.current?.focus({ preventScroll: true }));
     },
     [adapter, playback],
@@ -248,8 +248,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     playback.seek(t);
     setKept(lost ? copy : null);
     const sentence = lost
-      ? `Back at ${formatTime(t)}, with your copy set aside until you take over or leave.`
-      : `Back at ${formatTime(t)}, with nothing to set aside.`;
+      ? `Back at ${formatTime(t)}, with your copy set aside until you take over or leave`
+      : `Back at ${formatTime(t)}, with nothing to set aside`;
     setNotice(sentence);
     setAnnouncement(sentence);
     if (!onPage) history.replaceState(null, '', momentHash(t));
@@ -396,7 +396,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       <main className="reel-viewer">
         <h1>{project.title}</h1>
         <p className="reel-problem" role="alert">
-          This recording cannot play past this point. {story.error}
+          This recording cannot play past this point: {story.error}
         </p>
         <p>
           <a href="./transcript.html">Read the transcript</a>
@@ -412,8 +412,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const caption = captionAt(project.captions, story.t);
   const narration = inBranch
     ? branchEdits === 0
-      ? ', and the recording stays as it is.'
-      : `, with ${branchEdits} ${branchEdits === 1 ? 'edit' : 'edits'} the recording never sees.`
+      ? ', and the recording stays as it is'
+      : `, with ${branchEdits} ${branchEdits === 1 ? 'edit' : 'edits'} the recording never sees`
     : (notice ?? caption?.text ?? '');
 
   // Also offered in a branch: the camera holds its framing there, and this opens the rest.
@@ -490,7 +490,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
 
         {choosing && inBranch && (
           <fieldset className="reel-moments float" ref={moments} tabIndex={-1} aria-label="Choose a moment">
-            <p>The recording resumes at the moment you pick, and your copy is never merged into it.</p>
+            <p>The recording resumes at the moment you pick, and your copy is never merged into it</p>
             <ul>
               <li>
                 <button type="button" className="control" onClick={() => leaveBranch(branch.base.t)}>
@@ -642,7 +642,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
               <dt>T</dt>
               <dd>Take over</dd>
             </dl>
-            <p>Keys do nothing while you type in a field or use a control.</p>
+            <p>Keys do nothing while you type in a field or use a control</p>
           </details>
           <a className="quiet" href="./transcript.html">
             Read the transcript
