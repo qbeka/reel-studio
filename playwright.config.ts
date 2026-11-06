@@ -26,12 +26,12 @@ export default defineConfig({
     // the claim about reach applies to what viewers open.
     {
       name: 'webkit',
-      testMatch: /export\.spec/,
+      testMatch: /(export|site)\.spec/,
       use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } },
     },
     {
       name: 'firefox',
-      testMatch: /export\.spec/,
+      testMatch: /(export|site)\.spec/,
       use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } },
     },
   ],
