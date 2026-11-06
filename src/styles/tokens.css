@@ -1,0 +1,31 @@
+:root {
+  --paper: #fbf8f4;
+  --ink: #111511;
+  --body: #444944;
+  --muted: #5a5e5a;
+  --quiet: #767a77;
+  --forest: #1d3a2a;
+  --line: #1115111f;
+  --line-strong: #11151147;
+  --wash: #6040200e;
+  --problem: #8c2f1b;
+  --serif: 'Geist Serif', Georgia, 'Times New Roman', serif;
+  --sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-synthesis: none;
+  line-height: 1.45;
+}

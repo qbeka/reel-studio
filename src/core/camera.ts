@@ -15,8 +15,9 @@ export interface CameraTransform {
 
 export const FULL_VIEW: CameraTransform = { scale: 1, x: 0, y: 0 };
 
-const MAX_ZOOM = 1.8;
-const PADDING = 24;
+/** Enough to direct the eye. More than this hides the context a viewer needs. */
+const MAX_ZOOM = 1.35;
+const PADDING = 32;
 
 /**
  * The zoom and pan that frame `rect` inside the scene. Both are in scene coordinates.
