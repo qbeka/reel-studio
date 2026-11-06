@@ -3,7 +3,12 @@
 Frozen before the final measurement. A change to anything here after that run means a new
 protocol version and a new run. The earlier results stay in `runs/`.
 
-Version: 1
+Version: 2
+
+Version 1 sampled warm positions with a weak generator, and the sample was skewed toward
+early states. Its run is in `runs/2026-11-06-protocol-1-skewed-positions`, marked as failed.
+Version 2 changes only the sampling: Mulberry32 for the shuffle, 60 baseline samples instead
+of 30, and position quantiles in every raw file.
 
 ## Question
 
@@ -69,17 +74,18 @@ the same code.
    Chromium process.
 3. Cold: open a fresh page per position, seek once.
 4. Warm: open one page. Warmup is 40 seeded seeks plus a seek to the end. These samples
-   are discarded. Measure 300 seeded seeks at distinct times, or 30 for `baseline`, since
-   each takes seconds. A workload with too few distinct times uses all of them, which the
+   are discarded. Measure 300 seeded seeks at distinct times, or 60 for `baseline`, since
+   each takes about a second. A workload with too few distinct times uses all of them, which the
    raw files show.
 5. Scrub 120 positions, then check 12 positions: the full visible scene must equal a server
    render of a replay in Node. The run also records at how many of those positions a state
    one command old would look different, which states the power of the check.
 6. Force a collection and read the heap.
 
-Seek positions come from command timestamps through a linear congruential generator with
-seed bases 1000 (warmup), 2000 (warm), 3000 (scrub) and 4000 (coherence), plus the run
-number. Consecutive equal times are skipped, because a seek to the current time does nothing.
+Seek positions are a uniform sample of the distinct command timestamps, shuffled with
+Mulberry32, with seed bases 1000 (warmup), 2000 (warm), 3000 (scrub) and 4000 (coherence),
+plus the run number. A sample whose median position is outside 0.4 to 0.6 of the log is
+reported as such in the raw file. `tests/unit/sampling.test.ts` checks the sampler.
 
 ## Reporting
 

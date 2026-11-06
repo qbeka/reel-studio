@@ -16,7 +16,7 @@
     "test:e2e": "pnpm build && playwright test",
     "export": "tsx scripts/export.ts",
     "bench:smoke": "tsx bench/run-engine.ts --smoke",
-    "bench": "pnpm build && tsx bench/run-correctness.ts --label local && tsx bench/run-browser.ts --label local --protocol 1 && tsx bench/run-export.ts --label local && tsx bench/summarize.ts runs/$(date +%Y-%m-%d)-local"
+    "bench": "pnpm build && tsx bench/run-correctness.ts --label local && tsx bench/run-browser.ts --label local --protocol 2 && tsx bench/run-export.ts --label local && tsx bench/summarize.ts runs/$(date +%Y-%m-%d)-local"
   },
   "dependencies": {
     "react": "19.3.1",

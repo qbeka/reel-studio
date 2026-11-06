@@ -6,6 +6,7 @@
 import { createHash } from 'node:crypto';
 import type { AnyAdapter, LogEntry } from '../src/core/adapter';
 import { canonicalJson } from '../src/core/canonical';
+import { nextRandom } from '../src/core/random';
 import { Timeline } from '../src/core/timeline';
 
 export const fastHash = (adapter: AnyAdapter, state: unknown): string =>
@@ -36,10 +37,11 @@ export function seekPositions(
   for (let i = 1; i < log.length; i++) {
     if (log[i]!.t === log[i - 1]!.t) addAround(log[i]!.t);
   }
-  let x = seed >>> 0;
+  let rng = seed | 0;
   for (let i = 0; i < spread; i++) {
-    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
-    addAround(log[x % log.length]!.t);
+    const draw = nextRandom(rng);
+    rng = draw.rng;
+    addAround(log[Math.floor(draw.value * log.length)]!.t);
   }
   return [...times].sort((a, b) => a - b);
 }
@@ -76,10 +78,11 @@ export function checkSeeking(
   }
 
   const scrambled = [...positions];
-  let x = 0x9e3779b9;
+  let rng = 0x9e3779b9 | 0;
   for (let i = scrambled.length - 1; i > 0; i--) {
-    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
-    const j = x % (i + 1);
+    const draw = nextRandom(rng);
+    rng = draw.rng;
+    const j = Math.floor(draw.value * (i + 1));
     [scrambled[i], scrambled[j]] = [scrambled[j]!, scrambled[i]!];
   }
 

@@ -39,6 +39,7 @@ interface RunRecord {
   readyMs: number;
   loadAverage: number[];
   warm: { commit: number; nextFrame: number }[];
+  warmPositions: { p50: number };
   cold: { position: number; commit: number }[];
   scrub: { requested: number; committed: number; totalMs: number };
   coherentChecks: { passed: number; total: number };
@@ -64,6 +65,7 @@ for (const [key, group] of [...groups].sort()) {
     workload,
     variant,
     warmSamplesPerRun: group[0]!.warm.length,
+    warmPositionP50: group.map((r) => r.warmPositions.p50),
     warmP50Ms: acrossRuns(group.map((r) => quantile(r.warm.map((s) => s.commit), 0.5))),
     warmP95Ms: acrossRuns(group.map((r) => quantile(r.warm.map((s) => s.commit), 0.95))),
     warmMaxMs: acrossRuns(group.map((r) => Math.max(...r.warm.map((s) => s.commit)))),

@@ -23,6 +23,7 @@ import { readTree, writeBundle } from '../src/export/write';
 import { receiptAdapter } from '../src/scenes/receipt/adapter';
 import type { ReceiptState } from '../src/scenes/receipt/state';
 import { WORKLOADS, projectFrom, receiptLog } from './fixtures';
+import { positionQuantiles, seededTimes } from './sampling';
 
 const PORT = 4330;
 const CHECKPOINT_EVERY = 256;
@@ -41,7 +42,7 @@ const RUNS = Number(values.runs);
 const NAMES = values.workloads!.split(',');
 
 /** Samples per run. The baseline takes seconds per seek, so it gets fewer. */
-const SAMPLES = { warm: 300, warmBaseline: 30, warmup: 40, coldPositions: [0.25, 0.5, 0.75, 1], scrub: 120 };
+const SAMPLES = { warm: 300, warmBaseline: 60, warmup: 40, coldPositions: [0.25, 0.5, 0.75, 1], scrub: 120 };
 
 interface Variant {
   name: 'checkpointed' | 'baseline';
@@ -56,22 +57,6 @@ function workloadProject(name: string, every: number, shortProject: ReelProject)
   if (name === 'short') return { ...shortProject, checkpointEvery: every };
   const spec = WORKLOADS[name as keyof typeof WORKLOADS];
   return projectFrom(receiptAdapter, `bench-${name}`, `Bench ${name}`, receiptLog(spec), spec.seed, every);
-}
-
-/**
- * Seeded positions from the command timestamps, so every seek lands on real work. Times
- * are distinct and shuffled. A log with fewer distinct times than `count` uses them all,
- * and the manifest records how many each sample has.
- */
-function seededTimes(log: readonly LogEntry[], count: number, seed: number): number[] {
-  const times = [...new Set(log.map((c) => c.t))];
-  let x = seed >>> 0;
-  for (let i = times.length - 1; i > 0; i--) {
-    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
-    const j = x % (i + 1);
-    [times[i], times[j]] = [times[j]!, times[i]!];
-  }
-  return times.slice(0, count);
 }
 
 /**
@@ -329,6 +314,7 @@ for (let run = 1; run <= RUNS; run++) {
         loadAverage: loadavg(),
         readyMs,
         warmup: warmupTimes.length + 1,
+        warmPositions: positionQuantiles(log, warm.map((s) => s.t)),
         cold,
         warm,
         scrub,
