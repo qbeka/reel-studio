@@ -1,7 +1,7 @@
 {
   "format": "reel-project",
   "formatVersion": 1,
-  "id": "receipt-split-25953225",
+  "id": "receipt-split-c5d1b599",
   "title": "Receipt split demo",
   "disclosure": "Synthetic data. No real people or accounts.",
   "scene": {
@@ -11,7 +11,7 @@
   "seed": 1,
   "checkpointEvery": 256,
   "trim": null,
-  "posterT": 12868,
+  "posterT": 12872,
   "commands": [
     {
       "type": "selectExpense",
@@ -19,7 +19,7 @@
         "id": "e2"
       },
       "seq": 1,
-      "t": 1811,
+      "t": 1816,
       "source": "user"
     },
     {
@@ -28,7 +28,7 @@
         "mode": "percent"
       },
       "seq": 2,
-      "t": 4219,
+      "t": 4228,
       "source": "user"
     },
     {
@@ -38,7 +38,7 @@
         "value": 5000
       },
       "seq": 3,
-      "t": 5728,
+      "t": 5735,
       "source": "user"
     },
     {
@@ -48,7 +48,7 @@
         "value": 4000
       },
       "seq": 4,
-      "t": 6834,
+      "t": 6841,
       "source": "user"
     },
     {
@@ -58,14 +58,14 @@
         "value": 3000
       },
       "seq": 5,
-      "t": 7940,
+      "t": 7947,
       "source": "user"
     },
     {
       "type": "confirmEdit",
       "payload": {},
       "seq": 6,
-      "t": 9563,
+      "t": 9565,
       "source": "user"
     },
     {
@@ -75,14 +75,14 @@
         "value": 1000
       },
       "seq": 7,
-      "t": 12568,
+      "t": 12572,
       "source": "user"
     },
     {
       "type": "confirmEdit",
       "payload": {},
       "seq": 8,
-      "t": 14194,
+      "t": 14181,
       "source": "user"
     },
     {
@@ -92,7 +92,7 @@
         "ok": true
       },
       "seq": 9,
-      "t": 14647,
+      "t": 14634,
       "source": "outcome"
     },
     {
@@ -101,7 +101,7 @@
         "view": "balances"
       },
       "seq": 10,
-      "t": 16811,
+      "t": 16798,
       "source": "user"
     }
   ],
@@ -113,22 +113,22 @@
     },
     {
       "id": "chapter-2",
-      "t": 4219,
+      "t": 4228,
       "title": "Adjust the split"
     },
     {
       "id": "chapter-3",
-      "t": 9563,
+      "t": 9565,
       "title": "Hit a validation error"
     },
     {
       "id": "chapter-4",
-      "t": 12168,
+      "t": 12172,
       "title": "Correct the shares"
     },
     {
       "id": "chapter-5",
-      "t": 16811,
+      "t": 16798,
       "title": "Inspect the balances"
     }
   ],
@@ -142,28 +142,28 @@
     },
     {
       "id": "caption-2",
-      "start": 4319,
+      "start": 4328,
       "end": 9400,
       "text": "Mina had more. Switch to percent and adjust the shares.",
       "target": "split-editor"
     },
     {
       "id": "caption-3",
-      "start": 9663,
+      "start": 9665,
       "end": 12200,
       "text": "The shares add up to 120%, so the save is refused.",
       "target": "save"
     },
     {
       "id": "caption-4",
-      "start": 12268,
+      "start": 12272,
       "end": 16600,
       "text": "Lower Ana to 10% and the same save goes through.",
       "target": "split-editor"
     },
     {
       "id": "caption-5",
-      "start": 16811,
+      "start": 16798,
       "end": 20000,
       "text": "Balances are recomputed from every receipt.",
       "target": "balances"
@@ -177,12 +177,12 @@
     },
     {
       "id": "shot-2",
-      "t": 4219,
+      "t": 4228,
       "target": "split-editor"
     },
     {
       "id": "shot-3",
-      "t": 16811,
+      "t": 16798,
       "target": null
     }
   ]
