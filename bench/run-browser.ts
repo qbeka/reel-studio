@@ -362,7 +362,8 @@ const manifest = {
   label: values.label,
   protocol: values.protocol,
   commit: git('rev-parse HEAD'),
-  dirty: git('status --porcelain').length > 0,
+  // The run writes its own results to runs/, so that folder does not count.
+  dirty: git("status --porcelain -- . ':!runs'").length > 0,
   command: process.argv.slice(1).join(' '),
   date: new Date().toISOString(),
   browser: { name: 'chromium', version: (results[0] as { browser: string }).browser, headless: true },
