@@ -20,9 +20,9 @@ Sources read on 6 November 2026. Versions are those in `package.json` and the lo
 
 ## Name
 
-`qbeka/reel-studio` is free. The npm name `reel-studio` is taken by an unrelated package
-(0.2.7), and several unrelated GitHub repositories use the name. This project is not
-published to npm. Search again before any public launch.
+The repository is `qbeka/reel-studio`. The npm name `reel-studio` is taken by an unrelated
+package (0.2.7), and several unrelated GitHub repositories use the name. This project is
+not published to npm. Search again before any package release.
 
 ## Pinned versions
 
