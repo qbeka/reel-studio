@@ -22,7 +22,7 @@ const stage = (page: Page) => page.getByRole('figure');
 
 test.describe('keyboard', () => {
   test('transport keys work and their labels are visible', async ({ page }) => {
-    await page.goto(host.url);
+    await page.goto(`${host.url}#t=0`);
     await page.getByText('Keyboard').click();
     await expect(page.getByText('Previous or next chapter')).toBeVisible();
 
@@ -40,11 +40,11 @@ test.describe('keyboard', () => {
     await page.keyboard.press('k');
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
     await page.keyboard.press('t');
-    await expect(page.getByText('This is your copy.')).toBeVisible();
+    await expect(page.getByText('This is your copy')).toBeVisible();
   });
 
   test('the slider follows the pattern and speaks time and chapter', async ({ page }) => {
-    await page.goto(host.url);
+    await page.goto(`${host.url}#t=0`);
     await slider(page).focus();
     await page.keyboard.press('ArrowRight');
     await expect(slider(page)).toHaveValue('1000');
@@ -59,7 +59,7 @@ test.describe('keyboard', () => {
 
   test('typing in a scene field does not trigger shortcuts', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     const field = page.getByLabel('Ana share');
     await field.fill('');
     await field.pressSequentially('12');
@@ -67,26 +67,29 @@ test.describe('keyboard', () => {
     await field.press('t');
     await field.press(' ');
     await field.press('ArrowLeft');
-    await expect(page.getByText('This is your copy.')).toBeVisible();
+    await expect(page.getByText('This is your copy')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Pause' })).toHaveCount(0);
   });
 
   test('space on a focused button activates only that button', async ({ page }) => {
     await page.goto(host.url);
-    await page.getByLabel('Full view').focus();
+    const full = page.getByRole('button', { name: 'Full view' });
+    await full.focus();
     await page.keyboard.press('Space');
-    await expect(page.getByLabel('Full view')).toBeChecked();
+    await expect(full).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: 'Pause' })).toHaveCount(0);
   });
 
-  test('focus moves into the branch and back to Try it', async ({ page }) => {
+  test('focus moves into the branch and back to Take over', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
-    await expect(page.getByText('This is your copy.').locator('..')).toBeFocused();
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    await expect(page.getByRole('group', { name: 'Return to the story' })).toBeFocused();
-    await page.getByRole('button', { name: /where you paused/ }).click();
-    await expect(page.getByRole('button', { name: 'Try it' })).toBeFocused();
+    await page.getByRole('button', { name: 'Take over' }).click();
+    await expect(page.getByText('This is your copy').locator('..')).toBeFocused();
+    await page.getByRole('button', { name: 'Choose a moment' }).click();
+    await expect(page.getByRole('group', { name: 'Choose a moment' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Choose a moment' })).toBeFocused();
+    await page.getByRole('button', { name: 'Back to demo' }).click();
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeFocused();
   });
 });
 
@@ -130,17 +133,17 @@ test.describe('branching', () => {
   test('a timer never discards edits, and the story stays paused', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
     await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('10');
     await page.waitForTimeout(3000);
     await expect(page.getByLabel('Ana share')).toHaveValue('10');
-    await expect(page.getByText('1 edit so far.')).toBeVisible();
+    await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
     await expect(slider(page)).toBeDisabled();
   });
 
   test('a save in the branch runs only the local fixture and makes no request', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('10');
     const requests: string[] = [];
     page.on('request', (r) => requests.push(r.url()));
@@ -153,61 +156,61 @@ test.describe('branching', () => {
 
   test('a refused action is explained in place', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByRole('button', { name: 'Save split' }).click();
     await expect(stage(page).getByRole('alert')).toContainText('120%');
-    await expect(page.getByText('This is your copy.')).toBeVisible();
+    await expect(page.getByText('This is your copy')).toBeVisible();
   });
 
   test('Reset my changes returns to the moment of control', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('10');
+    await page.getByRole('button', { name: 'Choose a moment' }).click();
     await page.getByRole('button', { name: 'Reset my changes' }).click();
     await expect(page.getByLabel('Ana share')).toHaveValue('30');
-    await expect(page.getByText('Change anything.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Reset my changes' })).toBeDisabled();
+    await expect(page.getByText('and the recording stays as it is')).toBeVisible();
+    await page.getByRole('button', { name: 'Choose a moment' }).click();
+    await expect(page.getByRole('button', { name: 'Reset my changes' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   test('a branch with no edits returns without losing anything', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    await expect(page.getByRole('group', { name: 'Return to the story' })).toContainText('Nothing to clear.');
-    await page.getByRole('button', { name: /where you paused/ }).click();
-    await expect(page.getByRole('status')).toContainText('Nothing was lost');
+    await page.getByRole('button', { name: 'Take over' }).click();
+    await page.getByRole('button', { name: 'Back to demo' }).click();
+    await expect(page.getByRole('status')).toContainText('with nothing to set aside');
     await expect(page.getByRole('button', { name: 'Bring my copy back' })).toHaveCount(0);
   });
 
   test('the viewer can return by making the exact authored edit, and is told it matches', async ({ page }) => {
     await page.goto(`${host.url}#t=4000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByRole('radio', { name: 'Percent' }).check({ force: true });
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    const panel = page.getByRole('group', { name: 'Return to the story' });
-    await expect(panel.getByRole('button', { name: /Adjust the split/ })).toContainText('Matches your copy exactly.');
-    await expect(panel.getByRole('button', { name: /Open the receipt/ })).toContainText('Clears your changes.');
+    await page.getByRole('button', { name: 'Choose a moment' }).click();
+    const panel = page.getByRole('group', { name: 'Choose a moment' });
+    await expect(panel.getByRole('button', { name: /Adjust the split/ })).toContainText('Matches your copy');
+    await expect(panel.getByRole('button', { name: /Open the receipt/ })).not.toContainText('Matches');
     await panel.getByRole('button', { name: /Adjust the split/ }).click();
-    await expect(page.getByRole('status')).toContainText('Nothing was lost');
+    await expect(page.getByRole('status')).toContainText('with nothing to set aside');
   });
 
   test('choosing a chapter brings the story back into view', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
     const page = await context.newPage();
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('10');
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    const panel = page.getByRole('group', { name: 'Return to the story' });
+    await page.getByRole('button', { name: 'Choose a moment' }).click();
+    const panel = page.getByRole('group', { name: 'Choose a moment' });
     await panel.getByRole('button', { name: /Inspect the balances/ }).click();
     await expect(page.locator('.reel-frame')).toBeInViewport({ ratio: 0.9 });
-    await expect(page.getByRole('button', { name: 'Try it' })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeFocused();
     await context.close();
   });
 
   test('the address never holds viewer content', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('77');
     expect(new URL(page.url()).hash).toBe('#t=9000');
     expect(page.url()).not.toContain('77');
@@ -219,7 +222,7 @@ test.describe('motion and framing', () => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     await page.goto(`${host.url}?embed=1&play=1#t=6000`);
-    await expect(page.getByLabel('Full view')).toBeChecked();
+    await expect(page.getByRole('button', { name: 'Full view' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
     await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'full');
 
@@ -232,19 +235,24 @@ test.describe('motion and framing', () => {
   test('camera shots frame a target, and Full view turns them off', async ({ page }) => {
     await page.goto(`${host.url}#t=6000`);
     await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'framed');
-    await page.getByLabel('Full view').check();
+    await page.getByRole('button', { name: 'Full view' }).click();
     await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'full');
   });
 
-  test('a caption does not cover its active target', async ({ page }) => {
+  test('a caption sits above the app and covers none of it', async ({ page }) => {
     await page.goto(`${host.url}#t=14000`);
-    const caption = await page.locator('.reel-caption').boundingBox();
-    const target = await page.locator('[data-reel-target="split-editor"]').boundingBox();
-    expect(caption).not.toBeNull();
-    expect(target).not.toBeNull();
-    const overlap =
-      Math.min(caption!.y + caption!.height, target!.y + target!.height) - Math.max(caption!.y, target!.y);
-    expect(overlap).toBeLessThanOrEqual(1);
+    const caption = await page.locator('.reel-narration').boundingBox();
+    const scene = await page.locator('.reel-frame').boundingBox();
+    expect(caption!.y + caption!.height).toBeLessThanOrEqual(scene!.y);
+  });
+
+  test('taking over keeps the framed camera, so nothing moves', async ({ page }) => {
+    await page.goto(`${host.url}#t=6000`);
+    const scene = page.locator('.reel-scene');
+    const before = await scene.getAttribute('style');
+    await page.getByRole('button', { name: 'Take over' }).click();
+    await expect(page.getByText('This is your copy')).toBeVisible();
+    expect(await scene.getAttribute('style')).toBe(before);
   });
 });
 
@@ -259,17 +267,17 @@ test.describe('layouts', () => {
       const context = await browser.newContext({ viewport: { width, height } });
       const page = await context.newPage();
       await page.goto(`${host.url}#t=14000`);
-      await expect(page.getByRole('button', { name: 'Try it' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
       expect(overflow).toBeLessThanOrEqual(0);
 
       const layout = await page.locator('.reel-stage').getAttribute('data-layout');
       expect(layout).toBe(width < 600 ? 'narrow' : 'wide');
       if (width < 600) {
-        // The caption sits below the scene, in text of a readable size.
-        const size = await page.locator('.reel-caption-strip').evaluate((el) => Number.parseFloat(getComputedStyle(el).fontSize));
-        expect(size).toBeGreaterThanOrEqual(16);
-        await expect(page.locator('.reel-caption-strip')).toContainText('Ana');
+        // The caption keeps a readable size in its own line above the scene.
+        const size = await page.locator('.reel-narration').evaluate((el) => Number.parseFloat(getComputedStyle(el).fontSize));
+        expect(size).toBeGreaterThanOrEqual(15);
+        await expect(page.locator('.reel-narration')).toContainText('Ana');
       }
       await context.close();
     });
@@ -281,7 +289,7 @@ test.describe('layouts', () => {
     await page.goto(`${host.url}#t=9000`);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').scrollIntoViewIfNeeded();
     await expect(page.getByLabel('Ana share')).toBeInViewport();
     await context.close();
@@ -291,11 +299,11 @@ test.describe('layouts', () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     const page = await context.newPage();
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).tap();
+    await page.getByRole('button', { name: 'Take over' }).tap();
     await page.getByLabel('Ana share').tap();
     await page.getByLabel('Ana share').fill('10');
-    await expect(page.getByText('1 edit so far.')).toBeVisible();
-    for (const name of ['Reset my changes', 'Return to story']) {
+    await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
+    for (const name of ['Choose a moment', 'Back to demo']) {
       const box = await page.getByRole('button', { name }).boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
     }
@@ -313,7 +321,7 @@ test.describe('layouts', () => {
     await writeFile(join(path, 'project.reel.json'), JSON.stringify(project));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`http://127.0.0.1:${PORT}/projects/long/#t=6000`);
-    await expect(page.getByRole('button', { name: 'Try it' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
   });
@@ -356,7 +364,7 @@ test.describe('failure pages', () => {
   test('a missing transcript file does not stop the story', async ({ page }) => {
     await page.route('**/transcript.json', (route) => route.fulfill({ status: 404, body: 'gone' }));
     await page.goto(host.url);
-    await expect(page.getByRole('button', { name: 'Try it' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
   });
 });
 
@@ -390,11 +398,14 @@ test.describe('accessibility scan', () => {
 
   test('finds no violations in the story, the branch or the return panel', async ({ page }) => {
     await page.goto(`${host.url}#t=14000`);
-    await expect(page.getByRole('button', { name: 'Try it' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
     expect(await scan(page)).toEqual([]);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     expect(await scan(page)).toEqual([]);
-    await page.getByRole('button', { name: 'Return to story' }).click();
+    await page.getByRole('button', { name: 'Choose a moment' }).click();
+    expect(await scan(page)).toEqual([]);
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Back to demo' }).click();
     expect(await scan(page)).toEqual([]);
   });
 

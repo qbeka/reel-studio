@@ -25,7 +25,7 @@ test.beforeEach(async ({ page }) => {
 test('runs from a clean folder under a nested path on a plain static server', async ({ page }) => {
   await page.goto(host.url);
   await expect(page.getByRole('heading', { name: 'Fix a shared receipt' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Try it' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
 
   const base = new URL(host.url);
   for (const url of host.requests) {
@@ -61,21 +61,21 @@ test('plays the story to the end', async ({ page }) => {
 test('the viewer takes control, sees a recomputed result and returns at a chapter', async ({ page }) => {
   await page.goto(`${host.url}#t=9000`);
   await expect(page.getByLabel('Ana share')).toHaveValue('30');
-  await page.getByRole('button', { name: 'Try it' }).click();
-  await expect(page.getByText('This is your copy.')).toBeVisible();
+  await page.getByRole('button', { name: 'Take over' }).click();
+  await expect(page.getByText('This is your copy')).toBeVisible();
 
   await page.getByLabel('Ana share').fill('10');
-  await expect(page.getByText('1 edit so far.')).toBeVisible();
+  await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Balances after this split' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Return to story' }).click();
-  const panel = page.getByRole('group', { name: 'Return to the story' });
+  await page.getByRole('button', { name: 'Choose a moment' }).click();
+  const panel = page.getByRole('group', { name: 'Choose a moment' });
   await panel.getByRole('button', { name: /Inspect the balances/ }).click();
-  await expect(page.getByRole('status')).toContainText('Your changes are cleared');
+  await expect(page.getByRole('status')).toContainText('with your copy set aside');
   await expect(page.getByRole('heading', { name: 'Who owes what' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Bring my copy back' }).click();
-  await expect(page.getByText('1 edit so far.')).toBeVisible();
+  await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
   await expect(page.getByLabel('Ana share')).toHaveValue('10');
 });
 
@@ -101,12 +101,12 @@ test('the transcript page works with JavaScript off', async ({ browser }) => {
   await context.close();
 });
 
-test('an invalid link is ignored', async ({ page }) => {
+test('an invalid link is ignored, and the viewer opens at the poster', async ({ page }) => {
   await page.goto(`${host.url}#t=999999999`);
-  await expect(page.getByRole('slider', { name: 'Story position' })).toHaveValue('0');
+  await expect(page.getByRole('slider', { name: 'Story position' })).toHaveValue('14000');
   await page.goto(`${host.url}#chapter=%3Cscript%3E`);
   await page.reload();
-  await expect(page.getByRole('slider', { name: 'Story position' })).toHaveValue('0');
+  await expect(page.getByRole('slider', { name: 'Story position' })).toHaveValue('14000');
 });
 
 test('a chapter link opens at that chapter', async ({ page }) => {

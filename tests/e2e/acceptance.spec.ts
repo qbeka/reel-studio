@@ -97,18 +97,18 @@ test('a second scene goes from recording to a hosted interactive demo', async ({
   await expect(stage.getByText('Delivered after', { exact: false })).toBeVisible();
 
   /* Take control, then return --------------------------------------------------------- */
-  await viewer.getByRole('button', { name: 'Try it' }).click();
-  await expect(viewer.getByText('This is your copy.')).toBeVisible();
+  await viewer.getByRole('button', { name: 'Take over' }).click();
+  await expect(viewer.getByText('This is your copy')).toBeVisible();
   await stage.getByRole('button', { name: 'Send an event' }).click();
   await expect(stage.getByText('Event 2')).toBeVisible();
-  await expect(viewer.getByText('1 edit so far.')).toBeVisible();
+  await expect(viewer.getByText('with 1 edit the recording never sees')).toBeVisible();
 
-  await viewer.getByRole('button', { name: 'Return to story' }).click();
+  await viewer.getByRole('button', { name: 'Choose a moment' }).click();
   await viewer
-    .getByRole('group', { name: 'Return to the story' })
+    .getByRole('group', { name: 'Choose a moment' })
     .getByRole('button', { name: /Send into a failing endpoint/ })
     .click();
-  await expect(viewer.getByRole('status')).toContainText('Your changes are cleared');
+  await expect(viewer.getByRole('status')).toContainText('with your copy set aside');
   await expect(stage.getByText('Event 2')).toHaveCount(0);
 
   /* The source is unchanged, and a reload restores the story -------------------------- */

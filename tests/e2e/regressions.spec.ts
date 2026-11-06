@@ -30,48 +30,51 @@ test.afterAll(async () => {
   await slow.close();
 });
 
-const panel = (page: Page) => page.getByRole('group', { name: 'Return to the story' });
+const panel = (page: Page) => page.getByRole('group', { name: 'Choose a moment' });
+const chooseAMoment = (page: Page) => page.getByRole('button', { name: 'Choose a moment' }).click();
 const lane = (page: Page) => page.getByRole('region', { name: 'Timeline' }).locator('.ed-command');
 
 test.describe('viewer', () => {
   test('a restored copy still warns before it is cleared', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('10');
-    await page.getByRole('button', { name: 'Return to story' }).click();
+    await chooseAMoment(page);
     await panel(page).getByRole('button', { name: /Inspect the balances/ }).click();
     await page.getByRole('button', { name: 'Bring my copy back' }).click();
     await expect(page.getByLabel('Ana share')).toHaveValue('10');
 
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    await expect(panel(page).getByRole('button', { name: /Inspect the balances/ })).toContainText('Clears your changes.');
+    await chooseAMoment(page);
+    await expect(panel(page).getByRole('button', { name: /Inspect the balances/ })).not.toContainText('Matches');
     await panel(page).getByRole('button', { name: /Inspect the balances/ }).click();
-    await expect(page.getByRole('status')).toContainText('Your changes are cleared');
+    await expect(page.getByRole('status')).toContainText('with your copy set aside');
     await expect(page.getByRole('button', { name: 'Bring my copy back' })).toHaveCount(1);
   });
 
-  test('the scene cannot change behind the return panel', async ({ page }) => {
+  test('the scene cannot change behind the list of moments', async ({ page }) => {
     await page.goto(`${host.url}#t=4000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByRole('radio', { name: 'Percent' }).check({ force: true });
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    await expect(panel(page).getByRole('button', { name: /Adjust the split/ })).toContainText('Matches your copy exactly.');
-    await expect(page.locator('.reel-scene')).toHaveAttribute('inert', '');
-    await page.getByRole('button', { name: 'Keep experimenting' }).click();
+    await chooseAMoment(page);
+    await expect(panel(page).getByRole('button', { name: /Adjust the split/ })).toContainText('Matches your copy');
+    // Pressing the app closes the list first, so a promise in it is never left stale.
+    await page.locator('.rs-receipt h2').click();
+    await expect(panel(page)).toHaveCount(0);
     await expect(page.locator('.reel-scene')).not.toHaveAttribute('inert', '');
   });
 
-  test('Try it during a recorded save lets the save finish', async ({ page }) => {
+  test('Take over during a recorded save lets the save finish', async ({ page }) => {
     await page.goto(`${host.url}#t=15500`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     const stage = page.getByRole('figure');
     await expect(stage.getByRole('button', { name: 'Save split' })).toBeEnabled({ timeout: 2000 });
+    await page.getByRole('button', { name: 'Full view' }).click();
     await stage.getByRole('button', { name: /Corner Grocer/ }).click();
     await expect(stage.getByRole('heading', { name: 'Corner Grocer' })).toBeVisible();
   });
 
   test('End while playing stays at the end', async ({ page }) => {
-    await page.goto(host.url);
+    await page.goto(`${host.url}#t=0`);
     await page.getByRole('button', { name: 'Play', exact: true }).click();
     const slider = page.getByRole('slider', { name: 'Story position' });
     await slider.focus();
@@ -80,7 +83,7 @@ test.describe('viewer', () => {
     await expect(slider).toHaveValue(await slider.getAttribute('max') as string);
   });
 
-  test('Try it during a slow seek forks the state that was asked for', async ({ page }) => {
+  test('Take over during a slow seek forks the state that was asked for', async ({ page }) => {
     await page.goto(slow.url);
     await page.waitForSelector('.reel-slider');
     const target = slowLog.at(-1)!.t;
@@ -90,10 +93,10 @@ test.describe('viewer', () => {
       set.call(slider, String(t));
       slider.dispatchEvent(new Event('input', { bubbles: true }));
       return new Promise((resolve) => setTimeout(resolve, 30)).then(() => {
-        [...document.querySelectorAll('button')].find((b) => b.textContent === 'Try it')!.click();
+        [...document.querySelectorAll('button')].find((b) => b.textContent === 'Take over')!.click();
       });
     }, target);
-    await expect(page.getByText('This is your copy.')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('This is your copy')).toBeVisible({ timeout: 60_000 });
     const timeline = new Timeline<any>(receiptAdapter, slowLog, { seed: 5, checkpointEvery: 256 });
     const expected = timeline.stateAt(target).expenses.length;
     await expect(page.locator('.rs')).toContainText(`${expected} receipts`);
@@ -101,37 +104,38 @@ test.describe('viewer', () => {
 });
 
 test.describe('viewer, second review', () => {
-  test('Try it waiting on a seek cannot replace a restored copy', async ({ page }) => {
+  test('Take over waiting on a seek cannot replace a restored copy', async ({ page }) => {
     await page.goto(`${slow.url}#t=${slowLog[40]!.t}`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByRole('button', { name: 'Add a sample receipt' }).click();
-    await expect(page.getByText('1 edit so far.')).toBeVisible();
-    await page.getByRole('button', { name: 'Return to story' }).click();
+    await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
+    await chooseAMoment(page);
     await panel(page).getByRole('button', { name: /Part 4/ }).click();
     await page.evaluate(() => {
       const button = (name: string) =>
         [...document.querySelectorAll('button')].find((b) => b.textContent === name) as HTMLButtonElement;
-      button('Try it').click();
+      button('Take over').click();
       button('Bring my copy back').click();
     });
-    await expect(page.getByText('1 edit so far.')).toBeVisible();
+    await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
     await page.waitForFunction(
       () => (document.querySelector('.reel-bar') as HTMLElement).dataset.seeking === 'false',
       undefined,
       { timeout: 60_000 },
     );
     await page.waitForTimeout(200);
-    await expect(page.getByText('1 edit so far.')).toBeVisible();
+    await expect(page.getByText('with 1 edit the recording never sees')).toBeVisible();
   });
 
-  test('focus stays useful after Reset and Keep experimenting', async ({ page }) => {
+  test('focus stays useful after Escape and Reset', async ({ page }) => {
     await page.goto(`${host.url}#t=9000`);
-    await page.getByRole('button', { name: 'Try it' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
     await page.getByLabel('Ana share').fill('10');
-    await page.getByRole('button', { name: 'Return to story' }).click();
-    await page.getByRole('button', { name: 'Keep experimenting' }).click();
-    const status = page.getByText('This is your copy.').locator('..');
-    await expect(status).toBeFocused();
+    await chooseAMoment(page);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Choose a moment' })).toBeFocused();
+    const status = page.getByText('This is your copy').locator('..');
+    await chooseAMoment(page);
     await page.getByRole('button', { name: 'Reset my changes' }).click();
     await expect(status).toBeFocused();
   });
