@@ -1,7 +1,7 @@
 # Report
 
 Measured on 6 November 2026 with protocol 3 ([bench/PROTOCOL.md](../bench/PROTOCOL.md)), at
-commit `84873a6`, on one Apple M5 Pro laptop on AC power. Chromium 158, headless, Node 22.16.
+commit `91696b9`, on one Apple M5 Pro laptop on AC power. Chromium 158, headless, Node 22.16.
 Raw data is in [runs/2026-11-06-final](../runs/2026-11-06-final).
 
 ## Result
@@ -161,7 +161,7 @@ machines. The state hashes in `manifest.json` should not.
 
 ## Clean checkout
 
-A fresh `git clone` of commit `92d8d27`, on the same machine, with a frozen lockfile. Source
+A fresh `git clone` of commit `9090b4c`, on the same machine, with a frozen lockfile. Source
 files match the measured commit. Only documents changed after it.
 
 | Command | Result |

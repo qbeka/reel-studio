@@ -1,7 +1,7 @@
 {
   "label": "final",
   "protocol": "3",
-  "commit": "84873a6b064c20f17b431c15b39a5eb473e405f8",
+  "commit": "91696b95041792eb120b85b2c5339d77c6c69db4",
   "dirty": false,
   "command": "/Users/qendrimbeka/Coding_Projects/reel-studio/bench/run-browser.ts --label final --runs 5 --protocol 3",
   "date": "2026-11-06T09:21:18.218Z",
