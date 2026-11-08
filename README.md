@@ -7,7 +7,7 @@ story at a chapter.
 
 ![A viewer has taken control of a receipt demo. The split is edited, the balances are recomputed, and a thin line forks from the timeline.](docs/media/cover.png)
 
-**[Try the live demo](https://www.qendrimbeka.com/projects/reel/index.html)**, watch the
+**[Try the live demo](https://www.qendrimbeka.com/projects/reel/)**, watch the
 [18 second demo](docs/media/demo.mp4), or see the
 [61 second walkthrough](docs/media/walkthrough.mp4), which is silent with on-screen notes.
 
