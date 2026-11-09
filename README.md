@@ -9,7 +9,7 @@ story at a chapter.
 
 **[Try the live demo](https://www.qendrimbeka.com/projects/reel/)**, watch the
 [18 second demo](docs/media/demo.mp4), or see the
-[61 second walkthrough](docs/media/walkthrough.mp4), which is silent with on-screen notes.
+[63 second walkthrough](docs/media/walkthrough.mp4), which is silent with on-screen notes.
 
 ## Quick start
 
@@ -63,14 +63,15 @@ that, use a tool like [rrweb](https://github.com/rrweb-io/rrweb).
 
 | | |
 |---|---|
-| **Seek** | p95 17 ms on a generated 20,000 command log, against 973 ms replaying from the start. On a real 10 command recording both take 1.1 ms. |
-| **First seek** | About 1.1 s at worst on that same log, in a fresh page. The page appears in 119 ms. |
+| **Seek** | p95 22 ms on a generated 20,000 command log, against 1,074 ms replaying from the start. On a real 10 command recording both take 3.2 ms. |
+| **First seek** | About 1.2 s at worst on that same log, in a fresh page. The page appears in 137 ms. |
 | **Correctness** | 0 mismatches against replay at 5,332 positions. An independent model of each scene agreed on every log. |
 | **Test quality** | 14 of 14 seeded failures caught. 36 of 38 mutants killed, 2 equivalent. |
-| **Viewer size** | 91 KB of JavaScript and CSS with gzip. It needs no backend. |
+| **Viewer size** | 105 KB of JavaScript and CSS with gzip. It needs no backend. |
 
-Measured on one Apple M5 Pro laptop in headless Chromium, with other work running. These are
-lab numbers. [What they leave out](docs/REPORT.md#what-the-headline-leaves-out).
+Measured on 9 November 2026 on one Apple M5 Pro laptop in headless Chromium, with other work
+running. The mutants are from the run of 6 November, because the code they change has not
+changed. These are lab numbers. [What they leave out](docs/REPORT.md#what-the-headline-leaves-out).
 
 ## Add a scene
 
