@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { AnyAdapter } from '../src/core/adapter';
 import { newTrackId } from '../src/core/edit';
-import type { ReelProject } from '../src/core/project';
-import { captionAt } from '../src/core/tracks';
+import { type ReelProject, formatTime } from '../src/core/project';
+import { captionAt, shotAt } from '../src/core/tracks';
 import type { AuthorContext } from '../src/player/Viewer';
 
 /** A caption with no later caption to stop at runs this long. */
@@ -49,6 +49,18 @@ function withCaption(
   };
 }
 
+/**
+ * Frames `target` from `t` on. A shot that repeats the one before it says nothing, so it
+ * is dropped, and so is a later shot that this change has made a repeat.
+ */
+function withShot(project: ReelProject, t: number, target: string | null): ReelProject {
+  const others = project.camera.filter((shot) => shot.t !== t);
+  const id = project.camera.find((shot) => shot.t === t)?.id ?? newTrackId(project, 'shot');
+  const sorted = [...others, { id, t, target }].sort((a, b) => a.t - b.t);
+  const camera = sorted.filter((shot, i) => shot.target !== (i === 0 ? null : sorted[i - 1]!.target));
+  return { ...project, camera };
+}
+
 type ExportState = 'idle' | 'working' | 'saved' | 'failed';
 
 export function Author({
@@ -64,17 +76,30 @@ export function Author({
   onChange: (project: ReelProject) => void;
   context: AuthorContext;
 }) {
-  const { command } = context;
+  const { command, steps, current, seek, close } = context;
   const [exportState, setExportState] = useState<ExportState>('idle');
   const running = useRef<AbortController | null>(null);
+  const list = useRef<HTMLOListElement>(null);
   useEffect(() => () => running.current?.abort(), []);
   useEffect(() => {
     if (project !== null) setExportState((state) => (state === 'saved' ? 'idle' : state));
   }, [project]);
 
+  // Moves only this list. `scrollIntoView` would also move the page.
+  useLayoutEffect(() => {
+    const box = list.current!;
+    const item = box.querySelector<HTMLElement>('[aria-current="step"]');
+    if (item === null) return;
+    const top = item.offsetTop;
+    const bottom = top + item.offsetHeight;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+  });
+
   const t = command?.t ?? 0;
   const chapter = project.chapters.find((c) => c.t === t)?.title ?? '';
   const caption = captionAt(project.captions, t)?.text ?? '';
+  const framed = shotAt(project.camera, t)?.target ?? null;
   const changed = project !== original;
 
   const save = async () => {
@@ -95,30 +120,75 @@ export function Author({
 
   return (
     <div className="author">
-      <label>
-        <span>Chapter title</span>
-        <input
-          key={`chapter-${t}`}
-          value={chapter}
-          maxLength={TITLE_LENGTH}
-          disabled={command === null}
-          placeholder="This step starts no chapter"
-          onChange={(event) => onChange(withChapter(project, t, event.target.value))}
-        />
-      </label>
-      <label>
-        <span>Caption</span>
-        <textarea
-          key={`caption-${t}`}
-          value={caption}
-          rows={2}
-          maxLength={CAPTION_LENGTH}
-          disabled={command === null}
-          placeholder="Nothing is said at this step"
-          onChange={(event) => onChange(withCaption(adapter, project, context, event.target.value))}
-        />
-      </label>
-      <div className="author-actions">
+      <header className="author-head">
+        <h2>Authoring</h2>
+        <button type="button" className="control" onClick={close}>
+          Done
+        </button>
+      </header>
+
+      <ol className="author-steps" ref={list} aria-label="Recorded commands">
+        {steps.map((step, index) => (
+          <li key={step.t}>
+            <button
+              type="button"
+              className="author-step"
+              aria-current={index === current ? 'step' : undefined}
+              data-chapter={step.chapter}
+              title={step.text}
+              onClick={() => seek(step.t)}
+            >
+              <time>{formatTime(step.t)}</time>
+              <span>{step.text}</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      <div className="author-fields">
+        <label>
+          <span>Chapter that starts at this command</span>
+          <input
+            key={`chapter-${t}`}
+            value={chapter}
+            maxLength={TITLE_LENGTH}
+            disabled={command === null}
+            placeholder="None starts here"
+            onChange={(event) => onChange(withChapter(project, t, event.target.value))}
+          />
+        </label>
+        <label>
+          <span>Caption</span>
+          <textarea
+            key={`caption-${t}`}
+            value={caption}
+            rows={2}
+            maxLength={CAPTION_LENGTH}
+            disabled={command === null}
+            placeholder="Nothing is said here"
+            onChange={(event) => onChange(withCaption(adapter, project, context, event.target.value))}
+          />
+        </label>
+        <label>
+          <span>Camera from this command on</span>
+          <span className="author-select">
+            <select
+              value={framed ?? ''}
+              disabled={command === null}
+              onChange={(event) => onChange(withShot(project, t, event.target.value || null))}
+            >
+              <option value="">The whole app</option>
+              {adapter.targets.map((target) => (
+                <option key={target.id} value={target.id}>
+                  {target.label}
+                </option>
+              ))}
+            </select>
+          </span>
+        </label>
+      </div>
+
+      <footer className="author-actions">
         <button
           type="button"
           className="control primary"
@@ -140,8 +210,8 @@ export function Author({
         >
           Reset
         </button>
-      </div>
-      <p>Your changes stay in this page until you export a zip of the static viewer with them in it</p>
+        <p>Under the timeline the grey bars are captions and the green bar is a close camera, and Export saves a zip of the viewer with your changes</p>
+      </footer>
       <div className="sr-only" role="status">
         {exportState === 'saved' ? `Saved ${project.id}.zip` : ''}
         {exportState === 'failed' ? 'The export failed, so nothing was saved' : ''}

@@ -3,11 +3,87 @@
   padding: 24px;
 }
 
-/* The short authoring view, under the steps. */
+/* The authoring panel: the recorded commands, then the tracks laid over the one selected. */
 .author {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.author-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 6px 14px;
+  border-bottom: 1px solid var(--line);
+
+  & h2 {
+    margin: 0;
+    font: 400 17px/24px var(--serif);
+    letter-spacing: -0.01em;
+  }
+}
+.author-steps {
+  flex: 1 1 96px;
+  min-height: 72px;
+  margin: 0;
+  padding: 6px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  scrollbar-width: thin;
+}
+.author-step {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: baseline;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--body);
+  font: 400 13px/18px var(--sans);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+
+  & time {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  & span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &[data-chapter='true'] time {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+  &:active {
+    background: var(--wash-strong);
+  }
+  &[aria-current='step'] {
+    background: var(--forest);
+    color: #fff;
+  }
+  &[aria-current='step'] time {
+    color: #ffffffc7;
+  }
+  &[aria-current='step']:active {
+    background: var(--forest-pressed);
+  }
+}
+.author-fields {
   flex: none;
   display: grid;
-  gap: 10px;
+  gap: 9px;
   padding: 10px 14px 12px;
   border-top: 1px solid var(--line);
 
@@ -15,22 +91,24 @@
     display: grid;
     gap: 4px;
   }
-  & label span {
+  & label > span:first-child {
     font-size: 12px;
     line-height: 16px;
     color: var(--muted);
   }
   & input,
-  & textarea {
+  & textarea,
+  & select {
     width: 100%;
-    padding: 6px 8px;
+    margin: 0;
+    padding: 6px 9px;
     border: 1px solid var(--line-strong);
     border-radius: var(--radius-control);
     background: var(--paper);
     color: var(--ink);
     font: 400 13px/18px var(--sans);
     resize: none;
-    transition: border-color 0.12s;
+    transition: border-color 0.12s, box-shadow 0.12s;
 
     &::placeholder {
       color: var(--faint);
@@ -38,24 +116,51 @@
     &:disabled {
       color: var(--faint);
     }
+    &:focus-visible {
+      outline: none;
+      border-color: var(--forest);
+      box-shadow: 0 0 0 3px #1d3a2a26;
+    }
   }
-  & p {
-    margin: 0;
-    font-size: 12px;
-    line-height: 16px;
-    color: var(--muted);
+  & select {
+    appearance: none;
+    padding-right: 30px;
+    cursor: pointer;
   }
   @media (pointer: coarse) {
     & input,
-    & textarea {
+    & textarea,
+    & select {
       font-size: 16px;
     }
   }
 }
+.author-select {
+  position: relative;
+  display: block;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 6px;
+    height: 6px;
+    border: solid var(--muted);
+    border-width: 0 1.5px 1.5px 0;
+    translate: 0 -70%;
+    rotate: 45deg;
+    pointer-events: none;
+  }
+}
 .author-actions {
+  flex: none;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--line);
 
   & .primary {
     display: inline-grid;
@@ -67,10 +172,29 @@
   & .primary span[data-on='true'] {
     visibility: visible;
   }
+  & p {
+    flex-basis: 100%;
+    margin: 2px 0 0;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--muted);
+  }
 }
 @media (hover: hover) {
-  .author input:hover:not(:disabled),
-  .author textarea:hover:not(:disabled) {
+  .author-step:hover {
+    background: var(--wash);
+    color: var(--ink);
+  }
+  .author-step[aria-current='step']:hover {
+    background: var(--forest-hover);
+    color: #fff;
+  }
+  .author-step[aria-current='step']:active {
+    background: var(--forest-pressed);
+  }
+  .author-fields input:hover:not(:disabled),
+  .author-fields textarea:hover:not(:disabled),
+  .author-fields select:hover:not(:disabled) {
     border-color: #11151147;
   }
 }
