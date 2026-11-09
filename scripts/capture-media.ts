@@ -89,23 +89,18 @@ const browser = await chromium.launch();
 
 /* Stills ------------------------------------------------------------------------------ */
 {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 640 }, deviceScaleFactor: 2 });
-  await page.goto(`${viewerUrl}#t=8500`);
+  // The cover is the stage alone, just after a viewer took over at the refused save and
+  // fixed it. The viewport is sized so the stage comes out close to the 2:1 GitHub uses.
+  const page = await browser.newPage({ viewport: { width: 1128, height: 700 }, deviceScaleFactor: 2 });
+  await page.goto(`${viewerUrl}#t=10600`);
+  await page.getByRole('button', { name: 'Full view' }).click();
+  await page.waitForTimeout(800);
   await page.getByRole('button', { name: 'Take over' }).click();
   await page.getByLabel('Ana share').fill('10');
-  await page.getByLabel('Theo share').fill('30');
-  await page.getByLabel('Mina share').fill('60');
-  await page.getByLabel('Mina share').blur();
-  await page.waitForTimeout(200);
-  // A narrower column of the real layout, so the title, the recomputed balances and the
-  // fork all fit in the 2:1 frame GitHub uses for a cover.
-  await page.evaluate(() => {
-    document.querySelector('.reel-viewer')?.setAttribute('style', 'max-width:800px;padding-top:12px');
-    document.activeElement instanceof HTMLElement && document.activeElement.blur();
-    scrollTo(0, 0);
-  });
-  await page.waitForTimeout(200);
-  await page.screenshot({ path: join(OUT, 'cover.png') });
+  await page.getByLabel('Ana share').blur();
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(1200);
+  await page.locator('.stage').screenshot({ path: join(OUT, 'cover.png') });
   await page.close();
 
   const poster = await browser.newPage({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 2 });
