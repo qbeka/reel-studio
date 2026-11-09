@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CameraShot, Caption, Chapter } from '../core/project';
 import { formatTime } from '../core/project';
 import { chapterIndexAt } from '../core/tracks';
@@ -109,6 +109,8 @@ export interface TimelineBarProps {
   tracks?: { captions: readonly Caption[]; camera: readonly CameraShot[] } | null;
 }
 
+const NO_STEPS: readonly number[] = [];
+
 /** Keyboard steps for the slider, in milliseconds. */
 const SLIDER_KEYS: Record<string, number> = {
   ArrowRight: 1000,
@@ -133,7 +135,7 @@ export function TimelineBar({
   range,
   t,
   chapters,
-  steps = [],
+  steps = NO_STEPS,
   onSeek,
   disabled,
   fork,
@@ -180,6 +182,25 @@ export function TimelineBar({
     };
   });
   const current = chapterIndexAt(chapters, t);
+
+  // One dot per command, as a single path of zero length strokes with round ends. A long
+  // log has thousands, and as one path they cost nothing when the story moves: the dots
+  // already passed are the same path again, cut off at the playhead.
+  const dots = useMemo(() => {
+    if (usable === 0) return '';
+    const from = range.start;
+    let d = '';
+    let last = Number.NaN;
+    for (const step of steps) {
+      if (step < from || step > range.end) continue;
+      // Commands closer than a third of a pixel share a dot.
+      const at = Math.round((INSET + ((step - from) / span) * usable) * 3) / 3;
+      if (at === last) continue;
+      last = at;
+      d += `M${at.toFixed(2)} ${top + 10}h0`;
+    }
+    return d;
+  }, [steps, range.start, range.end, span, usable, top]);
 
   // Each name is centred over its chapter. A name wider than a short chapter is allowed
   // to reach past it, and its neighbours give way. Only when the names cannot all fit
@@ -262,10 +283,12 @@ export function TimelineBar({
             />
           ))}
         </g>
-        {tracks === null &&
-          steps.map((step) => (
-            <circle key={step} className="reel-step-tick" data-past={step <= t} cx={x(step)} cy={top + 10} r={1.6} />
-          ))}
+        {tracks === null && dots !== '' && (
+          <>
+            <path className="reel-step-tick" d={dots} />
+            <path className="reel-step-tick" data-past="true" d={dots} clipPath={`url(#${clip})`} />
+          </>
+        )}
         {tracks?.captions.map((caption) => (
           <rect
             key={caption.id}

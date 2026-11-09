@@ -655,10 +655,13 @@
   fill: #11151161;
 }
 .reel-step-tick {
-  fill: var(--faint, #8d918e);
+  fill: none;
+  stroke: var(--faint, #8d918e);
+  stroke-width: 3.2;
+  stroke-linecap: round;
 
   &[data-past='true'] {
-    fill: var(--ink, #111511);
+    stroke: var(--ink, #111511);
   }
 }
 .reel-lane-caption {
