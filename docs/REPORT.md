@@ -105,10 +105,10 @@ neither can change behaviour. Each kill records which test caught it, and the un
 suite passed first. The mutants change reducers and engine code, which the redesign did not
 touch, so they were not run again.
 
-Browser suite: 100 test runs. Chromium runs all 82 distinct tests. WebKit and Firefox each
-repeat the 9 exported viewer tests. The editor was only tested in Chromium. Axe finds no
-violations on the story, branch, return panel, embed, transcript, start page or editor.
-Automated checks do not establish full accessibility.
+Browser suite: 135 test runs. Chromium runs all 97 distinct tests. WebKit and Firefox each
+repeat the 9 exported viewer tests and the 10 project page tests. The editor was only tested
+in Chromium. Axe finds no violations on the story, branch, return panel, embed, transcript,
+start page or editor. Automated checks do not establish full accessibility.
 
 ## What moved between the two runs
 
@@ -195,17 +195,17 @@ machines. The state hashes in `manifest.json` should not.
 
 ## Clean checkout
 
-A fresh `git clone` of commit `9090b4c`, on the same machine, with a frozen lockfile. Source
-files match the measured commit. Only documents changed after it.
+A fresh `git clone` of commit `b84472a`, on the same machine, with a frozen lockfile. Source
+files match the measured commit. Only a benchmark script and documents changed after it.
 
 | Command | Result |
 |---|---|
 | `pnpm install --frozen-lockfile` | Passed |
 | `pnpm check` | Passed |
-| `pnpm test` | 237 of 237 passed |
+| `pnpm test` | 247 of 247 passed |
 | `pnpm build` | Passed |
-| `pnpm exec playwright test` | 100 of 100 passed on Chromium, WebKit and Firefox |
-| `pnpm export` and `scripts/verify-bundle.ts` | 13 files matched, and the replay reproduced the final state |
-| `pnpm demo` | Served the viewer and the embed at `/projects/reel/` |
+| `pnpm exec playwright test` | 135 of 135 passed on Chromium, WebKit and Firefox |
+| `pnpm export` and `scripts/verify-bundle.ts` | 14 files matched, and the replay reproduced the final state |
+| `pnpm build:site` | Built the project page with the exported viewer under it |
 
 This shows a clean checkout works here. It was not repeated on a second machine.

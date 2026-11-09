@@ -122,8 +122,8 @@ Run the unit tests, including the oracles, fuzz tests and negative controls.
 pnpm test
 ```
 
-Run the browser tests. Chromium runs all 82. WebKit and Firefox repeat the 9 exported viewer
-tests. On a Mac, keep the display awake, or WebKit clicks fail.
+Run the browser tests. Chromium runs all 97. WebKit and Firefox repeat the 19 exported viewer
+and project page tests. On a Mac, keep the display awake, or WebKit clicks fail.
 
 ```bash
 pnpm exec playwright install chromium webkit firefox
