@@ -42,6 +42,17 @@ export function frameRect(rect: Rect | null, viewport: Size): CameraTransform {
   return { scale, x: -left, y: -top };
 }
 
+/** A camera part of the way from `a` to `b`. `p` runs from 0 to 1. */
+export function mixCamera(a: CameraTransform, b: CameraTransform, p: number): CameraTransform {
+  if (p <= 0 || a === b) return p >= 1 ? b : a;
+  if (p >= 1) return b;
+  return {
+    scale: a.scale + (b.scale - a.scale) * p,
+    x: a.x + (b.x - a.x) * p,
+    y: a.y + (b.y - a.y) * p,
+  };
+}
+
 function clamp(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value));
 }
@@ -56,22 +67,48 @@ export function projectRect(rect: Rect, camera: CameraTransform): Rect {
   };
 }
 
-export type CaptionPlacement = 'top' | 'bottom';
+export type CalloutSide = 'left' | 'right' | 'below';
+
+export interface CalloutPlace {
+  side: CalloutSide;
+  /** Top left corner of the callout, in the same units as the frame. */
+  x: number;
+  y: number;
+  /** Where its pointer leaves the box, measured down from the top of the box. */
+  tail: number;
+}
+
+const CALLOUT_MARGIN = 10;
+const CALLOUT_GAP = 14;
 
 /**
- * Picks the edge that overlaps the active target least. `captionHeight` is in the same
- * units as the viewport. With no target the caption sits at the bottom, where subtitles
- * are expected. The bottom also wins a tie.
+ * Puts a caption beside the thing it is about, never on top of it. It goes on the side of
+ * `anchor` that has room, level with `focusY` when that lies within the anchor, so the
+ * words stay next to the control in use. With no anchor, or no room on either side, it
+ * sits along the bottom of the frame, where subtitles are expected.
  */
-export function placeCaption(
-  target: Rect | null,
-  viewportHeight: number,
-  captionHeight: number,
-): CaptionPlacement {
-  if (target === null) return 'bottom';
-  const top = Math.max(0, target.y);
-  const bottom = Math.min(viewportHeight, target.y + target.height);
-  const overlapBottom = Math.max(0, bottom - (viewportHeight - captionHeight));
-  const overlapTop = Math.max(0, captionHeight - top);
-  return overlapTop < overlapBottom ? 'top' : 'bottom';
+export function placeCallout(
+  anchor: Rect | null,
+  focusY: number | null,
+  frame: Size,
+  box: Size,
+): CalloutPlace {
+  const low = {
+    side: 'below' as const,
+    x: (frame.width - box.width) / 2,
+    y: frame.height - box.height - CALLOUT_MARGIN,
+    tail: 0,
+  };
+  if (anchor === null) return low;
+  const centre = anchor.x + anchor.width / 2;
+  const order: CalloutSide[] = centre < frame.width * 0.45 ? ['right', 'left'] : ['left', 'right'];
+  for (const side of order) {
+    const x = side === 'left' ? anchor.x - CALLOUT_GAP - box.width : anchor.x + anchor.width + CALLOUT_GAP;
+    if (x < CALLOUT_MARGIN || x + box.width > frame.width - CALLOUT_MARGIN) continue;
+    const within = focusY !== null && focusY >= anchor.y - 8 && focusY <= anchor.y + anchor.height + 8;
+    const level = within ? focusY : anchor.y + Math.min(anchor.height / 2, box.height / 2 + 12);
+    const y = clamp(level - box.height / 2, CALLOUT_MARGIN, frame.height - box.height - CALLOUT_MARGIN);
+    return { side, x, y, tail: clamp(level - y, 14, box.height - 14) };
+  }
+  return low;
 }
