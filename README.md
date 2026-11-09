@@ -5,7 +5,7 @@ a React scene, add chapters and captions, and export a static page. A viewer can
 scrub it, press **Take over** to use the product from that exact moment, then return to your
 story at a chapter.
 
-![A viewer has taken control of a receipt demo. The split is edited, the balances are recomputed, and a thin line forks from the timeline.](docs/media/cover.png)
+![A viewer has taken over a demo of an invented receipt app. Its window sits on a dark backdrop, the split adds up again, and a line forks from the chaptered timeline.](docs/media/cover.png)
 
 **[Try the live demo](https://www.qendrimbeka.com/projects/reel/)**, watch the
 [18 second demo](docs/media/demo.mp4), or see the
@@ -41,8 +41,13 @@ Reel records semantic commands that a scene declares, such as `setSplit`, with t
 time. It does not record pixels, DOM changes or mouse paths, so playback is the real
 application running and a viewer can take over at any moment.
 
-- **Seek anywhere.** Reel restores a checkpoint and replays to the exact time.
-- **Take over.** The state on screen becomes the viewer's own copy, and the timeline forks.
+- **Seek anywhere.** Reel restores a checkpoint and replays to the exact time. The timeline
+  is cut into the chapters you named, and each name jumps to its chapter.
+- **Watch it like a demo.** The app sits in a window, the camera closes in on the part in
+  use, and a pointer travels to each control with a caption beside it. Reel records no
+  pointer movement, so that pointer is drawn from the commands, and it says so.
+- **Take over.** The state on screen becomes the viewer's own copy. The drawn pointer goes
+  to the viewer's real one, the window changes colour and the timeline forks.
 - **Return.** Back to demo restores the recorded moment and keeps the viewer's copy one press
   away, and Choose a moment offers the chapters. States are never merged, and nothing a
   viewer does reaches the recording, the URL or storage.
@@ -87,7 +92,8 @@ export const counterAdapter: SceneAdapter<CounterState> = {
 
 Then add one entry to [src/scenes/registry.ts](src/scenes/registry.ts) and one line to
 `src/styles/scenes.css`. [docs/FORMAT.md](docs/FORMAT.md) is the full contract. Two scenes are
-included: a synthetic receipt split and a retry queue with seeded backoff.
+included: a synthetic receipt split, drawn as an invented product called Tabkin, and a retry
+queue with seeded backoff.
 
 ## Export from the command line
 
@@ -145,7 +151,7 @@ pnpm bench
 | Document | Contents |
 |---|---|
 | [docs/REPORT.md](docs/REPORT.md) | Results, limits, what failed and what changed. |
-| [site/](site/) | The project page. It runs the viewer directly, with a short authoring view. Build it with `pnpm build:site`. |
+| [site/](site/) | The project page. It runs the viewer directly, with an authoring panel for chapters, captions and the camera. Build it with `pnpm build:site`. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How seeking, branches and export work. |
 | [docs/FORMAT.md](docs/FORMAT.md) | The adapter contract and project file. |
 | [docs/DESIGN.md](docs/DESIGN.md) | The central workflow and the design that was rejected. |
@@ -156,4 +162,4 @@ pnpm bench
 ## License
 
 MIT for the code here. Fonts and React keep their own licenses. See [NOTICE.md](NOTICE.md).
-The receipt data is invented, and this project holds no Koba code or data.
+Tabkin and its receipt data are invented, and this project holds no Koba code or data.
