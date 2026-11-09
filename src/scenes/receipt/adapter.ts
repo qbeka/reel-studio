@@ -148,9 +148,24 @@ export const receiptAdapter: SceneAdapter<ReceiptState> = {
         return null;
     }
   },
-  handoffTarget(state) {
-    if (state.view === 'balances') return 'balances';
-    return state.draft === null ? null : 'save';
+  pointOf(command) {
+    const { type, payload } = command;
+    switch (type) {
+      case 'selectExpense':
+        return `expense:${payload.id}`;
+      case 'setSplitMode':
+        return `mode:${payload.mode}`;
+      case 'setSplit':
+        return `share:${payload.member}`;
+      case 'confirmEdit':
+        return 'save';
+      case 'setView':
+        return `view:${payload.view}`;
+      default:
+        return null;
+    }
   },
+  // The reserved .example ending keeps the address from ever being a real one.
+  address: 'tabkin.example/flat-4b',
   Render,
 };

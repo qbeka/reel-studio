@@ -93,8 +93,13 @@ export interface SceneAdapter<S> {
   describe(before: S, command: Command, after: S): string | null;
   /** The named target a command acts on, or null. */
   targetOf(command: Command): string | null;
-  /** The target that Take over sits beside in this state, or null for the stage's corner. */
-  handoffTarget?(state: S): string | null;
+  /**
+   * The control a command presses, as the name the scene's markup gives it in
+   * `data-reel-point`. Finer than `targetOf`, and used only to draw the pointer.
+   */
+  pointOf?(command: Command): string | null;
+  /** The address written in the window around the scene. It is decoration, and must be plainly invented. */
+  address?: string;
 
   Render: ComponentType<SceneProps<S>>;
 }
