@@ -92,6 +92,27 @@ test('taking over keeps the exact visible state, and the line forks', async ({ p
   await expect(page.locator('.reel-fork text')).toHaveText('Your copy');
 });
 
+test('a viewer who took over inside a close view can open the rest of the app', async ({ page }) => {
+  await open(page);
+  await expect(page.getByRole('button', { name: 'Full view' })).toHaveCount(0);
+  await slider(page).fill('7000');
+  await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'framed');
+  await page.getByRole('button', { name: 'Take over' }).click();
+  const full = page.getByRole('button', { name: 'Full view' });
+  await full.click();
+  await expect(full).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'full');
+  await page.getByRole('button', { name: 'Corner Grocer' }).click();
+  await expect(page.locator('.rs-receipt h2')).toHaveText('Corner Grocer');
+  await full.click();
+  await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'framed');
+
+  // Back in the story the camera follows its shots again, whatever the copy was left on.
+  await full.click();
+  await page.getByRole('button', { name: 'Back to demo' }).click();
+  await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'framed');
+});
+
 test('there is one default way back, and it says what happens to the copy', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'Take over' }).click();
