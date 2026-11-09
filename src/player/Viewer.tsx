@@ -7,7 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import type { AnyAdapter, LogEntry, Payload } from '../core/adapter';
+import type { AnyAdapter, LayoutName, LogEntry, Payload } from '../core/adapter';
 import {
   type Branch,
   type BranchCopy,
@@ -21,18 +21,20 @@ import {
 } from '../core/branch';
 import { momentHash, parseMoment } from '../core/location';
 import { Playback } from '../core/playback';
+import { pointerAt, userCommands } from '../core/pointer';
 import { type ReelProject, forViewer, formatTime, playRange } from '../core/project';
 import { browserHost } from '../core/session';
 import { Timeline } from '../core/timeline';
-import { captionAt, chapterIndexAt, shotAt } from '../core/tracks';
+import { captionAt, chapterIndexAt, shotMixAt } from '../core/tracks';
 import type { TranscriptLine } from '../core/transcript';
-import { Rail, type RailStep } from './Rail';
-import { type Framing, Stage } from './Stage';
+import { Handoff, type HandoffHandle } from './Handoff';
+import { Stage, type StagePointer } from './Stage';
 import { TimelineBar } from './Transport';
 
-/** How long the ring stays on a target after a command, in logical milliseconds. */
-const RING_MS = 900;
 const STEP_MS = 5000;
+/** How long the camera takes to leave or rejoin its shots when Full view is pressed. */
+const FOLLOW_MS = 520;
+const COPIED_MS = 1800;
 
 const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -45,10 +47,63 @@ function ownsKeys(target: EventTarget | null): boolean {
   );
 }
 
+/**
+ * A number that eases to its target, and can be sent somewhere else on the way. With
+ * reduced motion it is simply the target.
+ */
+function useEased(target: number, ms: number): number {
+  const [value, setValue] = useState(target);
+  const live = useRef(target);
+  useEffect(() => {
+    if (live.current === target) return;
+    if (prefersReducedMotion()) {
+      live.current = target;
+      setValue(target);
+      return;
+    }
+    const from = live.current;
+    const started = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const p = Math.min(1, (now - started) / ms);
+      // Starts at once and settles gently, which reads as a response to a press.
+      live.current = from + (target - from) * (1 - (1 - p) ** 3);
+      setValue(live.current);
+      if (p < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [target, ms]);
+  return value;
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // An insecure page has no clipboard API, so fall back to a selection.
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.setAttribute('readonly', '');
+    field.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.append(field);
+    field.select();
+    const done = document.execCommand('copy');
+    field.remove();
+    return done;
+  }
+}
+
 /** A branch set aside by Back to demo, held in memory until the next Take over or page load. */
 interface KeptCopy extends BranchCopy {
   edits: number;
   lines: readonly string[];
+}
+
+/** One recorded command, as a line an author can read. */
+export interface AuthorStep {
+  t: number;
+  text: string;
+  chapter: boolean;
 }
 
 /** What an authoring panel needs from the viewer it sits in. */
@@ -56,6 +111,11 @@ export interface AuthorContext {
   /** The command on screen, or null before the first one. */
   command: LogEntry | null;
   range: { start: number; end: number };
+  steps: readonly AuthorStep[];
+  /** Index of the step on screen, or -1 before the first one. */
+  current: number;
+  seek: (t: number) => void;
+  close: () => void;
 }
 
 export interface ViewerProps {
@@ -75,6 +135,48 @@ export interface ViewerProps {
   author?: (context: AuthorContext) => ReactNode;
 }
 
+const ICONS = {
+  play: <path d="M5 3.4v9.2a.6.6 0 0 0 .92.5l7.1-4.6a.6.6 0 0 0 0-1L5.92 2.9a.6.6 0 0 0-.92.5Z" fill="currentColor" />,
+  pause: <path d="M4.5 3h2.4v10H4.500V3Zm4.6 0h2.400v10H9.100V3Z" fill="currentColor" />,
+  replay: (
+    <path
+      d="M3.2 8a4.8 4.8 0 1 0 1.5-3.500M3 2.700v2.600h2.6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  link: (
+    <path
+      d="M6.7 9.300a2.7 2.7 0 0 0 3.8 0l2-2a2.7 2.7 0 0 0-3.8-3.800l-.6.6M9.3 6.700a2.7 2.7 0 0 0-3.8 0l-2 2a2.7 2.7 0 0 0 3.8 3.800l.6-.6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+  ),
+  back: (
+    <path
+      d="M6.5 4 3 7.5 6.5 11M3.5 7.500H10a3 3 0 0 1 0 6H8.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+};
+
+function Icon({ name }: { name: keyof typeof ICONS }) {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      {ICONS[name]}
+    </svg>
+  );
+}
+
 export function Viewer({ adapter, project, transcript, variant, autoplay, startAt, author }: ViewerProps) {
   const onPage = variant === 'page';
   const { start: rangeStart, end: rangeEnd } = playRange(project);
@@ -90,7 +192,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   // A shared link wins, then the host's choice. A viewer opening with nothing asked for
   // lands on the author's poster, not on an empty first moment. Chosen once, on load.
   const [{ opening, linked }] = useState(() => {
-    const moment = onPage ? null : parseMoment(location.hash, chapters, range);
+    const moment = parseMoment(location.hash, chapters, range);
     if (moment?.kind === 'time') return { opening: moment.t, linked: true };
     if (moment?.kind === 'chapter') {
       return { opening: chapters.find((c) => c.id === moment.id)!.t, linked: true };
@@ -106,9 +208,13 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   useEffect(() => () => playback.destroy(), [playback]);
   const story = useSyncExternalStore(playback.subscribe, playback.getSnapshot);
 
-  const [framing, setFraming] = useState<Framing>(() =>
-    onPage || prefersReducedMotion() ? 'full' : 'follow',
-  );
+  const [framing, setFraming] = useState<'follow' | 'full'>(() => (prefersReducedMotion() ? 'full' : 'follow'));
+  /**
+   * False while the opening frame is still as it loaded. A poster shows the whole scene,
+   * like any thumbnail, and the camera joins in once the viewer plays or moves the story.
+   */
+  const [moved, setMoved] = useState(linked || autoplay);
+  const [layout, setLayout] = useState<LayoutName>('wide');
 
   const [branch, setBranch] = useState<Branch | null>(null);
   const [branchState, setBranchState] = useState<unknown>(null);
@@ -124,6 +230,10 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const [kept, setKept] = useState<KeptCopy | null>(null);
   const [authoring, setAuthoring] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const [copied, setCopied] = useState(false);
+  /** True while the drawn pointer is on its way back from the viewer's hand. */
+  const [returning, setReturning] = useState(false);
+  const [offscreen, setOffscreen] = useState(false);
 
   const box = useRef<HTMLDivElement>(null);
   const playButton = useRef<HTMLButtonElement>(null);
@@ -131,6 +241,14 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const chooseButton = useRef<HTMLButtonElement>(null);
   const moments = useRef<HTMLFieldSetElement>(null);
   const line = useRef<HTMLParagraphElement>(null);
+  const handoff = useRef<HandoffHandle>(null);
+
+  // Ambient motion stops while the stage is out of sight.
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => setOffscreen(!entry!.isIntersecting));
+    observer.observe(box.current!);
+    return () => observer.disconnect();
+  }, []);
 
   const enterBranch = useCallback(
     (
@@ -152,6 +270,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       });
       previous = next.session.state;
       playback.pause();
+      // The drawn pointer goes to the viewer's own, before the stage stops drawing it.
+      handoff.current?.give();
       // A waiting Take over is settled now, or it would replace this branch when its seek ends.
       setControlWanted(false);
       setBranch(next);
@@ -164,6 +284,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       setNotice(null);
       setKept(null);
       setAuthoring(false);
+      setReturning(false);
       setAnnouncement('Your own copy is open, and the recording will not change');
       requestAnimationFrame(() => line.current?.focus({ preventScroll: true }));
     },
@@ -253,6 +374,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     setNotice(sentence);
     setAnnouncement(sentence);
     if (!onPage) history.replaceState(null, '', momentHash(t));
+    // The pointer leaves the viewer's hand and goes back to where the story has it.
+    setReturning(handoff.current?.takeBack(() => setReturning(false)) ?? false);
     requestAnimationFrame(() => takeOverButton.current?.focus({ preventScroll: true }));
   };
 
@@ -270,13 +393,21 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
 
   const playOrPause = useCallback(() => {
     setNotice(null);
-    if (playback.getSnapshot().playing) playback.pause();
-    else playback.play();
-  }, [playback]);
+    const snapshot = playback.getSnapshot();
+    if (snapshot.playing) {
+      playback.pause();
+      return;
+    }
+    // The opening frame is a poster, so the first press of Play tells the story from its start.
+    if (!moved && snapshot.t === opening && opening !== range.start) playback.seek(range.start);
+    setMoved(true);
+    playback.play();
+  }, [playback, moved, opening, range]);
 
   const seek = useCallback(
     (t: number) => {
       setNotice(null);
+      setMoved(true);
       playback.seek(t);
     },
     [playback],
@@ -287,6 +418,20 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     setNotice(null);
     setAuthoring((open) => !open);
   };
+  const closeAuthor = useCallback(() => setAuthoring(false), []);
+
+  const copyLink = async () => {
+    const { t } = playback.getSnapshot();
+    const address = `${location.origin}${location.pathname}${location.search}${momentHash(t)}`;
+    const done = await copyText(address);
+    setCopied(done);
+    setAnnouncement(done ? `Link to ${formatTime(t)} copied` : 'The link could not be copied');
+  };
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPIED_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   useEffect(() => {
     if (autoplay && !prefersReducedMotion()) playback.play();
@@ -367,7 +512,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     };
   }, [choosing, closeMoments]);
 
-  const steps = useMemo<RailStep[]>(
+  const steps = useMemo<AuthorStep[]>(
     () =>
       transcript.flatMap((entry) =>
         entry.kind === 'step'
@@ -377,19 +522,37 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     [transcript, chapters],
   );
   const stepTimes = useMemo(() => commands.map((c) => c.t), [commands]);
+  const made = useMemo(() => userCommands(commands), [commands]);
 
   const shownT = inBranch ? branch.base.t : story.t;
   let current = -1;
   for (let i = 0; i < steps.length && steps[i]!.t <= shownT; i++) current = i;
 
   const last = story.count > 0 ? commands[story.count - 1] : undefined;
-  const activeTarget =
-    !inBranch && last !== undefined && story.t - last.t < RING_MS ? adapter.targetOf(last) : null;
-
   const authorContext = useMemo<AuthorContext>(
-    () => ({ command: last ?? null, range }),
-    [last, range],
+    () => ({ command: last ?? null, range, steps, current, seek, close: closeAuthor }),
+    [last, range, steps, current, seek, closeAuthor],
   );
+
+  // The camera follows its shots once the story has moved, unless Full view is on.
+  const shot = shotMixAt(project.camera, shownT);
+  const follow = useEased(framing === 'follow' && moved ? 1 : 0, FOLLOW_MS);
+  const cropped = framing === 'follow' && moved && layout === 'wide' && shot.to !== null;
+
+  // The pointer is drawn from the commands. Nothing recorded where a hand really was.
+  const plan = pointerAt(made, story.t, range.start);
+  const placeOf = (command: LogEntry | null) =>
+    command === null ? null : (adapter.pointOf?.(command) ?? adapter.targetOf(command));
+  const pointer: StagePointer | null =
+    inBranch || made.length === 0
+      ? null
+      : {
+          from: placeOf(plan.from),
+          to: placeOf(plan.to),
+          progress: plan.progress,
+          sinceClick: plan.sinceClick,
+          label: 'Reel',
+        };
 
   if (story.error !== null) {
     return (
@@ -409,15 +572,20 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   // Until something changes, the recording's own state stays on screen. Both hold the same
   // data, and this is what keeps taking over from changing a single pixel.
   const scene = !inBranch ? story.state : branchState === untouched ? story.state : branchState;
-  const caption = captionAt(project.captions, story.t);
+  const caption = inBranch ? null : captionAt(project.captions, story.t);
+  const chapterTitle = chapterIndex >= 0 ? chapters[chapterIndex]!.title : '';
+  // A narrow stage has no room for a callout, so the caption takes the title bar instead.
   const narration = inBranch
     ? branchEdits === 0
       ? ', and the recording stays as it is'
       : `, with ${branchEdits} ${branchEdits === 1 ? 'edit' : 'edits'} the recording never sees`
-    : (notice ?? caption?.text ?? '');
+    : (notice ?? (layout === 'narrow' ? (caption?.text ?? '') : ''));
+
+  const ended =
+    !inBranch && !authoring && !story.playing && !story.seeking && story.t >= range.end && range.end > range.start;
 
   // Also offered in a branch: the camera holds its framing there, and this opens the rest.
-  const fullView = !onPage && (
+  const fullView = (inBranch ? !onPage || cropped : !onPage) && (
     <button
       type="button"
       className="control"
@@ -429,64 +597,66 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   );
 
   const stage = (
-    <div className="reel-box" ref={box} data-mode={inBranch ? 'branch' : 'story'} data-author={authoring}>
-      <div className="reel-line">
-        <p className="reel-narration" ref={line} tabIndex={-1}>
-          {inBranch && <strong>This is your copy</strong>}
-          {narration}
-        </p>
-        <p className="reel-tag" data-live={inBranch}>
-          <i aria-hidden="true" />
-          {inBranch ? 'Live' : 'Recorded'}, synthetic data
-        </p>
-      </div>
-
+    <div
+      className="reel-box"
+      ref={box}
+      data-mode={inBranch ? 'branch' : 'story'}
+      data-author={authoring}
+      data-layout={layout}
+      data-playing={story.playing}
+      data-offscreen={offscreen}
+      data-returning={returning}
+      onPointerMove={(event) => handoff.current?.track(event)}
+      onPointerDown={(event) => handoff.current?.track(event)}
+      onPointerLeave={() => handoff.current?.forget()}
+    >
       <div className="reel-work">
-        <div className="reel-app">
-          <Stage
-            fill
-            adapter={adapter}
-            state={scene}
-            interactive={inBranch}
-            send={send}
-            cameraTarget={inBranch ? branchShot(project, branch.base.t) : (shotAt(project.camera, story.t)?.target ?? null)}
-            framing={framing}
-            caption={null}
-            activeTarget={activeTarget}
-            smooth={story.playing && !prefersReducedMotion()}
-            label={`${project.title}, ${inBranch ? 'your copy' : 'recorded story'}`}
-            handoff={
-              inBranch || authoring
-                ? null
-                : {
-                    target: adapter.handoffTarget?.(story.state) ?? null,
-                    element: (
-                      <button
-                        ref={takeOverButton}
-                        type="button"
-                        className="control primary"
-                        onClick={takeControl}
-                      >
-                        Take over
-                      </button>
-                    ),
-                  }
-            }
-          />
+        {inBranch && <i className="reel-claim" aria-hidden="true" />}
+        <div className="reel-window">
+          <div className="reel-line" data-quiet={!inBranch && narration === ''}>
+            <span className="reel-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+            <p className="reel-narration" ref={line} tabIndex={-1}>
+              {inBranch && <strong>This is your copy</strong>}
+              {narration}
+            </p>
+            <span className="reel-address" aria-hidden="true">
+              {adapter.address ?? adapter.title}
+            </span>
+            <p className="reel-tag" data-live={inBranch}>
+              <i aria-hidden="true" />
+              {inBranch ? 'Live' : 'Recorded'}, synthetic data
+            </p>
+          </div>
+          <div className="reel-app">
+            <Stage
+              fill
+              adapter={adapter}
+              state={scene}
+              interactive={inBranch}
+              send={send}
+              shot={shot}
+              follow={follow}
+              caption={authoring ? null : caption}
+              pointer={pointer}
+              onLayout={setLayout}
+              label={`${project.title}, ${inBranch ? 'your copy' : 'recorded story'}`}
+            />
+          </div>
+          {ended && (
+            <div className="reel-end">
+              <p>The story ends here and the app is yours to try</p>
+              <button type="button" className="control primary" onClick={takeControl}>
+                Try it yourself
+              </button>
+            </div>
+          )}
         </div>
 
-        {(steps.length > 0 || authoring) && (
-          <aside className="reel-rail" aria-label="Steps">
-            <Rail
-              steps={steps}
-              current={current}
-              forkAt={inBranch ? current + 1 : null}
-              mine={branchLines}
-              onSeek={seek}
-            />
-            {authoring && author?.(authorContext)}
-          </aside>
-        )}
+        {authoring && <aside className="reel-author float">{author?.(authorContext)}</aside>}
 
         {choosing && inBranch && (
           <fieldset className="reel-moments float" ref={moments} tabIndex={-1} aria-label="Choose a moment">
@@ -527,12 +697,14 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
         data-state-t={story.stateT}
       >
         <TimelineBar
+          labels
           range={range}
           t={shownT}
           chapters={chapters}
           steps={stepTimes}
           onSeek={seek}
           disabled={inBranch}
+          tracks={authoring ? project : null}
           fork={
             inBranch
               ? { t: branch.base.t, edits: branchEdits, kept: false }
@@ -544,15 +716,10 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
 
         {inBranch ? (
           <div className="reel-controls">
-            {rejected !== null ? (
-              <p className="reel-problem" role="alert">
-                {rejected}
-              </p>
-            ) : (
-              <span className="reel-time">From {formatTime(branch.base.t)}</span>
-            )}
-            <span className="reel-spacer" />
-            {fullView}
+            <button type="button" className="control primary" onClick={() => leaveBranch(branch.base.t)}>
+              <Icon name="back" />
+              Back to demo
+            </button>
             <button
               ref={chooseButton}
               type="button"
@@ -562,9 +729,18 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
             >
               Choose a moment
             </button>
-            <button type="button" className="control primary" onClick={() => leaveBranch(branch.base.t)}>
-              Back to demo
-            </button>
+            {rejected !== null ? (
+              <p className="reel-problem" role="alert">
+                {rejected}
+              </p>
+            ) : (
+              <span className="reel-time">
+                From {formatTime(branch.base.t)}
+                {branchLines.length > 0 && <span>{branchLines.at(-1)}</span>}
+              </span>
+            )}
+            <span className="reel-spacer" />
+            {fullView}
           </div>
         ) : (
           <div className="reel-controls">
@@ -577,29 +753,56 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
                 if (!authoring) playOrPause();
               }}
             >
-              <span data-on={!story.playing && story.t < range.end}>Play</span>
-              <span data-on={story.playing}>Pause</span>
-              <span data-on={!story.playing && story.t >= range.end}>Replay</span>
+              <span data-on={!story.playing && story.t < range.end}>
+                <Icon name="play" />
+                Play
+              </span>
+              <span data-on={story.playing}>
+                <Icon name="pause" />
+                Pause
+              </span>
+              <span data-on={!story.playing && story.t >= range.end}>
+                <Icon name="replay" />
+                Replay
+              </span>
             </button>
             <span className="reel-time">
-              {formatTime(story.t)} / {formatTime(range.end)}
+              {formatTime(story.t)} <span>/ {formatTime(range.end)}</span>
             </span>
-            <span className="reel-chapter">{chapterIndex >= 0 ? chapters[chapterIndex]!.title : ''}</span>
+            <span className="reel-now">{chapterTitle}</span>
             <span className="reel-spacer" />
             {kept !== null && (
               <button type="button" className="control outline" onClick={restoreCopy}>
                 Bring my copy back
               </button>
             )}
+            <button type="button" className="control reel-copy" onClick={copyLink}>
+              <Icon name="link" />
+              <span data-on={!copied}>Copy link</span>
+              <span data-on={copied}>Copied</span>
+            </button>
             {fullView}
             {author !== undefined && (
               <button type="button" className="control" aria-pressed={authoring} onClick={toggleAuthor}>
                 Author
               </button>
             )}
+            <button
+              ref={takeOverButton}
+              type="button"
+              className={ended ? 'control outline' : 'control primary'}
+              aria-disabled={authoring}
+              onClick={() => {
+                if (!authoring) takeControl();
+              }}
+            >
+              Take over
+            </button>
           </div>
         )}
       </div>
+
+      <Handoff ref={handoff} box={box} />
 
       <div className="sr-only" role="status">
         {announcement}
@@ -651,9 +854,4 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       )}
     </main>
   );
-}
-
-/** The shot in force at a fork. The camera stays where it was, so nothing moves. */
-function branchShot(project: ReelProject, t: number): string | null {
-  return shotAt(project.camera, t)?.target ?? null;
 }
