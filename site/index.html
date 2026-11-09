@@ -42,16 +42,17 @@
 
       <h3>Results</h3>
       <dl class="results">
-        <div><dt>Seeking a long log</dt><dd><b>17 ms at p95</b>to any point of a generated 20,000 command log, 16.7 to 17.6 across 5 runs, against 973 ms replaying from the start</dd></div>
+        <div><dt>Seeking a long log</dt><dd><b>22 ms at p95</b>to any point of a generated 20,000 command log, 19.7 to 35.2 across 5 runs, against 1,074 ms replaying from the start</dd></div>
         <div><dt>Seeking correctness</dt><dd><b>0 mismatches</b>against replay at 5,332 positions</dd></div>
         <div><dt>Seeded failures</dt><dd><b>14 of 14 detected</b>overall, including 6 of 6 seeded reducer bugs that the replay comparison could not see, caught by a separate BigInt model of the money</dd></div>
       </dl>
 
       <h3>Limits</h3>
       <ul class="limits">
-        <li>The gain only appears on a generated stress log, because on the real 10 command recording here both variants take 1.1 ms.</li>
-        <li>The first seek in a fresh page is slower, and on the stress log the slowest of four takes about 1.1 s.</li>
-        <li>Timings come from one Apple M5 Pro laptop in headless Chromium, with other work running.</li>
+        <li>The gain only appears on a generated stress log, because on the real 10 command recording here both variants take 3.2 ms.</li>
+        <li>The first seek in a fresh page is slower, and on the stress log the slowest of four takes about 1.2 s.</li>
+        <li>Timings come from one Apple M5 Pro laptop in headless Chromium, while other work pushed its load average from 7 to 49.</li>
+        <li>The pointer shows which control each command pressed, because where a hand really moved was never recorded.</li>
         <li>It records only scenes written for it, so it cannot record any website.</li>
         <li>No study has been run, so nobody outside this project has been measured using it.</li>
       </ul>
@@ -65,7 +66,7 @@
       </dl>
 
       <h3>Method</h3>
-      <p class="prose">The numbers come from protocol 3 in the <a href="https://github.com/qbeka/reel-studio/blob/main/docs/REPORT.md">full report</a>, and you can also read the <a href="demo/transcript.html">transcript</a> or open the <a href="demo/">exported viewer</a> built from this recording.</p>
+      <p class="prose">The numbers come from protocol 3 in the <a href="https://github.com/qbeka/reel-studio/blob/main/docs/REPORT.md">full report</a>, measured on 9 November 2026 on the viewer you see here, and you can also read the <a href="demo/transcript.html">transcript</a> or open the <a href="demo/">exported viewer</a> built from this recording.</p>
     </section>
 
     <footer class="page-end">
