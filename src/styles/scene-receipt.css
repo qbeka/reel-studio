@@ -531,10 +531,10 @@
     transition: width 0.32s var(--rs-ease);
     animation: rs-drift 1.4s linear infinite;
   }
-  & .rs-bar-mark {
-    top: 0 !important;
+  & .rs-bar > .rs-bar-mark {
+    top: 0;
     width: 0;
-    height: 18px !important;
+    height: 18px;
     border-left: 1.5px solid var(--rs-ink);
 
     &::after {
