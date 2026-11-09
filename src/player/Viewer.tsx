@@ -376,6 +376,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     setNotice(sentence);
     setAnnouncement(sentence);
     if (!onPage) history.replaceState(null, '', momentHash(t));
+    // On a host page Full view exists only in a branch, so the story gets its camera back.
+    else if (!prefersReducedMotion()) setFraming('follow');
     // The pointer leaves the viewer's hand and goes back to where the story has it.
     setReturning(handoff.current?.takeBack(() => setReturning(false)) ?? false);
     requestAnimationFrame(() => takeOverButton.current?.focus({ preventScroll: true }));
@@ -541,7 +543,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const moving = shotMixAt(project.camera, shownT);
   const shot = authoring ? { ...moving, progress: 1 } : moving;
   const follow = useEased(framing === 'follow' && moved ? 1 : 0, FOLLOW_MS);
-  const cropped = framing === 'follow' && moved && layout === 'wide' && shot.to !== null;
+  /** True when this moment has a close view, whether or not the viewer is looking through it. */
+  const hasCloseView = moved && layout === 'wide' && shot.to !== null;
 
   // The pointer is drawn from the commands. Nothing recorded where a hand really was.
   const plan = pointerAt(made, story.t, range.start);
@@ -589,7 +592,9 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     !inBranch && !authoring && !story.playing && !story.seeking && story.t >= range.end && range.end > range.start;
 
   // Also offered in a branch: the camera holds its framing there, and this opens the rest.
-  const fullView = (inBranch ? !onPage || cropped : !onPage) && (
+  // A host page has no room to spare for it while the story plays, so there it appears
+  // only for a viewer who took over inside a close view.
+  const fullView = (onPage ? inBranch && hasCloseView : true) && (
     <button
       type="button"
       className="control"
