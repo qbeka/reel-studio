@@ -222,8 +222,7 @@ export function TimelineBar({
                   className="reel-chapter"
                   aria-current={index === current ? 'true' : undefined}
                   aria-disabled={disabled}
-                  aria-label={`Chapter ${index + 1}, ${chapter!.title}, at ${formatTime(chapter!.t)}`}
-                  title={chapter!.title}
+                  title={`${chapter!.title}, at ${formatTime(chapter!.t)}`}
                   onClick={() => {
                     if (!disabled) onSeek(chapter!.t);
                   }}
