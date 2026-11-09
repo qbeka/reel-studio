@@ -232,6 +232,26 @@ test.describe('motion and framing', () => {
     await context.close();
   });
 
+  test('the poster shows the whole scene until the story moves', async ({ page }) => {
+    await page.goto(host.url);
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
+    await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'full');
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+    await page.getByRole('button', { name: 'Pause' }).click();
+    // The poster is late in the story, and Play starts the story from the beginning.
+    expect(Number(await slider(page).inputValue())).toBeLessThan(5000);
+  });
+
+  test('Copy link copies the address of this moment and leaves the page where it is', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto(`${host.url}#t=6000`);
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`${host.url}#t=6000`);
+    await expect(page.getByRole('status')).toContainText('Link to 0:06 copied');
+  });
+
   test('camera shots frame a target, and Full view turns them off', async ({ page }) => {
     await page.goto(`${host.url}#t=6000`);
     await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'framed');
@@ -239,11 +259,71 @@ test.describe('motion and framing', () => {
     await expect(page.locator('.reel-scene')).toHaveAttribute('data-camera', 'full');
   });
 
-  test('a caption sits above the app and covers none of it', async ({ page }) => {
-    await page.goto(`${host.url}#t=14000`);
-    const caption = await page.locator('.reel-narration').boundingBox();
-    const scene = await page.locator('.reel-frame').boundingBox();
-    expect(caption!.y + caption!.height).toBeLessThanOrEqual(scene!.y);
+  test('a caption sits beside its target and covers none of it', async ({ page }) => {
+    for (const [t, target] of [
+      [2000, 'expense-list'],
+      [6000, 'split-editor'],
+      [14000, 'split-editor'],
+    ] as const) {
+      await page.goto(`${host.url}#t=${t}`);
+      await page.reload();
+      const caption = (await page.locator('.reel-caption').boundingBox())!;
+      const about = (await page.locator(`[data-reel-target="${target}"]`).boundingBox())!;
+      const apart =
+        caption.x + caption.width <= about.x + 1 ||
+        caption.x >= about.x + about.width - 1 ||
+        caption.y + caption.height <= about.y + 1 ||
+        caption.y >= about.y + about.height - 1;
+      expect(apart, `caption at ${t}`).toBe(true);
+      const frame = (await page.locator('.reel-frame').boundingBox())!;
+      expect(caption.x).toBeGreaterThanOrEqual(frame.x);
+      expect(caption.x + caption.width).toBeLessThanOrEqual(frame.x + frame.width);
+    }
+  });
+
+  test('the drawn pointer is on a control as its command happens', async ({ page }) => {
+    // Each command of the recording, and the control it presses.
+    const presses = [
+      [4600, page.getByRole('radio', { name: 'Percent' }).locator('..')],
+      [7400, page.getByLabel('Theo share').locator('..')],
+      [10400, page.getByRole('button', { name: 'Save split' })],
+      [18200, stage(page).getByRole('button', { name: 'Balances' })],
+    ] as const;
+    await page.goto(host.url);
+    for (const [t, control] of presses) {
+      await slider(page).fill(String(t));
+      await expect(page.locator('.reel-bar')).toHaveAttribute('data-state-t', String(t));
+      const tip = (await page.locator('.reel-frame > .reel-cursor').boundingBox())!;
+      const box = (await control.boundingBox())!;
+      expect(tip.x, `x at ${t}`).toBeGreaterThanOrEqual(box.x);
+      expect(tip.x, `x at ${t}`).toBeLessThanOrEqual(box.x + box.width);
+      expect(tip.y, `y at ${t}`).toBeGreaterThanOrEqual(box.y);
+      expect(tip.y, `y at ${t}`).toBeLessThanOrEqual(box.y + box.height);
+    }
+    // It is drawn from the log, so the same time always gives the same place.
+    await slider(page).fill('9000');
+    await expect(page.getByLabel('Ana share')).toHaveValue('30');
+    // The camera took half a second to join the story after the first seek, and has settled.
+    await page.waitForTimeout(700);
+    const once = (await page.locator('.reel-frame > .reel-cursor').getAttribute('style'))!;
+    await slider(page).fill('3000');
+    await expect(page.getByLabel('Ana share')).toHaveCount(0);
+    await slider(page).fill('9000');
+    await expect(page.locator('.reel-frame > .reel-cursor')).toHaveAttribute('style', once);
+  });
+
+  test('a seek into the middle of a camera move shows the middle of that move', async ({ page }) => {
+    const zoom = async () =>
+      Number(/scale\(([\d.]+)\)/.exec((await page.locator('.reel-scene').getAttribute('style'))!)![1]);
+    await page.goto(`${host.url}#t=4000`);
+    const wide = await zoom();
+    await slider(page).fill('7000');
+    const close = await zoom();
+    await slider(page).fill('5000');
+    const between = await zoom();
+    expect(close).toBeGreaterThan(wide);
+    expect(between).toBeGreaterThan(wide);
+    expect(between).toBeLessThan(close);
   });
 
   test('taking over keeps the framed camera, so nothing moves', async ({ page }) => {
@@ -274,7 +354,7 @@ test.describe('layouts', () => {
       const layout = await page.locator('.reel-stage').getAttribute('data-layout');
       expect(layout).toBe(width < 600 ? 'narrow' : 'wide');
       if (width < 600) {
-        // The caption keeps a readable size in its own line above the scene.
+        // The caption keeps a readable size in the title bar above the scene.
         const size = await page.locator('.reel-narration').evaluate((el) => Number.parseFloat(getComputedStyle(el).fontSize));
         expect(size).toBeGreaterThanOrEqual(15);
         await expect(page.locator('.reel-narration')).toContainText('Ana');
@@ -324,6 +404,15 @@ test.describe('layouts', () => {
     await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
+
+    // On a wide stage the chapter names cannot all fit, so each keeps to its own chapter.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const track = (await page.locator('.reel-track').boundingBox())!;
+    for (const name of await page.locator('.reel-chapter').all()) {
+      const box = (await name.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(track.x - 1);
+      expect(box.x + box.width).toBeLessThanOrEqual(track.x + track.width + 1);
+    }
   });
 });
 
