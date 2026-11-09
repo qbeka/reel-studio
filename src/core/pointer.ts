@@ -40,8 +40,15 @@ export function userCommands(commands: readonly LogEntry[]): LogEntry[] {
 
 /** `made` must be sorted by time, as a recording is. */
 export function pointerAt(made: readonly LogEntry[], t: number, start: number): PointerPlan {
-  let index = -1;
-  for (let i = 0; i < made.length && made[i]!.t <= t; i++) index = i;
+  // The last command at or before `t`, by binary search, since a log can be long.
+  let low = 0;
+  let high = made.length;
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    if (made[mid]!.t <= t) low = mid + 1;
+    else high = mid;
+  }
+  const index = low - 1;
   const from = index >= 0 ? made[index]! : null;
   const next = made[index + 1] ?? null;
   const sinceClick = from === null ? null : t - from.t;
