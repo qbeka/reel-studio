@@ -26,7 +26,7 @@ import {
 } from '../core/project';
 import { LiveSession, browserHost } from '../core/session';
 import { Timeline as ReplayTimeline } from '../core/timeline';
-import { captionAt, shotAt } from '../core/tracks';
+import { captionAt, shotMixAt } from '../core/tracks';
 import { downloadBytes, exportZip } from '../export/browser';
 import { Stage } from '../player/Stage';
 import { TimelineBar } from '../player/Transport';
@@ -396,11 +396,8 @@ export function Workspace({
             state={shownState}
             interactive={isRecording}
             send={sendLive}
-            cameraTarget={isRecording ? null : (shotAt(project.camera, story.t)?.target ?? null)}
-            framing="follow"
+            shot={isRecording ? undefined : shotMixAt(project.camera, story.t)}
             caption={isRecording ? null : captionAt(project.captions, story.t)}
-            activeTarget={null}
-            smooth={story.playing}
             label={isRecording ? 'Scene, recording' : 'Scene preview'}
           />
 
