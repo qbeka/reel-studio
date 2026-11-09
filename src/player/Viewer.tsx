@@ -245,8 +245,10 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
 
   // Ambient motion stops while the stage is out of sight.
   useEffect(() => {
+    // A recording that cannot play shows a message in place of the stage.
+    if (box.current === null) return;
     const observer = new IntersectionObserver(([entry]) => setOffscreen(!entry!.isIntersecting));
-    observer.observe(box.current!);
+    observer.observe(box.current);
     return () => observer.disconnect();
   }, []);
 
@@ -535,7 +537,9 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   );
 
   // The camera follows its shots once the story has moved, unless Full view is on.
-  const shot = shotMixAt(project.camera, shownT);
+  // An author picks a framing on a still frame, so there the camera shows where it settles.
+  const moving = shotMixAt(project.camera, shownT);
+  const shot = authoring ? { ...moving, progress: 1 } : moving;
   const follow = useEased(framing === 'follow' && moved ? 1 : 0, FOLLOW_MS);
   const cropped = framing === 'follow' && moved && layout === 'wide' && shot.to !== null;
 
