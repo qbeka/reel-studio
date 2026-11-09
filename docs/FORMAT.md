@@ -31,6 +31,8 @@ Defined in [`src/core/adapter.ts`](../src/core/adapter.ts).
 | `migrateCommand(command, fromVersion)` | Optional. Rewrites an older recorded command. |
 | `describe(before, command, after)` | A plain transcript line, or null for an unimportant step. |
 | `targetOf(command)` | The target a command acts on, or null. |
+| `pointOf(command)` | Optional. The control a command presses, as the name its element carries in `data-reel-point`. Only the drawn pointer uses it. |
+| `address` | Optional. The address written in the window around the scene. It is decoration and must be plainly invented. |
 | `Render` | A React component. It receives `state`, `send`, `interactive` and `layout`. |
 
 ## Logical time and rendering time

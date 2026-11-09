@@ -69,17 +69,44 @@ spatial view, and command lists full of `setSplit` lines read poorly.
 
 ## The memorable interaction
 
-The fork in the transport line. A thin rule leaves the timeline at the point of control,
-gains a tick for each edit, and folds back when the viewer returns. Everything else stays
-quiet: no gradients, no metric tiles, no background motion.
+Taking over. While the story plays, the stage draws a pointer of its own, labelled Reel. When
+the viewer presses Take over, that pointer travels to the viewer's real one and lets go, the
+window's title bar and the backdrop change colour, and a line leaves the timeline at the
+paused position. Nothing inside the app moves. Each edit adds a tick to the viewer's line,
+and going back sends the pointer home and leaves the line dashed, with Bring my copy back
+beside it.
+
+## The drawn pointer
+
+Reel records commands, not pointer movement, so there is no recorded path to play. The
+pointer is worked out from the log instead. It rests on the control of the last command,
+and shortly before the next one it travels there and arrives as the command happens. It
+depends only on the log and the time, so playing, scrubbing and a seek all draw the same
+pointer, and the page says it is drawn. A scene names the control for each command with
+`pointOf`. Without it the pointer goes to the command's target.
+
+The camera works the same way. A shot eases in over 900 ms of logical time from the moment
+it starts, so a seek into the middle of a move shows the middle of that move. A caption sits
+beside its target, level with the pointer, on the side that has room. A narrow stage has no
+room for that, so there the caption takes the title bar and the scene scrolls to follow the
+pointer.
 
 ## Visual rules
 
-- Warm white paper, dark ink, hairline rules, one forest accent.
+- The scene is drawn as a finished product, Tabkin, which is invented. Its data is synthetic
+  and the app says so.
+- The app sits in a window on a backdrop. The backdrop is pale while the recording plays and
+  dark forest while the copy on screen is the viewer's own.
+- The timeline is cut into its chapters, each with its name as a way to jump there.
+- Off-white paper, dark ink, hairline rules and one forest accent around the window. Colour
+  inside the window belongs to the product: one hue per person, red for too much.
 - Geist Serif for titles, captions and the transcript. Geist Sans for controls and dense
   data. Geist Serif has one weight, so hierarchy comes from size and colour.
-- Motion is limited to the camera and the fork. Reduced motion removes both transitions
-  and uses a static full view.
+- Motion is the pointer, the camera, the handoff and the fork. With reduced motion the
+  pointer is still drawn where it belongs, the camera shows the whole scene, and nothing
+  animates.
+- The opening frame is a poster, so it shows the whole scene and the first press of Play
+  starts the story from its beginning.
 
 ## What a code review changed
 
