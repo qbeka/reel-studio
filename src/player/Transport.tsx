@@ -211,7 +211,8 @@ export function TimelineBar({
     if (!labels || width === 0 || wanted?.key === key) return;
     setWanted({ key, widths: named.map((_, i) => Math.ceil(names.current[i]?.offsetWidth ?? 0)) });
   });
-  const placed = wanted?.key === key ? placeNames(named, wanted.widths, width) : null;
+  // Undefined until the names have been measured at this width, and null when they cannot fit.
+  const placed = wanted?.key === key ? placeNames(named, wanted.widths, width) : undefined;
 
   return (
     <div
@@ -233,7 +234,7 @@ export function TimelineBar({
           {named.map(({ chapter, index, left, right }, i) => (
               <li
                 key={chapter!.id}
-                style={placed === null ? { left } : (placed[i] ?? { left, width: Math.max(0, right - left) })}
+                style={placed === undefined ? { left } : (placed?.[i] ?? { left, width: Math.max(0, right - left) })}
               >
                 <button
                   ref={(element) => {

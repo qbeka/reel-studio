@@ -545,9 +545,11 @@
   padding: 0;
   list-style: none;
 
+  /* As wide as its name unless it is told to keep to its chapter. */
   & li {
     position: absolute;
     top: 0;
+    width: max-content;
     height: 24px;
   }
 }
