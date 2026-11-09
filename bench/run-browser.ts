@@ -8,7 +8,7 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { arch, cpus, loadavg, platform, release, totalmem } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { parseArgs } from 'node:util';
 import { type Browser, chromium } from '@playwright/test';
 import { createElement } from 'react';
@@ -351,7 +351,8 @@ const manifest = {
   commit: git('rev-parse HEAD'),
   // The run writes its own results to runs/, so that folder does not count.
   dirty: git("status --porcelain -- . ':!runs'").length > 0,
-  command: process.argv.slice(1).join(' '),
+  // Relative, so a run folder never carries a path from the machine that made it.
+  command: [relative(process.cwd(), process.argv[1]!), ...process.argv.slice(2)].join(' '),
   date: new Date().toISOString(),
   browser: { name: 'chromium', version: (results[0] as { browser: string }).browser, headless: true },
   node: process.version,
