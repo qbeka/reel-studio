@@ -196,7 +196,8 @@ machines. The state hashes in `manifest.json` should not.
 ## Clean checkout
 
 A fresh `git clone` of commit `b84472a`, on the same machine, with a frozen lockfile. Source
-files match the measured commit. Only a benchmark script and documents changed after it.
+files match the measured commit. Only the text of the project page, a benchmark script, the
+media and documents changed after it.
 
 | Command | Result |
 |---|---|
