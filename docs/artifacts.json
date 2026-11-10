@@ -18,22 +18,40 @@
     "description": "Exported viewer from the acceptance run on the second scene."
   },
   {
+    "path": "runs/2026-11-10-pass2/manifest.json",
+    "bytes": 3420,
+    "sha256": "a9639a78ca1ced8ef136f30248959882a8a89258026f5be68360575eca1313ad",
+    "description": "Benchmark manifest, protocol 3, on the viewer as it is now."
+  },
+  {
+    "path": "runs/2026-11-10-pass2/summary.json",
+    "bytes": 14024,
+    "sha256": "268e1eb020e1806fc8bfe5b89b2bb80dd9c4282473a0d0ccf67a202ebc46067f",
+    "description": "Run level statistics computed from raw samples."
+  },
+  {
+    "path": "runs/2026-11-10-pass2/correctness.json",
+    "bytes": 5164,
+    "sha256": "84875b5934ab01702d9e8302403dd882e53853d03e2af5271265da0706f575b0",
+    "description": "Seek, oracle and negative control results."
+  },
+  {
     "path": "runs/2026-11-09-redesign/manifest.json",
     "bytes": 3426,
     "sha256": "01fe28c91410e0468f6d0eee5fc838790559e27512dd443b9848ad3951bbd8dc",
-    "description": "Benchmark manifest, protocol 3, on the redrawn viewer."
+    "description": "Benchmark manifest of the second protocol 3 run."
   },
   {
     "path": "runs/2026-11-09-redesign/summary.json",
     "bytes": 14025,
     "sha256": "75f0b0d0949da347a38d6e9ddb444eda1e17535b27640e1da0ff76922d7ed5a7",
-    "description": "Run level statistics computed from raw samples."
+    "description": "Run level statistics of the second run."
   },
   {
     "path": "runs/2026-11-09-redesign/correctness.json",
     "bytes": 5164,
     "sha256": "84875b5934ab01702d9e8302403dd882e53853d03e2af5271265da0706f575b0",
-    "description": "Seek, oracle and negative control results."
+    "description": "Seek, oracle and negative control results of the second run."
   },
   {
     "path": "runs/2026-11-06-final/manifest.json",
@@ -61,26 +79,26 @@
   },
   {
     "path": "docs/media/cover.png",
-    "bytes": 320706,
-    "sha256": "5169c46add539f81ad45f25672db80587b11346fc58458f6e4c5362d1dff17a8",
+    "bytes": 512122,
+    "sha256": "6896a6173955b39cbc7a251f298431990643c92265ee1b9ca72fed5e0c448f09",
     "description": "Cover, from the real viewer."
   },
   {
     "path": "docs/media/poster.png",
-    "bytes": 253233,
-    "sha256": "9f3235068be98c51f4c939c896676e27d5312f4ae9d0f831062c145a29ad1823",
+    "bytes": 292202,
+    "sha256": "97a9e815054c04fb28e3dfc2402dea775302c4e2a8ddf98773f1148fca218319",
     "description": "Embed poster, from the real export."
   },
   {
     "path": "docs/media/demo.mp4",
-    "bytes": 301262,
-    "sha256": "b70f751c1c4cb5e2915f1563f283c23042950b16e18a0013e7466c23a472b2da",
-    "description": "18 second recording of the signature interaction."
+    "bytes": 675726,
+    "sha256": "acb57339a46efc52d501905463e16052a11fe3fd5b8f7986b02fac2db2381ea7",
+    "description": "25 second recording of the look ahead, a take over and what changed."
   },
   {
     "path": "docs/media/walkthrough.mp4",
-    "bytes": 992549,
-    "sha256": "24cb8e2cb153a264ac5372c0ed9b5a96b10a6d752dcc9bafee8ee581d721e86e",
+    "bytes": 1069517,
+    "sha256": "fcac6a0c21908e75923e40771014fdd80a2f4800795fa3d7fedd99f722f54c93",
     "description": "63 second silent technical walkthrough with on-screen notes."
   }
 ]

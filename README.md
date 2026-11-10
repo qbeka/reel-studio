@@ -8,7 +8,7 @@ story at a chapter.
 ![A viewer has taken over a demo of an invented receipt app. Its window sits on a dark backdrop, the values that differ from the recording are outlined and listed beside it, and the viewer's own line runs under the chaptered timeline.](docs/media/cover.png)
 
 **[Try the live demo](https://www.qendrimbeka.com/projects/reel/)**, watch the
-[18 second demo](docs/media/demo.mp4), or see the
+[25 second demo](docs/media/demo.mp4), or see the
 [63 second walkthrough](docs/media/walkthrough.mp4), which is silent with on-screen notes.
 
 ## Quick start
