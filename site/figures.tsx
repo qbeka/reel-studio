@@ -180,7 +180,7 @@ function LogFigure() {
           </pre>
           <p className="log-note">
             {chapter >= 0 ? `In the chapter ${project.chapters[chapter]!.title}` : 'Before the first chapter'}, and the app
-            beside this is drawn from the state after that command
+            shown with this is drawn from the state after that command
           </p>
         </div>
         <div className="log-mini" ref={miniRef}>
