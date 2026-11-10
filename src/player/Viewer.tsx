@@ -1,4 +1,5 @@
 import {
+  Fragment,
   type ReactNode,
   useCallback,
   useEffect,
@@ -19,6 +20,7 @@ import {
   reopenBranch,
   returnOptions,
 } from '../core/branch';
+import { diffStates } from '../core/diff';
 import { momentHash, parseMoment } from '../core/location';
 import { Playback } from '../core/playback';
 import { pointerAt, userCommands } from '../core/pointer';
@@ -28,13 +30,28 @@ import { Timeline } from '../core/timeline';
 import { captionAt, chapterIndexAt, shotMixAt } from '../core/tracks';
 import type { TranscriptLine } from '../core/transcript';
 import { Handoff, type HandoffHandle } from './Handoff';
+import { ChangeRow, Peek } from './Peek';
 import { Stage, type StagePointer } from './Stage';
-import { TimelineBar } from './Transport';
+import { type ForkMark, TimelineBar } from './Transport';
 
 const STEP_MS = 5000;
 /** How long the camera takes to leave or rejoin its shots when Full view is pressed. */
 const FOLLOW_MS = 520;
 const COPIED_MS = 1800;
+/** How often the line of a viewer's copy grows while they are in it. */
+const BRANCH_TICK_MS = 250;
+/** The widest the look ahead above the timeline draws the app. */
+const PEEK_MINI = 332;
+
+/** The player's own keys, in the order a person meets them. */
+const KEYS: readonly (readonly [string, string])[] = [
+  ['Space or K', 'Play or pause'],
+  ['Left and Right', 'Back or forward 5 seconds'],
+  ['[ and ]', 'Previous or next chapter'],
+  ['T', 'Take over'],
+  ['C', 'Hold this moment and compare'],
+  ['?', 'Show or hide these keys'],
+];
 
 const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -97,7 +114,11 @@ async function copyText(text: string): Promise<boolean> {
 interface KeptCopy extends BranchCopy {
   edits: number;
   lines: readonly string[];
+  /** What happened in the copy and when, in milliseconds since it left the recording. */
+  marks: readonly Mark[];
 }
+
+type Mark = NonNullable<ForkMark['marks']>[number];
 
 /** One recorded command, as a line an author can read. */
 export interface AuthorStep {
@@ -133,6 +154,8 @@ export interface ViewerProps {
   startAt?: number;
   /** Adds an Author control. The exported viewer has none. */
   author?: (context: AuthorContext) => ReactNode;
+  /** One more thing to open once the story is over, offered on its end card. */
+  next?: { label: string; onSelect: () => void };
 }
 
 const ICONS = {
@@ -151,6 +174,15 @@ const ICONS = {
   link: (
     <path
       d="M6.7 9.300a2.7 2.7 0 0 0 3.8 0l2-2a2.7 2.7 0 0 0-3.8-3.800l-.6.6M9.3 6.700a2.7 2.7 0 0 0-3.8 0l-2 2a2.7 2.7 0 0 0 3.8 3.800l.6-.6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+  ),
+  compare: (
+    <path
+      d="M5.5 2.5v11M10.5 2.5v11M2 5.5h3.500M2 10.5h3.500M10.5 8H14"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.4"
@@ -177,7 +209,15 @@ function Icon({ name }: { name: keyof typeof ICONS }) {
   );
 }
 
-export function Viewer({ adapter, project, transcript, variant, autoplay, startAt, author }: ViewerProps) {
+/** Everything that has happened in a copy, as places on its line. */
+function marksOf(branch: Branch, earlier: readonly Mark[]): Mark[] {
+  return [
+    ...earlier,
+    ...branch.session.log.map((entry) => ({ at: entry.t - branch.base.t, made: entry.source === 'user' })),
+  ];
+}
+
+export function Viewer({ adapter, project, transcript, variant, autoplay, startAt, author, next }: ViewerProps) {
   const onPage = variant === 'page';
   const { start: rangeStart, end: rangeEnd } = playRange(project);
   const range = useMemo(() => ({ start: rangeStart, end: rangeEnd }), [rangeStart, rangeEnd]);
@@ -234,6 +274,14 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   /** True while the drawn pointer is on its way back from the viewer's hand. */
   const [returning, setReturning] = useState(false);
   const [offscreen, setOffscreen] = useState(false);
+  /** A moment of the recording held to compare with the one on screen, or null. */
+  const [pin, setPin] = useState<number | null>(null);
+  /** True while the list of changes is open in a viewer's copy. */
+  const [comparing, setComparing] = useState(false);
+  const [keysOpen, setKeysOpen] = useState(false);
+  /** What happened in a copy before it was set aside, kept so its line can be drawn again. */
+  const [earlier, setEarlier] = useState<readonly Mark[]>([]);
+  const [, setTick] = useState(0);
 
   const box = useRef<HTMLDivElement>(null);
   const playButton = useRef<HTMLButtonElement>(null);
@@ -242,6 +290,8 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const moments = useRef<HTMLFieldSetElement>(null);
   const line = useRef<HTMLParagraphElement>(null);
   const handoff = useRef<HandoffHandle>(null);
+  const keysSheet = useRef<HTMLDivElement>(null);
+  const keysFrom = useRef<HTMLElement | null>(null);
 
   // Ambient motion stops while the stage is out of sight.
   useEffect(() => {
@@ -258,6 +308,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       edits: number,
       lines: readonly string[],
       fresh: boolean,
+      marks: readonly Mark[] = [],
     ) => {
       let previous: unknown;
       const next: Branch = make((changed) => {
@@ -287,6 +338,9 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       setKept(null);
       setAuthoring(false);
       setReturning(false);
+      setPin(null);
+      setComparing(false);
+      setEarlier(marks);
       setAnnouncement('Your own copy is open, and the recording will not change');
       requestAnimationFrame(() => line.current?.focus({ preventScroll: true }));
     },
@@ -364,10 +418,12 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       t: branch.session.t,
       edits: branchEdits,
       lines: branchLines,
+      marks: marksOf(branch, earlier),
     };
     branch.session.close();
     setBranch(null);
     setChoosing(false);
+    setComparing(false);
     playback.seek(t);
     setKept(lost ? copy : null);
     const sentence = lost
@@ -392,6 +448,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
       copy.edits,
       copy.lines,
       false,
+      copy.marks,
     );
   };
 
@@ -420,8 +477,52 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const toggleAuthor = () => {
     playback.pause();
     setNotice(null);
+    setPin(null);
     setAuthoring((open) => !open);
   };
+
+  /** Holds the moment on screen, so that wherever the story goes next can be compared with it. */
+  const toggleCompare = useCallback(() => {
+    if (branch !== null) {
+      setComparing((open) => !open);
+      return;
+    }
+    const { t, seeking } = playback.getSnapshot();
+    if (seeking) return;
+    setAuthoring(false);
+    setPin((held) => {
+      const nextPin = held === null ? t : null;
+      setAnnouncement(
+        nextPin === null
+          ? 'Comparison closed'
+          : `Holding ${formatTime(t)}, so move the story to see what differs from it`,
+      );
+      return nextPin;
+    });
+  }, [branch, playback]);
+
+  const closeKeys = useCallback(() => {
+    setKeysOpen(false);
+    keysFrom.current?.focus({ preventScroll: true });
+  }, []);
+  const toggleKeys = useCallback(() => {
+    setKeysOpen((open) => {
+      if (open) keysFrom.current?.focus({ preventScroll: true });
+      else keysFrom.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      return !open;
+    });
+  }, []);
+  useEffect(() => {
+    if (keysOpen) keysSheet.current?.focus({ preventScroll: true });
+  }, [keysOpen]);
+
+  // The line of a copy grows with the time spent in it. With reduced motion it only moves
+  // when something happens.
+  useEffect(() => {
+    if (branch === null || prefersReducedMotion()) return;
+    const timer = setInterval(() => setTick((n) => n + 1), BRANCH_TICK_MS);
+    return () => clearInterval(timer);
+  }, [branch]);
   const closeAuthor = useCallback(() => setAuthoring(false), []);
 
   const copyLink = async () => {
@@ -462,12 +563,32 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (ownsKeys(event.target) || inBranch || authoring) return;
+      if (event.key === 'Escape' && keysOpen) {
+        closeKeys();
+        return;
+      }
+      if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.closest('input, textarea, select') !== null)) return;
       if (onPage) {
         // On a page with reading below, the keys belong to the page once the stage has left.
         const bounds = box.current?.getBoundingClientRect();
         if (bounds === undefined || bounds.bottom < 80 || bounds.top > innerHeight - 80) return;
       }
+      if (event.key === '?') {
+        event.preventDefault();
+        toggleKeys();
+        return;
+      }
+      if (keysOpen) return;
+      if (event.key === 'Escape' && pin !== null && !inBranch) {
+        setPin(null);
+        return;
+      }
+      if (ownsKeys(event.target) || authoring) return;
+      if (event.key === 'c') {
+        toggleCompare();
+        return;
+      }
+      if (inBranch) return;
       const key = event.key;
       if (key === ' ' || key === 'k') {
         event.preventDefault();
@@ -488,7 +609,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [inBranch, authoring, onPage, playback, seek, playOrPause, jumpChapter, takeControl]);
+  }, [inBranch, authoring, onPage, playback, seek, playOrPause, jumpChapter, takeControl, keysOpen, closeKeys, toggleKeys, toggleCompare, pin]);
 
   useEffect(() => {
     if (onPage || story.playing || story.seeking || inBranch) return;
@@ -547,33 +668,37 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const hasCloseView = moved && layout === 'wide' && shot.to !== null;
 
   // The pointer is drawn from the commands. Nothing recorded where a hand really was.
-  const plan = pointerAt(made, story.t, range.start);
-  const placeOf = (command: LogEntry | null) =>
-    command === null ? null : (adapter.pointOf?.(command) ?? adapter.targetOf(command));
+  // Neither were the keys, so a typed value is drawn one key at a time from its command.
+  const typedOf = (command: LogEntry) => adapter.typedOf?.(story.state, command) ?? null;
+  const plan = pointerAt(made, story.t, range.start, (command) => typedOf(command)?.length ?? 0);
+  // A scene may need the state a command changed to say which control it pressed. For the
+  // next command that is the state on screen. For the last one it is found by replay,
+  // once per command, and only for a scene that asks.
+  const fromIndex = useMemo(
+    () => (adapter.pointsReadState === true && plan.from !== null ? commands.indexOf(plan.from) : -1),
+    [adapter, commands, plan.from],
+  );
+  const beforeFrom = useMemo(
+    () => (fromIndex < 0 ? undefined : timeline.stateAfter(fromIndex)),
+    [timeline, fromIndex],
+  );
+  const placeOf = (command: LogEntry | null, before: unknown) =>
+    command === null ? null : (adapter.pointOf?.(command, before) ?? adapter.targetOf(command));
   const pointer: StagePointer | null =
     inBranch || made.length === 0
       ? null
       : {
-          from: placeOf(plan.from),
-          to: placeOf(plan.to),
+          from: placeOf(plan.from, beforeFrom),
+          to: placeOf(plan.to, story.state),
           progress: plan.progress,
           sinceClick: plan.sinceClick,
+          press: plan.press,
+          typing:
+            plan.typing === null || plan.to === null
+              ? null
+              : { text: typedOf(plan.to) ?? '', keys: plan.typing.keys, selecting: plan.typing.selecting },
           label: 'Reel',
         };
-
-  if (story.error !== null) {
-    return (
-      <main className="reel-viewer">
-        <h1>{project.title}</h1>
-        <p className="reel-problem" role="alert">
-          This recording cannot play past this point: {story.error}
-        </p>
-        <p>
-          <a href="./transcript.html">Read the transcript</a>
-        </p>
-      </main>
-    );
-  }
 
   // Scene transient marks are not part of a state's data, so a branch starts without them.
   // Until something changes, the recording's own state stays on screen. Both hold the same
@@ -591,6 +716,60 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
   const ended =
     !inBranch && !authoring && !story.playing && !story.seeking && story.t >= range.end && range.end > range.start;
 
+  // What the stage is compared with: a held moment of the recording, or in a copy, the
+  // recording as it was when the copy left it. Both are whole states.
+  const heldT = inBranch ? branch.base.t : pin;
+  const held = useMemo(() => (heldT === null ? null : timeline.stateAt(heldT)), [timeline, heldT]);
+  const changes = useMemo(
+    () => (held === null ? [] : diffStates(adapter, held, scene)),
+    [adapter, held, scene],
+  );
+  const showChanges = inBranch ? comparing : pin !== null;
+
+  const fork: ForkMark | null = inBranch
+    ? {
+        t: branch.base.t,
+        edits: branchEdits,
+        kept: false,
+        marks: marksOf(branch, earlier),
+        elapsed: prefersReducedMotion() ? 0 : branch.session.t - branch.base.t,
+      }
+    : kept !== null
+      ? { t: kept.base.t, edits: kept.edits, kept: true, marks: kept.marks, elapsed: kept.t - kept.base.t }
+      : null;
+
+  const stageScene = useCallback(() => box.current?.querySelector('.reel-scene') ?? null, []);
+  const peek =
+    inBranch || authoring
+      ? undefined
+      : (t: number) => (
+          <Peek
+            adapter={adapter}
+            timeline={timeline}
+            t={t}
+            now={scene}
+            chapters={chapters}
+            steps={steps}
+            layout={layout}
+            width={PEEK_MINI}
+            stageScene={stageScene}
+          />
+        );
+
+  if (story.error !== null) {
+    return (
+      <main className="reel-viewer">
+        <h1>{project.title}</h1>
+        <p className="reel-problem" role="alert">
+          This recording cannot play past this point: {story.error}
+        </p>
+        <p>
+          <a href="./transcript.html">Read the transcript</a>
+        </p>
+      </main>
+    );
+  }
+
   // Also offered in a branch: the camera holds its framing there, and this opens the rest.
   // A host page has no room to spare for it while the story plays, so there it appears
   // only for a viewer who took over inside a close view.
@@ -605,23 +784,48 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     </button>
   );
 
+  const compareButton = (
+    <button
+      type="button"
+      className="control reel-compare"
+      aria-pressed={showChanges}
+      aria-disabled={authoring}
+      title="Hold this moment, then move the story to see what differs from it"
+      onClick={() => {
+        if (!authoring) toggleCompare();
+      }}
+    >
+      <Icon name="compare" />
+      {inBranch ? 'What changed' : 'Compare'}
+    </button>
+  );
+
+  // In a copy the line under the window says how far it has come from the recording.
+  const apart = inBranch
+    ? changes.length === 0
+      ? `Your copy is the same state as the recording at ${formatTime(branch.base.t)}`
+      : `Your copy differs from the recording in ${changes.length} ${changes.length === 1 ? 'field' : 'fields'}`
+    : null;
+
   const stage = (
     <div
       className="reel-box"
       ref={box}
       data-mode={inBranch ? 'branch' : 'story'}
       data-author={authoring}
+      data-side={authoring || showChanges}
       data-layout={layout}
       data-playing={story.playing}
       data-offscreen={offscreen}
       data-returning={returning}
+      data-ended={ended}
       onPointerMove={(event) => handoff.current?.track(event)}
       onPointerDown={(event) => handoff.current?.track(event)}
       onPointerLeave={() => handoff.current?.forget()}
     >
       <div className="reel-work">
         {inBranch && <i className="reel-claim" aria-hidden="true" />}
-        <div className="reel-window">
+        <div className="reel-window" data-chrome={adapter.chrome ?? 'light'}>
           <div className="reel-line" data-quiet={!inBranch && narration === ''}>
             <span className="reel-dots" aria-hidden="true">
               <i />
@@ -649,23 +853,102 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
               send={send}
               shot={shot}
               follow={follow}
-              caption={authoring ? null : caption}
               pointer={pointer}
+              against={showChanges && held !== null ? held : undefined}
               onLayout={setLayout}
               label={`${project.title}, ${inBranch ? 'your copy' : 'recorded story'}`}
             />
           </div>
           {ended && (
             <div className="reel-end">
-              <p>The story ends here and the app is yours to try</p>
-              <button type="button" className="control primary" onClick={takeControl}>
-                Try it yourself
-              </button>
+              <div className="reel-end-card">
+                <p className="reel-end-kicker">
+                  {commands.length} {commands.length === 1 ? 'command' : 'commands'} played in {formatTime(range.end - range.start)}
+                </p>
+                <h2>{project.title}</h2>
+                <p>The story ends here and the app is yours to try</p>
+                <div className="reel-end-actions">
+                  <button type="button" className="control primary" onClick={takeControl}>
+                    Try it yourself
+                  </button>
+                  <button type="button" className="control outline" onClick={playOrPause}>
+                    <Icon name="replay" />
+                    Watch again
+                  </button>
+                  {next !== undefined && (
+                    <button type="button" className="control" onClick={next.onSelect}>
+                      {next.label}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
 
+        {/*
+          Set under the picture, where subtitles go, so a caption can never cover the
+          control it describes. The band keeps its height, so nothing moves between lines.
+        */}
+        <div className="reel-sub" aria-live="off">
+          {inBranch ? (
+            <p className="reel-apart" data-apart={changes.length > 0}>
+              {apart}
+            </p>
+          ) : (
+            caption !== null && !authoring && (
+              <p className="reel-caption" key={caption.id}>
+                {caption.text}
+              </p>
+            )
+          )}
+        </div>
+
         {authoring && <aside className="reel-author float">{author?.(authorContext)}</aside>}
+
+        {showChanges && held !== null && (
+          <aside className="reel-diff float" aria-label="What changed">
+            <header>
+              <h2>What changed</h2>
+              <button
+                type="button"
+                className="control"
+                onClick={() => {
+                  if (inBranch) setComparing(false);
+                  else setPin(null);
+                }}
+              >
+                Done
+              </button>
+            </header>
+            <p className="reel-diff-ends">
+              <span>
+                <i>A</i>
+                {inBranch ? `The recording at ${formatTime(branch.base.t)}` : `Held at ${formatTime(pin ?? 0)}`}
+              </span>
+              <span>
+                <i>B</i>
+                {inBranch ? 'Your copy now' : `On screen at ${formatTime(story.t)}`}
+              </span>
+            </p>
+            {changes.length === 0 ? (
+              <p className="reel-diff-none">
+                {inBranch
+                  ? 'Nothing differs yet, so change something in the app'
+                  : 'Nothing differs yet, so play or scrub to another moment'}
+              </p>
+            ) : (
+              <ul className="reel-changes">
+                {changes.map((change) => (
+                  <ChangeRow key={change.id} change={change} />
+                ))}
+              </ul>
+            )}
+            <p className="reel-diff-note">
+              {changes.length} of the state's values differ, and each is outlined in the app
+            </p>
+          </aside>
+        )}
 
         {choosing && inBranch && (
           <fieldset className="reel-moments float" ref={moments} tabIndex={-1} aria-label="Choose a moment">
@@ -697,6 +980,32 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
             </button>
           </fieldset>
         )}
+
+        {keysOpen && (
+          <div
+            className="reel-keys-sheet float"
+            role="dialog"
+            aria-label="Keyboard shortcuts"
+            ref={keysSheet}
+            tabIndex={-1}
+          >
+            <header>
+              <h2>Keys</h2>
+              <button type="button" className="control" onClick={closeKeys}>
+                Close
+              </button>
+            </header>
+            <dl>
+              {KEYS.map(([key, does]) => (
+                <div key={key}>
+                  <dt>{key}</dt>
+                  <dd>{does}</dd>
+                </div>
+              ))}
+            </dl>
+            <p>Keys do nothing while you type in a field or use a control</p>
+          </div>
+        )}
       </div>
 
       <div
@@ -714,13 +1023,9 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
           onSeek={seek}
           disabled={inBranch}
           tracks={authoring ? project : null}
-          fork={
-            inBranch
-              ? { t: branch.base.t, edits: branchEdits, kept: false }
-              : kept !== null
-                ? { t: kept.base.t, edits: kept.edits, kept: true }
-                : null
-          }
+          fork={fork}
+          peek={peek}
+          pin={inBranch ? null : pin}
         />
 
         {inBranch ? (
@@ -749,6 +1054,7 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
               </span>
             )}
             <span className="reel-spacer" />
+            {compareButton}
             {fullView}
           </div>
         ) : (
@@ -790,12 +1096,23 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
               <span data-on={!copied}>Copy link</span>
               <span data-on={copied}>Copied</span>
             </button>
+            {compareButton}
             {fullView}
             {author !== undefined && (
               <button type="button" className="control" aria-pressed={authoring} onClick={toggleAuthor}>
                 Author
               </button>
             )}
+            <button
+              type="button"
+              className="control reel-keys-button"
+              aria-expanded={keysOpen}
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts"
+              onClick={toggleKeys}
+            >
+              ?
+            </button>
             <button
               ref={takeOverButton}
               type="button"
@@ -845,14 +1162,12 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
           <details className="reel-keys">
             <summary>Keyboard</summary>
             <dl>
-              <dt>Space or K</dt>
-              <dd>Play or pause</dd>
-              <dt>Left and Right</dt>
-              <dd>Back or forward 5 seconds</dd>
-              <dt>[ and ]</dt>
-              <dd>Previous or next chapter</dd>
-              <dt>T</dt>
-              <dd>Take over</dd>
+              {KEYS.map(([key, does]) => (
+                <Fragment key={key}>
+                  <dt>{key}</dt>
+                  <dd>{does}</dd>
+                </Fragment>
+              ))}
             </dl>
             <p>Keys do nothing while you type in a field or use a control</p>
           </details>
