@@ -27,6 +27,9 @@ const FRAMES = Math.round(((range.end - range.start) / 1000) * FPS);
 
 const ms = (value: number) => (value < 10 ? value.toFixed(1) : Math.round(value).toLocaleString('en-US'));
 
+/** One end of a range, with the decimal the page's text quotes it to. */
+const edge = (value: number) => (value < 100 ? value.toFixed(1) : Math.round(value).toLocaleString('en-US'));
+
 function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
   const ref = useRef<T>(null);
   const [width, setWidth] = useState(0);
@@ -246,7 +249,7 @@ function Bars({ title, scope, bars, top, log, verdict }: { title: string; scope:
             <output>
               <b>{ms(bar.median)} ms</b>
               <span>
-                {ms(bar.min)} to {ms(bar.max)}
+                {edge(bar.min)} to {edge(bar.max)}
               </span>
             </output>
           </div>
