@@ -20,8 +20,13 @@ export function shotAt(shots: readonly CameraShot[], t: number): CameraShot | nu
   return found;
 }
 
-/** How long the camera takes to ease from one shot to the next, in logical milliseconds. */
-export const SHOT_EASE_MS = 900;
+/** How long the camera takes to move from one shot to the next, in logical milliseconds. */
+export const SHOT_EASE_MS = 1200;
+/**
+ * A move starts this long before its shot. Shots sit on the commands they are about, and a
+ * camera that only sets off once the click has happened is always late for it.
+ */
+export const SHOT_LEAD_MS = 420;
 
 /** The framing in force, the one before it, and how far the move between them has come. */
 export interface ShotMix {
@@ -37,11 +42,24 @@ export interface ShotMix {
  */
 export function shotMixAt(shots: readonly CameraShot[], t: number): ShotMix {
   let index = -1;
-  for (let i = 0; i < shots.length && shots[i]!.t <= t; i++) index = i;
+  for (let i = 0; i < shots.length && moveStart(shots, i) <= t; i++) index = i;
   if (index < 0) return { from: null, to: null, progress: 1 };
   const shot = shots[index]!;
   const before = index > 0 ? shots[index - 1]!.target : null;
-  return { from: before, to: shot.target, progress: Math.min(1, (t - shot.t) / SHOT_EASE_MS) };
+  // A shot that frames what the last one did is no move at all.
+  if (before === shot.target) return { from: before, to: shot.target, progress: 1 };
+  return {
+    from: before,
+    to: shot.target,
+    progress: Math.min(1, (t - moveStart(shots, index)) / SHOT_EASE_MS),
+  };
+}
+
+/** When the move into shot `i` begins. It leads the shot, but never starts before the shot it leaves. */
+function moveStart(shots: readonly CameraShot[], i: number): number {
+  const shot = shots[i]!;
+  const floor = i > 0 ? shots[i - 1]!.t : 0;
+  return Math.max(floor, shot.t - SHOT_LEAD_MS);
 }
 
 /** Index of the chapter containing `t`, or -1 before the first chapter. */

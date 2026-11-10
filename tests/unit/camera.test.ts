@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FULL_VIEW, frameRect, mixCamera, placeCallout, projectRect } from '../../src/core/camera';
-import { SHOT_EASE_MS, captionAt, chapterIndexAt, shotAt, shotMixAt } from '../../src/core/tracks';
+import { FULL_VIEW, clampCamera, direct, frameRect, mixCamera, projectRect } from '../../src/core/camera';
+import { SHOT_EASE_MS, SHOT_LEAD_MS, captionAt, chapterIndexAt, shotAt, shotMixAt } from '../../src/core/tracks';
 
 const viewport = { width: 880, height: 560 };
 
@@ -37,43 +37,6 @@ describe('frameRect', () => {
   });
 });
 
-describe('placeCallout', () => {
-  const frame = { width: 1000, height: 460 };
-  const box = { width: 260, height: 70 };
-
-  it('sits along the bottom with no anchor', () => {
-    const place = placeCallout(null, null, frame, box);
-    expect(place.side).toBe('below');
-    expect(place.x).toBe(370);
-    expect(place.y + box.height).toBeLessThan(frame.height);
-  });
-
-  it('goes to the side of the anchor that has room and never covers it', () => {
-    const right = { x: 560, y: 60, width: 420, height: 300 };
-    const placed = placeCallout(right, null, frame, box);
-    expect(placed.side).toBe('left');
-    expect(placed.x + box.width).toBeLessThanOrEqual(right.x);
-
-    const left = { x: 0, y: 0, width: 228, height: 460 };
-    expect(placeCallout(left, null, frame, box).side).toBe('right');
-    expect(placeCallout(left, null, frame, box).x).toBeGreaterThanOrEqual(left.x + left.width);
-  });
-
-  it('stays level with the control in use, and inside the frame', () => {
-    const anchor = { x: 560, y: 60, width: 420, height: 300 };
-    const level = placeCallout(anchor, 200, frame, box);
-    expect(level.y + level.tail).toBe(200);
-    const low = placeCallout(anchor, 355, { ...frame, height: 380 }, box);
-    expect(low.y + box.height).toBeLessThanOrEqual(370);
-    expect(low.tail).toBeLessThanOrEqual(box.height - 14);
-  });
-
-  it('falls back to the bottom when neither side has room', () => {
-    const wide = { x: 100, y: 40, width: 800, height: 300 };
-    expect(placeCallout(wide, 100, frame, box).side).toBe('below');
-  });
-});
-
 describe('mixCamera', () => {
   const framed = { scale: 1.3, x: -200, y: -20 };
 
@@ -84,6 +47,68 @@ describe('mixCamera', () => {
 
   it('moves every part together', () => {
     expect(mixCamera(FULL_VIEW, framed, 0.5)).toEqual({ scale: 1.15, x: -100, y: -10 });
+  });
+
+  it('leans away from its target when asked for less than nothing', () => {
+    const lean = mixCamera(framed, FULL_VIEW, -0.1);
+    expect(lean.scale).toBeGreaterThan(framed.scale);
+    expect(lean.x).toBeLessThan(framed.x);
+  });
+});
+
+describe('a directed move', () => {
+  it('starts and ends at rest, exactly on its ends', () => {
+    expect(direct(0)).toBe(0);
+    expect(direct(1)).toBe(1);
+    expect(direct(-1)).toBe(0);
+    expect(direct(2)).toBe(1);
+    expect(Math.abs(direct(0.001))).toBeLessThan(0.001);
+    expect(1 - direct(0.999)).toBeLessThan(0.001);
+  });
+
+  it('leans back a little before it sets off, and never passes its target', () => {
+    let lowest = 0;
+    let highest = 0;
+    for (let i = 0; i <= 1000; i++) {
+      const value = direct(i / 1000);
+      lowest = Math.min(lowest, value);
+      highest = Math.max(highest, value);
+    }
+    expect(lowest).toBeLessThan(-0.005);
+    expect(lowest).toBeGreaterThan(-0.03);
+    expect(highest).toBe(1);
+  });
+
+  it('only moves forward once the lean is over, with no jump in speed', () => {
+    let last = direct(0.25);
+    let lastStep = 0;
+    for (let i = 251; i <= 1000; i++) {
+      const value = direct(i / 1000);
+      const step = value - last;
+      expect(step).toBeGreaterThanOrEqual(0);
+      if (i > 252) expect(Math.abs(step - lastStep)).toBeLessThan(0.0002);
+      last = value;
+      lastStep = step;
+    }
+  });
+
+  it('spends more of its time settling than setting off', () => {
+    expect(direct(0.5)).toBeGreaterThan(0.7);
+  });
+});
+
+describe('clampCamera', () => {
+  it('leaves a camera that is on the scene alone, as the same object', () => {
+    const camera = { scale: 1.2, x: -40, y: -10 };
+    expect(clampCamera(camera, viewport)).toBe(camera);
+  });
+
+  it('brings a camera that leaned past the full view back onto the scene', () => {
+    expect(clampCamera({ scale: 0.98, x: 6, y: 2 }, viewport)).toEqual({ scale: 1, x: 0, y: 0 });
+    const far = clampCamera({ scale: 1.3, x: -900, y: -900 }, viewport);
+    const corner = projectRect({ x: viewport.width, y: viewport.height, width: 0, height: 0 }, far);
+    expect(corner.x).toBeCloseTo(viewport.width);
+    expect(corner.y).toBeCloseTo(viewport.height);
   });
 });
 
@@ -122,15 +147,36 @@ describe('track lookup', () => {
     expect(chapterIndexAt(chapters, 20)).toBe(1);
   });
 
-  it('eases from the shot before, and a seek lands in the middle of the move', () => {
+  it('moves from the shot before, and a seek lands in the middle of the move', () => {
     const shots = [
       { id: 'a', t: 0, target: null },
       { id: 'b', t: 1000, target: 'x' },
     ];
+    const start = 1000 - SHOT_LEAD_MS;
     expect(shotMixAt([], 50)).toEqual({ from: null, to: null, progress: 1 });
-    expect(shotMixAt(shots, 999)).toEqual({ from: null, to: null, progress: 1 });
-    expect(shotMixAt(shots, 1000)).toEqual({ from: null, to: 'x', progress: 0 });
-    expect(shotMixAt(shots, 1000 + SHOT_EASE_MS / 2)).toEqual({ from: null, to: 'x', progress: 0.5 });
+    expect(shotMixAt(shots, start - 1)).toEqual({ from: null, to: null, progress: 1 });
+    expect(shotMixAt(shots, start)).toEqual({ from: null, to: 'x', progress: 0 });
+    expect(shotMixAt(shots, start + SHOT_EASE_MS / 2)).toEqual({ from: null, to: 'x', progress: 0.5 });
     expect(shotMixAt(shots, 90_000).progress).toBe(1);
+  });
+
+  it('sets off ahead of its shot, so the camera is already moving as the command lands', () => {
+    const shots = [
+      { id: 'a', t: 0, target: null },
+      { id: 'b', t: 1000, target: 'x' },
+    ];
+    const landing = shotMixAt(shots, 1000);
+    expect(landing.to).toBe('x');
+    expect(landing.progress).toBeGreaterThan(0);
+    expect(landing.progress).toBeLessThan(1);
+  });
+
+  it('never starts a move before the shot it leaves', () => {
+    const shots = [
+      { id: 'a', t: 900, target: 'x' },
+      { id: 'b', t: 1000, target: 'y' },
+    ];
+    expect(shotMixAt(shots, 899).to).toBe('x');
+    expect(shotMixAt(shots, 900)).toEqual({ from: 'x', to: 'y', progress: 0 });
   });
 });
