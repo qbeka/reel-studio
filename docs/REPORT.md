@@ -108,10 +108,12 @@ neither can change behaviour. Each kill records which test caught it, and the un
 suite passed first. The mutants change reducers and engine code, which neither redesign
 touched, so they were not run again.
 
-Browser suite: 135 test runs. Chromium runs all 97 distinct tests. WebKit and Firefox each
-repeat the 9 exported viewer tests and the 10 project page tests. The editor was only tested
-in Chromium. Axe finds no violations on the story, branch, return panel, embed, transcript,
-start page or editor. Automated checks do not establish full accessibility.
+Browser suite: 227 test runs. Chromium runs all 133 distinct tests. WebKit and Firefox each
+repeat the 9 exported viewer tests and the 38 project page tests, and skip the two of those
+that need a mouse over the timeline, which Chromium covers. The editor was only tested in
+Chromium. Axe finds no violations on the story, the comparison, the keys sheet, the end
+card, the branch, the return panel, embed, transcript, start page or editor. Automated
+checks do not establish full accessibility.
 
 ## What moved between the runs
 
