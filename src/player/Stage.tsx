@@ -1,17 +1,9 @@
 import { type CSSProperties, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AnyAdapter, LayoutName, Payload } from '../core/adapter';
-import {
-  type CameraTransform,
-  FULL_VIEW,
-  type Rect,
-  frameRect,
-  mixCamera,
-  placeCallout,
-  projectRect,
-} from '../core/camera';
-import { ease } from '../core/pointer';
+import { type CameraTransform, FULL_VIEW, type Rect, clampCamera, direct, frameRect, mixCamera } from '../core/camera';
 import type { Caption } from '../core/project';
 import type { ShotMix } from '../core/tracks';
+import { boundsOf, changedElements } from './marks';
 
 /** Below this stage width a scene uses its narrow coordinate system. */
 const NARROW_BELOW = 560;
@@ -23,9 +15,9 @@ const MIN_WIDE_WIDTH = 720;
 const MIN_NARROW_WIDTH = 344;
 
 /** How long the ring of a click takes to spread and fade, in logical milliseconds. */
-const RIPPLE_MS = 520;
-/** The pointer dips for this long as it presses. */
-const PRESS_MS = 140;
+const RIPPLE_MS = 460;
+/** Room left around the subject of a close shot, which stays clear while the rest is veiled. */
+const SUBJECT_ROOM = 10;
 
 /** Room kept around the pointer when a narrow stage scrolls to follow it. */
 const FOLLOW_ABOVE = 72;
@@ -37,18 +29,22 @@ const SHOT_NONE: ShotMix = { from: null, to: null, progress: 1 };
  * Layout bounds of every named target and control, in scene coordinates. Offsets ignore
  * CSS transforms, so bounds do not change while the camera moves or the stage rescales.
  */
+export function offsetRect(element: HTMLElement, root: HTMLElement): Rect {
+  let x = 0;
+  let y = 0;
+  let node: HTMLElement | null = element;
+  while (node !== null && node !== root) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent as HTMLElement | null;
+  }
+  return { x, y, width: element.offsetWidth, height: element.offsetHeight };
+}
+
 function measureTargets(root: HTMLElement): Map<string, Rect> {
   const bounds = new Map<string, Rect>();
   for (const element of root.querySelectorAll<HTMLElement>('[data-reel-target], [data-reel-point]')) {
-    let x = 0;
-    let y = 0;
-    let node: HTMLElement | null = element;
-    while (node !== null && node !== root) {
-      x += node.offsetLeft;
-      y += node.offsetTop;
-      node = node.offsetParent as HTMLElement | null;
-    }
-    const rect = { x, y, width: element.offsetWidth, height: element.offsetHeight };
+    const rect = offsetRect(element, root);
     const { reelTarget, reelPoint } = element.dataset;
     if (reelTarget !== undefined) bounds.set(reelTarget, rect);
     if (reelPoint !== undefined) bounds.set(reelPoint, rect);
@@ -101,10 +97,57 @@ export interface StagePointer {
   to: string | null;
   /** From 0 to 1, already eased. */
   progress: number;
-  /** Logical milliseconds since it last pressed, or null. */
+  /** Logical milliseconds since its button last came up, or null. */
   sinceClick: number | null;
+  /** How far down its button is, from 0 to 1. */
+  press: number;
+  /** The value being typed into the control at `to`, or null. */
+  typing: { text: string; keys: number; selecting: boolean } | null;
   /** The short word it carries, saying who is moving it. */
   label: string;
+}
+
+/** The field being typed into: where its text sits and how that text is set. */
+interface TypedField {
+  point: string;
+  host: Rect;
+  hostRadius: string;
+  box: Rect;
+  old: string;
+  style: CSSProperties;
+}
+
+/** The first colour behind an element that is not see-through. */
+function backgroundBehind(element: HTMLElement, root: HTMLElement): string {
+  for (let node: HTMLElement | null = element; node !== null && node !== root.parentElement; node = node.parentElement) {
+    const colour = getComputedStyle(node).backgroundColor;
+    if (colour !== '' && colour !== 'transparent' && !/,\s*0\)$/.test(colour)) return colour;
+  }
+  return '#fff';
+}
+
+function readField(root: HTMLElement, point: string): TypedField | null {
+  const host = root.querySelector<HTMLElement>(`[data-reel-point="${CSS.escape(point)}"]`);
+  if (host === null) return null;
+  const input = host.matches('input, textarea') ? host : host.querySelector<HTMLElement>('input, textarea');
+  if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement)) return null;
+  const set = getComputedStyle(input);
+  return {
+    point,
+    host: offsetRect(host, root),
+    hostRadius: getComputedStyle(host).borderRadius,
+    box: offsetRect(input, root),
+    old: input.value,
+    style: {
+      font: set.font,
+      fontVariantNumeric: set.fontVariantNumeric,
+      letterSpacing: set.letterSpacing,
+      color: set.color,
+      padding: set.padding,
+      justifyContent: set.textAlign === 'right' || set.textAlign === 'end' ? 'flex-end' : 'flex-start',
+      background: backgroundBehind(input, root),
+    },
+  };
 }
 
 export interface StageProps {
@@ -116,7 +159,8 @@ export interface StageProps {
   shot?: ShotMix;
   /** How much the camera follows its shots: 0 shows the whole scene, 1 the shot. */
   follow?: number;
-  caption: Caption | null;
+  /** Set under the scene by a stage that is not filling a box. A filled stage leaves it to its host. */
+  caption?: Caption | null;
   /** The drawn pointer, or null for none. It is never a recording of a real one. */
   pointer?: StagePointer | null;
   /** Puts a stable, known layout on the stage for tests and screenshots. */
@@ -126,7 +170,18 @@ export interface StageProps {
   fill?: boolean;
   /** Told which coordinate system the scene is using, whenever that changes. */
   onLayout?: (layout: LayoutName) => void;
+  /**
+   * Another state of the same scene. Wherever the scene on the stage shows something this
+   * one would not, that part is outlined.
+   */
+  against?: unknown;
 }
+
+const NO_MARKS: readonly Rect[] = [];
+
+const sameRects = (a: readonly Rect[], b: readonly Rect[]) =>
+  a.length === b.length &&
+  a.every((r, i) => r.x === b[i]!.x && r.y === b[i]!.y && r.width === b[i]!.width && r.height === b[i]!.height);
 
 export function Stage({
   adapter,
@@ -135,19 +190,21 @@ export function Stage({
   send = ignoreSend,
   shot = SHOT_NONE,
   follow = 1,
-  caption,
+  caption = null,
   pointer = null,
   label,
   onCommit,
   fill = false,
   onLayout,
+  against,
 }: StageProps) {
+  const twinRef = useRef<HTMLFormElement>(null);
+  const [marks, setMarks] = useState<readonly Rect[]>(NO_MARKS);
   const frameRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
-  const calloutRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [bounds, setBounds] = useState<Map<string, Rect>>(() => new Map());
-  const [calloutHeight, setCalloutHeight] = useState(64);
+  const [field, setField] = useState<TypedField | null>(null);
 
   useLayoutEffect(() => {
     const frame = frameRef.current!;
@@ -190,9 +247,22 @@ export function Stage({
     onCommit?.();
     const measured = measureTargets(sceneRef.current!);
     setBounds((previous) => (sameBounds(previous, measured) ? previous : measured));
-    const callout = calloutRef.current?.offsetHeight;
-    if (callout !== undefined && callout > 0) setCalloutHeight(callout);
+    // The other state is drawn out of sight by the same code, and the two are read side by side.
+    const twin = twinRef.current;
+    const found = twin === null ? NO_MARKS : boundsOf(changedElements(twin, sceneRef.current!), sceneRef.current!);
+    setMarks((previous) => (sameRects(previous, found) ? previous : found));
   });
+
+  // The field under the keys is read once as typing starts, so the letters drawn over it
+  // sit and look exactly like its own.
+  const typedPoint = pointer?.typing != null ? pointer.to : null;
+  useLayoutEffect(() => {
+    if (typedPoint === null) {
+      if (field !== null) setField(null);
+      return;
+    }
+    if (field?.point !== typedPoint) setField(readField(sceneRef.current!, typedPoint));
+  }, [typedPoint, field]);
 
   // A scene that scrolls is followed by scrolling, so its camera stays on the whole scene.
   const [shotFrom, shotTo] = useMemo(() => {
@@ -202,14 +272,26 @@ export function Stage({
       target === null ? FULL_VIEW : frameRect(bounds.get(target) ?? null, size);
     return [frame(shot.from), frame(shot.to)];
   }, [scrolls, sceneWidth, sceneHeight, bounds, shot.from, shot.to]);
-  const camera: CameraTransform = useMemo(
-    () => mixCamera(FULL_VIEW, mixCamera(shotFrom, shotTo, ease(shot.progress)), follow),
-    [shotFrom, shotTo, shot.progress, follow],
-  );
-  /** Where the camera will be once it stops. A callout picks its side from this. */
-  const settled = follow >= 0.5 ? shotTo : FULL_VIEW;
+  const camera: CameraTransform = useMemo(() => {
+    const paced = mixCamera(shotFrom, shotTo, direct(shot.progress));
+    const kept = paced === shotFrom || paced === shotTo ? paced : clampCamera(paced, { width: sceneWidth, height: sceneHeight });
+    return mixCamera(FULL_VIEW, kept, follow);
+  }, [shotFrom, shotTo, shot.progress, follow, sceneWidth, sceneHeight]);
   const scale = fit * camera.scale;
   const framed = camera.scale !== 1 || camera.x !== 0 || camera.y !== 0;
+
+  // A close shot has a subject. The rest of the app stays where it is and goes quiet, so
+  // the eye is on the part in use. A viewer in control gets the whole app back.
+  const arrived = Math.min(1, Math.max(0, direct(shot.progress)));
+  const veils: { id: string; rect: Rect; strength: number }[] = [];
+  if (!scrolls && !interactive && follow > 0) {
+    const add = (id: string | null, strength: number) => {
+      const rect = id === null ? undefined : bounds.get(id);
+      if (rect !== undefined && strength > 0.01) veils.push({ id: id!, rect, strength });
+    };
+    if (shot.from !== shot.to) add(shot.from, follow * (1 - arrived));
+    add(shot.to, follow * (shot.from === shot.to ? 1 : arrived));
+  }
 
   // The pointer, in scene coordinates.
   const point = useMemo(() => {
@@ -228,7 +310,7 @@ export function Stage({
     const dy = to.y - from.y;
     const distance = Math.hypot(dx, dy) || 1;
     // A slight bow to one side, the way a hand moves, which is flat at both ends.
-    const bow = Math.sin(Math.PI * pointer.progress) * Math.min(26, distance * 0.09);
+    const bow = Math.sin(Math.PI * pointer.progress) ** 2 * Math.min(22, distance * 0.08);
     return {
       x: from.x + dx * pointer.progress + (-dy / distance) * bow,
       y: from.y + dy * pointer.progress + (dx / distance) * bow,
@@ -260,31 +342,6 @@ export function Stage({
     if (next !== top) frame.scrollTo({ top: Math.max(0, next), behavior: 'auto' });
   }, [followY]);
 
-  // The callout sits beside its target, level with the pointer. Its side comes from the
-  // settled camera, so it does not change sides while the camera is still moving.
-  const calloutWidth = Math.round(Math.min(288, Math.max(196, width * 0.29)));
-  let callout: { x: number; y: number; side: string; tail: number } | null = null;
-  if (caption !== null && layout === 'wide' && width > 0) {
-    const anchor = caption.target === null ? undefined : bounds.get(caption.target);
-    const fitted = { ...settled, scale: settled.scale * fit };
-    const there = anchor === undefined ? null : projectRect(anchor, fitted);
-    const focus = point === null ? null : toFrame(settled, point.x, point.y).y;
-    const place = placeCallout(
-      there,
-      focus,
-      { width, height },
-      { width: calloutWidth, height: calloutHeight },
-    );
-    // Carried along with its target while the camera is on its way.
-    const now = anchor === undefined || there === null ? null : toFrame(camera, anchor.x, anchor.y);
-    const rides = place.side !== 'below' && now !== null && there !== null;
-    callout = {
-      ...place,
-      x: place.x + (rides ? now.x - there.x : 0),
-      y: place.y + (rides ? now.y - there.y : 0),
-    };
-  }
-
   // Where the camera has left part of the scene outside the frame, that edge fades out,
   // so a close view reads as a close view and not as a page cut short.
   const beyond = (hidden: number) => Math.min(1, Math.max(0, (hidden * scale) / 28));
@@ -298,8 +355,13 @@ export function Stage({
       };
 
   const since = pointer?.sinceClick ?? null;
-  const ripple = since !== null && since < RIPPLE_MS ? since / RIPPLE_MS : null;
-  const pressed = since !== null && since < PRESS_MS;
+  const ripple = since !== null && since >= 0 && since < RIPPLE_MS ? since / RIPPLE_MS : null;
+  const press = pointer?.press ?? 0;
+  // The control under the button while it is down, which answers as a pressed control does.
+  const underId = pointer === null || press === 0 ? null : pointer.to !== null && pointer.progress >= 1 ? pointer.to : pointer.to === null ? pointer.from : null;
+  const under = underId === null ? undefined : bounds.get(underId);
+  const typing = pointer?.typing ?? null;
+  const typed = typing !== null && field !== null && field.point === pointer?.to ? field : null;
 
   return (
     <figure className="reel-stage" aria-label={label} data-layout={layout} data-fill={fill}>
@@ -329,18 +391,81 @@ export function Stage({
             layout={layout}
           />
         </div>
+        {/* Drawn over the scene and moved with it. None of it is part of the app. */}
+        <div
+          className="reel-over"
+          aria-hidden="true"
+          style={{ width: sceneWidth, height: scrolls ? undefined : sceneHeight, transform: `scale(${scale}) translate(${camera.x}px, ${camera.y}px)` }}
+        >
+          {veils.map(({ id, rect, strength }) => (
+            <i
+              key={id}
+              className="reel-veil"
+              style={{
+                left: rect.x - SUBJECT_ROOM,
+                top: rect.y - SUBJECT_ROOM,
+                width: rect.width + SUBJECT_ROOM * 2,
+                height: rect.height + SUBJECT_ROOM * 2,
+                opacity: strength,
+              }}
+            />
+          ))}
+          {marks.map((mark) => (
+            <i
+              key={`${mark.x}:${mark.y}:${mark.width}:${mark.height}`}
+              className="reel-mark"
+              style={{ left: mark.x - 3, top: mark.y - 3, width: mark.width + 6, height: mark.height + 6 }}
+            />
+          ))}
+          {under !== undefined && typed === null && (
+            <i
+              className="reel-press"
+              style={{ left: under.x, top: under.y, width: under.width, height: under.height, opacity: press }}
+            />
+          )}
+          {typed !== null && typing !== null && (
+            <>
+              <i
+                className="reel-focus"
+                style={{
+                  left: typed.host.x,
+                  top: typed.host.y,
+                  width: typed.host.width,
+                  height: typed.host.height,
+                  borderRadius: typed.hostRadius,
+                }}
+              />
+              <span
+                className="reel-typed"
+                data-selecting={typing.selecting}
+                style={{ ...typed.style, left: typed.box.x, top: typed.box.y, width: typed.box.width, height: typed.box.height }}
+              >
+                <span>{typing.selecting ? typed.old : typing.text.slice(0, typing.keys)}</span>
+                <i />
+              </span>
+            </>
+          )}
+        </div>
+        {against !== undefined && (
+          // A form of its own, so that its radio buttons never join a group in the scene.
+          <form ref={twinRef} hidden inert>
+            <SceneView adapter={adapter} state={against} send={ignoreSend} interactive={false} layout={layout} />
+          </form>
+        )}
         {framed && <i className="reel-fade" aria-hidden="true" />}
         {cursor !== null && pointer !== null && (
           <div
             className="reel-cursor"
             aria-hidden="true"
-            data-pressed={pressed}
-            style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}
+            // Near the bottom or the right edge its name goes where there is room for it.
+            data-up={!scrolls && cursor.y > height - 46}
+            data-back={cursor.x > width - 64}
+            style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)`, '--press': press } as CSSProperties}
           >
             {ripple !== null && (
               <i
                 className="reel-ripple"
-                style={{ transform: `scale(${0.3 + ripple * 1.5})`, opacity: (1 - ripple) ** 1.6 }}
+                style={{ transform: `scale(${0.35 + (1 - (1 - ripple) ** 3) * 1.1})`, opacity: (1 - ripple) ** 2 * 0.9 }}
               />
             )}
             <svg viewBox="0 0 22 24" width="22" height="24" aria-hidden="true">
@@ -349,31 +474,13 @@ export function Stage({
             <span>{pointer.label}</span>
           </div>
         )}
-        {callout !== null && caption !== null && (
-          <div
-            ref={calloutRef}
-            className="reel-caption"
-            data-side={callout.side}
-            style={{
-              width: calloutWidth,
-              transform: `translate(${Math.round(callout.x)}px, ${Math.round(callout.y)}px)`,
-            }}
-          >
-            <p key={caption.id}>
-              {caption.text}
-              <i aria-hidden="true" style={{ top: callout.tail }} />
-            </p>
-          </div>
-        )}
       </div>
       {/*
-        On a narrow stage the caption has its own strip below the scene, so it can never
-        cover the target and its text stays at a readable size. The strip keeps its
-        height when empty, so the controls do not shift between captions.
+        A caption is set under the picture, where subtitles go, so it can never cover the
+        control it describes. The strip keeps its height when empty, so nothing below it
+        shifts between captions. A filled stage leaves the line to its host.
       */}
-      {layout === 'narrow' && !fill && (
-        <figcaption className="reel-caption-strip">{caption?.text ?? ''}</figcaption>
-      )}
+      {!fill && <figcaption className="reel-caption-strip">{caption?.text ?? ''}</figcaption>}
     </figure>
   );
 }
