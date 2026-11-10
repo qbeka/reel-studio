@@ -1,0 +1,329 @@
+{
+  "format": "reel-project",
+  "formatVersion": 1,
+  "id": "retry-queue-demo",
+  "title": "Rescue a dead letter",
+  "disclosure": "Synthetic data with no real endpoint, events or accounts",
+  "scene": {
+    "id": "retry-queue",
+    "version": 1
+  },
+  "seed": 11,
+  "checkpointEvery": 256,
+  "trim": null,
+  "posterT": 6639,
+  "commands": [
+    {
+      "type": "enqueue",
+      "payload": {},
+      "seq": 1,
+      "t": 1500,
+      "source": "user"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 1,
+        "status": 503
+      },
+      "seq": 2,
+      "t": 1760,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptDue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 3,
+      "t": 2211,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 2,
+        "status": 503
+      },
+      "seq": 4,
+      "t": 2471,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptDue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 5,
+      "t": 3376,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 3,
+        "status": 503
+      },
+      "seq": 6,
+      "t": 3636,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptDue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 7,
+      "t": 5479,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 4,
+        "status": 503
+      },
+      "seq": 8,
+      "t": 5739,
+      "source": "outcome"
+    },
+    {
+      "type": "setPolicy",
+      "payload": {
+        "maxAttempts": 5,
+        "baseDelayMs": 400,
+        "jitterPercent": 25
+      },
+      "seq": 9,
+      "t": 8300,
+      "source": "user"
+    },
+    {
+      "type": "setPolicy",
+      "payload": {
+        "maxAttempts": 6,
+        "baseDelayMs": 400,
+        "jitterPercent": 25
+      },
+      "seq": 10,
+      "t": 9100,
+      "source": "user"
+    },
+    {
+      "type": "requeue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 11,
+      "t": 10600,
+      "source": "user"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 1,
+        "status": 503
+      },
+      "seq": 12,
+      "t": 10860,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptDue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 13,
+      "t": 11319,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 2,
+        "status": 503
+      },
+      "seq": 14,
+      "t": 11579,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptDue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 15,
+      "t": 12549,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 3,
+        "status": 503
+      },
+      "seq": 16,
+      "t": 12809,
+      "source": "outcome"
+    },
+    {
+      "type": "setHealthy",
+      "payload": {
+        "healthy": true
+      },
+      "seq": 17,
+      "t": 13300,
+      "source": "user"
+    },
+    {
+      "type": "attemptDue",
+      "payload": {
+        "job": "job-1"
+      },
+      "seq": 18,
+      "t": 14624,
+      "source": "outcome"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-1",
+        "attempt": 4,
+        "status": 200
+      },
+      "seq": 19,
+      "t": 14884,
+      "source": "outcome"
+    },
+    {
+      "type": "enqueue",
+      "payload": {},
+      "seq": 20,
+      "t": 17400,
+      "source": "user"
+    },
+    {
+      "type": "attemptResult",
+      "payload": {
+        "job": "job-2",
+        "attempt": 1,
+        "status": 200
+      },
+      "seq": 21,
+      "t": 17660,
+      "source": "outcome"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "send",
+      "t": 0,
+      "title": "Send into a failing endpoint"
+    },
+    {
+      "id": "backoff",
+      "t": 1760,
+      "title": "Watch it back off"
+    },
+    {
+      "id": "policy",
+      "t": 7800,
+      "title": "Allow more attempts"
+    },
+    {
+      "id": "requeue",
+      "t": 10600,
+      "title": "Requeue the dead letter"
+    },
+    {
+      "id": "recover",
+      "t": 13300,
+      "title": "The endpoint recovers"
+    }
+  ],
+  "captions": [
+    {
+      "id": "cap-send",
+      "start": 300,
+      "end": 1760,
+      "text": "The endpoint is failing, so send it an event and see what the queue does",
+      "target": "send"
+    },
+    {
+      "id": "cap-backoff",
+      "start": 1860,
+      "end": 5739,
+      "text": "Every attempt gets a 503, and each wait is about twice the last",
+      "target": "jobs"
+    },
+    {
+      "id": "cap-dead",
+      "start": 5839,
+      "end": 7700,
+      "text": "After four attempts the policy gives up and the event is a dead letter",
+      "target": "jobs"
+    },
+    {
+      "id": "cap-policy",
+      "start": 7800,
+      "end": 10300,
+      "text": "Raise the limit to six attempts",
+      "target": "policy"
+    },
+    {
+      "id": "cap-requeue",
+      "start": 10400,
+      "end": 13000,
+      "text": "Requeue it and it starts failing again, since nothing has been fixed yet",
+      "target": "jobs"
+    },
+    {
+      "id": "cap-recover",
+      "start": 13100,
+      "end": 17000,
+      "text": "Bring the endpoint back while the event waits, and its next try is delivered",
+      "target": "endpoint"
+    },
+    {
+      "id": "cap-next",
+      "start": 17100,
+      "end": 20500,
+      "text": "A new event now goes through on its first attempt",
+      "target": "send"
+    }
+  ],
+  "camera": [
+    {
+      "id": "shot-open",
+      "t": 0,
+      "target": null
+    },
+    {
+      "id": "shot-jobs",
+      "t": 1960,
+      "target": "jobs"
+    },
+    {
+      "id": "shot-policy",
+      "t": 8000,
+      "target": null
+    },
+    {
+      "id": "shot-requeue",
+      "t": 13684,
+      "target": "jobs"
+    },
+    {
+      "id": "shot-end",
+      "t": 16900,
+      "target": null
+    }
+  ]
+}
