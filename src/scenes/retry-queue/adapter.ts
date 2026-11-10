@@ -1,4 +1,4 @@
-import type { Command, Effect, Payload, SceneAdapter } from '../../core/adapter';
+import type { Command, Effect, Field, Payload, SceneAdapter } from '../../core/adapter';
 import type { Json } from '../../core/canonical';
 import { Render } from './Render';
 import { type RetryState, apply, initialState, precondition } from './state';
@@ -90,6 +90,35 @@ function describe(_before: RetryState, command: Command, after: RetryState): str
   }
 }
 
+const STATUS: Record<string, string> = {
+  sending: 'Sending',
+  waiting: 'Waiting to retry',
+  delivered: 'Delivered',
+  dead: 'Dead letter',
+};
+
+/** How many of the most recent jobs are named one by one. Earlier ones are only counted. */
+const NAMED_JOBS = 4;
+
+/** The state as a person would read it off the screen, short whatever the length of the queue. */
+function fields(state: RetryState): Field[] {
+  const out: Field[] = [
+    { id: 'endpoint', label: 'Endpoint', value: state.healthy ? 'Healthy (200)' : 'Failing (503)' },
+    { id: 'attempts', label: 'Max attempts', value: String(state.policy.maxAttempts) },
+    { id: 'delay', label: 'Base delay', value: `${state.policy.baseDelayMs} ms` },
+    { id: 'jobs', label: 'Events sent', value: String(state.jobs.length) },
+  ];
+  for (const job of state.jobs.slice(-NAMED_JOBS)) {
+    const tries = job.attempts.length;
+    out.push({
+      id: `job:${job.id}`,
+      label: job.label,
+      value: `${STATUS[job.status]}, ${tries} ${tries === 1 ? 'attempt' : 'attempts'}`,
+    });
+  }
+  return out;
+}
+
 function serialize(state: RetryState): Json {
   const { presentation: _presentation, ...data } = state;
   return data as unknown as Json;
@@ -109,8 +138,9 @@ export const retryAdapter: SceneAdapter<RetryState> = {
   ],
   layouts: {
     wide: { width: 880, height: 560 },
-    narrow: { width: 360, height: 580 },
+    narrow: { width: 360, height: 640 },
   },
+  compactHeight: 440,
   init: initialState,
   parse,
   precondition,
@@ -145,5 +175,35 @@ export const retryAdapter: SceneAdapter<RetryState> = {
         return 'jobs';
     }
   },
+  pointsReadState: true,
+  pointOf(command, before) {
+    const { type, payload } = command;
+    switch (type) {
+      case 'enqueue':
+        return 'send';
+      case 'setHealthy':
+        return `health:${payload.healthy}`;
+      case 'setPolicy': {
+        // Which stepper was pressed is not in the command. The state it changed says.
+        if (before === undefined) return null;
+        const { maxAttempts, baseDelayMs } = before.policy;
+        if (payload.maxAttempts !== maxAttempts) {
+          return `attempts:${(payload.maxAttempts as number) > maxAttempts ? 'up' : 'down'}`;
+        }
+        if (payload.baseDelayMs !== baseDelayMs) {
+          return `delay:${(payload.baseDelayMs as number) > baseDelayMs ? 'up' : 'down'}`;
+        }
+        return null;
+      }
+      case 'requeue':
+        return `requeue:${payload.job}`;
+      default:
+        return null;
+    }
+  },
+  fields,
+  // The reserved .example ending keeps the address from ever being a real one.
+  address: 'relaymoth.example/endpoints/orders',
+  chrome: 'dark',
   Render,
 };
