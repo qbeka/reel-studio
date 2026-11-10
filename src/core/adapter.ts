@@ -43,6 +43,14 @@ export interface TargetDefinition {
   label: string;
 }
 
+/** One named value of a state, as text. */
+export interface Field {
+  /** Stable within a scene. Fields are matched by it. */
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface SceneProps<S> {
   state: S;
   send: (type: string, payload?: Payload) => void;
@@ -97,9 +105,28 @@ export interface SceneAdapter<S> {
    * The control a command presses, as the name the scene's markup gives it in
    * `data-reel-point`. Finer than `targetOf`, and used only to draw the pointer.
    */
-  pointOf?(command: Command): string | null;
+  pointOf?(command: Command, before?: S): string | null;
+  /**
+   * True when `pointOf` needs the state its command changed. Finding that state for a
+   * command already played means replaying to just before it, so only a scene that asks
+   * for it pays for it.
+   */
+  pointsReadState?: boolean;
+  /**
+   * The text a command types into its control, as that control shows it, or null for a
+   * command that is a plain press. `state` is the state the command is about to change.
+   * Used only to draw the typing, which was never recorded.
+   */
+  typedOf?(state: S, command: Command): string | null;
+  /**
+   * The state as named values a person can read, in a stable order. Two states are
+   * compared field by field to say what changed between them.
+   */
+  fields?(state: S): readonly Field[];
   /** The address written in the window around the scene. It is decoration, and must be plainly invented. */
   address?: string;
+  /** The window dresses to suit the scene inside it. Light when left out. */
+  chrome?: 'light' | 'dark';
 
   Render: ComponentType<SceneProps<S>>;
 }
