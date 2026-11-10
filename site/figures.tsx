@@ -307,7 +307,7 @@ function SeekFigure() {
             bar('From the nearest checkpoint', 'Reel', 'reel', short.checkpointed),
             bar('Replay from the start', 'The same viewer with checkpoints off', 'base', short.baseline),
           ]}
-          verdict="No gain, because ten commands replay faster than anyone can notice"
+          verdict="No gain, because ten commands replay faster than anyone can notice, and the two bars differ by less than their own spread"
         />
       </div>
     </>

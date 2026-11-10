@@ -1,78 +1,78 @@
 {
   "run": {
-    "folder": "runs/2026-11-09-redesign",
-    "date": "2026-11-09",
-    "commit": "6c63e99",
+    "folder": "runs/2026-11-10-pass2",
+    "date": "2026-11-10",
+    "commit": "13816bd",
     "machine": "Apple M5 Pro",
     "loadMin": 7,
-    "loadMax": 49
+    "loadMax": 21
   },
   "seek": {
     "stress": {
       "commands": 20000,
       "checkpointed": {
-        "median": 22.1,
-        "min": 19.7,
-        "max": 35.2,
+        "median": 23.3,
+        "min": 21.2,
+        "max": 25.5,
         "perRun": [
-          19.7,
-          22.1,
+          25.5,
+          23.3,
           22,
-          35.2,
+          21.2,
           24
         ]
       },
       "baseline": {
-        "median": 1074.1,
-        "min": 1048.1,
-        "max": 1658.9,
+        "median": 1130,
+        "min": 983.8,
+        "max": 1289.9,
         "perRun": [
-          1074.1,
-          1048.1,
-          1658.9,
-          1333,
-          1050.6
+          1289.9,
+          1023.7,
+          1130,
+          983.8,
+          1199.7
         ]
       }
     },
     "short": {
       "commands": 10,
       "checkpointed": {
-        "median": 3.2,
-        "min": 2.5,
-        "max": 5.7,
+        "median": 3.5,
+        "min": 3,
+        "max": 4,
         "perRun": [
-          3.6,
-          3.2,
-          3,
-          5.7,
-          2.5
+          4,
+          4,
+          3.5,
+          3.3,
+          3
         ]
       },
       "baseline": {
-        "median": 3.2,
-        "min": 2.6,
-        "max": 5.1,
+        "median": 3.1,
+        "min": 2.7,
+        "max": 4.1,
         "perRun": [
-          2.6,
+          4.1,
+          3.6,
+          2.7,
           3.1,
-          3.5,
-          5.1,
-          3.2
+          3
         ]
       }
     }
   },
   "firstSeek": {
-    "median": 1190.9,
-    "min": 1149.4,
-    "max": 1825.7,
+    "median": 1253.4,
+    "min": 1197.8,
+    "max": 1364.8,
     "perRun": [
-      1170,
-      1149.4,
-      1273.2,
-      1825.7,
-      1190.9
+      1364.8,
+      1318.8,
+      1241.6,
+      1197.8,
+      1253.4
     ]
   },
   "correctness": {
@@ -223,5 +223,5 @@
       }
     ]
   },
-  "viewerGzipBytes": 104555
+  "viewerGzipBytes": 115360
 }

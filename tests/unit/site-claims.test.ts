@@ -44,7 +44,7 @@ describe('the numbers on the project page', () => {
     const { stress, short } = claims.seek;
     expect(stress.baseline.median).toBeGreaterThan(stress.checkpointed.median);
     // The real recording shows no gain, and the page has to say so in the same breath.
-    expect(page).toContain('it changes nothing');
+    expect(page).toContain('it gains nothing');
     expect(page).toMatch(/The gain only appears on a generated stress log/);
     expect(short.checkpointed.perRun).toHaveLength(5);
   });

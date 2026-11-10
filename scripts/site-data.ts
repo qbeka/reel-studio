@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** The run every number on the page comes from. */
-export const CLAIMS_RUN = 'runs/2026-11-09-redesign';
+export const CLAIMS_RUN = 'runs/2026-11-10-pass2';
 
 interface Across {
   median: number;
@@ -72,7 +72,7 @@ export async function buildClaims(run = CLAIMS_RUN): Promise<SiteClaims> {
       date: manifest.date.slice(0, 10),
       commit: manifest.commit.slice(0, 7),
       machine: manifest.hardware.cpu,
-      loadMin: Math.floor(Math.min(...loads)),
+      loadMin: Math.round(Math.min(...loads)),
       loadMax: Math.round(Math.max(...loads)),
     },
     seek: {
