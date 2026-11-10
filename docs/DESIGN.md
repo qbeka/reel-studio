@@ -72,29 +72,65 @@ spatial view, and command lists full of `setSplit` lines read poorly.
 Taking over. While the story plays, the stage draws a pointer of its own, labelled Reel. When
 the viewer presses Take over, that pointer travels to the viewer's real one and lets go, the
 window's title bar and the backdrop change colour, and a line leaves the timeline at the
-paused position. Nothing inside the app moves. Each edit adds a tick to the viewer's line,
-and going back sends the pointer home and leaves the line dashed, with Bring my copy back
-beside it.
+paused position. Nothing inside the app moves. The viewer's line then runs beside the
+recording on the same time scale, with a dot for each thing they do and a hollow dot for
+each thing the app answers by itself. Going back sends the pointer home and leaves the line
+dashed, with Bring my copy back beside it.
 
-## The drawn pointer
+## What only a recording of state can do
 
-Reel records commands, not pointer movement, so there is no recorded path to play. The
-pointer is worked out from the log instead. It rests on the control of the last command,
-and shortly before the next one it travels there and arrives as the command happens. It
-depends only on the log and the time, so playing, scrubbing and a seek all draw the same
-pointer, and the page says it is drawn. A scene names the control for each command with
+A moment of the story is a whole state, not a picture, and the player uses that in three
+places.
+
+- **Look without going.** Hovering the timeline works out the state at that moment and
+  runs the scene on it at a small size. Nothing is stored for this. Beside it is a list of
+  the values that differ from the moment on screen, and those parts are outlined.
+- **Compare.** Compare holds one moment. Wherever the story goes next, the values that
+  differ from the held moment are listed and outlined in the app itself. In a viewer's
+  copy the same list compares the copy with the recording it left.
+- **Take over.** Covered above.
+
+The list comes from `fields`, a short reading of the state that each scene supplies. A
+scene without one gets an exact comparison of its serialized state by path. The outlines
+come from a different source on purpose: the player draws the other state out of sight
+with the same code and walks the two results side by side, so it needs no knowledge of
+the scene and cannot disagree with what is on screen.
+
+## The drawn pointer and the drawn keys
+
+Reel records commands, not pointer movement or key presses, so there is no recorded path
+to play. The pointer is worked out from the log instead. It rests on the control of the
+last command, and shortly before the next one it reaches for that control, quick away and
+slow onto it, and arrives ahead of the command. The button goes down just before the
+command and comes up as it happens, and the control under it darkens as a pressed control
+does. A command that sets a typed value is drawn as a press on its field, the old value
+selected, and then one key at a time, with the last key landing as the command happens.
+The scene says what was typed with `typedOf`, and the letters are drawn over the field, so
+the scene's own markup stays a pure reading of its state.
+
+All of it depends only on the log and the time, so playing, scrubbing and a seek draw the
+same thing, and the page says it is drawn. A scene names the control for each command with
 `pointOf`. Without it the pointer goes to the command's target.
 
-The camera works the same way. A shot eases in over 900 ms of logical time from the moment
-it starts, so a seek into the middle of a move shows the middle of that move. A caption sits
-beside its target, level with the pointer, on the side that has room. A narrow stage has no
-room for that, so there the caption takes the title bar and the scene scrolls to follow the
-pointer.
+## The camera and the captions
+
+A shot is a move between two framings. It sets off 420 ms before the command it sits on, so
+the camera is already moving as the click lands, and takes 1.2 s of logical time. Its pace
+is that of a directed move: a small lean the wrong way, then away quickly, then a long
+settle with no overshoot. A seek into the middle of a move shows the middle of that move.
+While a close shot holds, everything outside its subject is veiled, which does more to
+direct the eye than zoom does, so the zoom stops at 1.22.
+
+A caption is set under the picture, in a band of its own between the window and the
+timeline, like a subtitle. It can never cover the control it describes, because it is
+never over the app. A narrow stage has no room for the band, so there the caption takes
+the title bar and the scene scrolls to follow the pointer.
 
 ## Visual rules
 
-- The scene is drawn as a finished product, Tabkin, which is invented. Its data is synthetic
-  and the app says so.
+- Each scene is drawn as a finished product. Tabkin, a receipt splitter, is light and warm.
+  Relaymoth, a delivery console for the retry queue, is dark and set partly in a monospace
+  face. Both are invented, their data is synthetic, and each app says so.
 - The app sits in a window on a backdrop. The backdrop is pale while the recording plays and
   dark forest while the copy on screen is the viewer's own.
 - The timeline is cut into its chapters, each with its name as a way to jump there.
@@ -102,6 +138,8 @@ pointer.
   inside the window belongs to the product: one hue per person, red for too much.
 - Geist Serif for titles, captions and the transcript. Geist Sans for controls and dense
   data. Geist Serif has one weight, so hierarchy comes from size and colour.
+- A story ends on a card that names it, says how many commands played, and offers the app
+  to try, a replay, and on the project page the other demo.
 - Motion is the pointer, the camera, the handoff and the fork. With reduced motion the
   pointer is still drawn where it belongs, the camera shows the whole scene, and nothing
   animates.

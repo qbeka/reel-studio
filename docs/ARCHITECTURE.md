@@ -22,11 +22,12 @@ src/core        No React and no DOM. Everything here runs in Node tests.
   edit.ts         Edit proposals, repair and undo history.
   project.ts      The file format, its limits and its validation.
   registry.ts     Resolves a project to installed scene code.
-  camera.ts       Framing math, the mix between two shots and callout placement.
-  pointer.ts      Where the drawn pointer is at a time, worked out from the command log.
+  camera.ts       Framing math, the mix between two shots and the pace of a move.
+  pointer.ts      Where the drawn pointer is at a time, and which keys are down, from the command log.
+  diff.ts         What differs between two states, by named field or by path.
   transcript.ts   The plain story, from a replay.
 src/scenes      One folder per scene, plus the registry.
-src/player      Stage, the chaptered timeline, the pointer handoff and the viewer.
+src/player      Stage, the chaptered timeline, the look ahead, the pointer handoff and the viewer.
 src/editor      Start page, workspace, timeline and inspector.
 src/export      Bundle assembly, shared by the browser and the command line.
 src/storage     Drafts in IndexedDB.

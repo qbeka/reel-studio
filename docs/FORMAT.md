@@ -31,7 +31,10 @@ Defined in [`src/core/adapter.ts`](../src/core/adapter.ts).
 | `migrateCommand(command, fromVersion)` | Optional. Rewrites an older recorded command. |
 | `describe(before, command, after)` | A plain transcript line, or null for an unimportant step. |
 | `targetOf(command)` | The target a command acts on, or null. |
-| `pointOf(command)` | Optional. The control a command presses, as the name its element carries in `data-reel-point`. Only the drawn pointer uses it. |
+| `pointOf(command, before)` | Optional. The control a command presses, as the name its element carries in `data-reel-point`. Only the drawn pointer uses it. `before` is the state the command changed, given only when `pointsReadState` is true, because finding it for a command already played costs a replay. |
+| `typedOf(state, command)` | Optional. The text a command types into its control, as the control shows it. Only the drawn typing uses it. |
+| `fields(state)` | Optional. The state as a short list of named values. Two states are compared field by field to say what changed. Without it the comparison is of serialized state, by path. |
+| `chrome` | Optional. `dark` gives the window around the scene a dark title bar and marks that read on a dark app. |
 | `address` | Optional. The address written in the window around the scene. It is decoration and must be plainly invented. |
 | `Render` | A React component. It receives `state`, `send`, `interactive` and `layout`. |
 
