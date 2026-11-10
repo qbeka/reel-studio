@@ -50,9 +50,11 @@
     top: -2.2px;
     left: -3px;
     overflow: visible;
-    filter: drop-shadow(0 1px 1.5px #1115114d) drop-shadow(0 4px 8px #11151126);
+    filter: drop-shadow(0 1px 1.5px #1115114d) drop-shadow(0 calc(4px - 3px * var(--press, 0)) calc(8px - 5px * var(--press, 0)) #11151126);
     transform-origin: 3px 2.2px;
-    transition: scale 0.1s;
+    /* A press has weight: the arrow dips and leans into the control, and its shadow closes up. */
+    scale: calc(1 - 0.13 * var(--press, 0));
+    rotate: calc(-3deg * var(--press, 0));
   }
   & path {
     fill: var(--ink, #111511);
@@ -73,19 +75,97 @@
     white-space: nowrap;
     box-shadow: 0 0 0 1.5px #fff, 0 3px 8px #11151133;
   }
-  &[data-pressed='true'] svg {
-    scale: 0.88;
-  }
 }
 .reel-ripple {
   position: absolute;
-  top: -20px;
-  left: -20px;
-  width: 40px;
-  height: 40px;
-  border: 1.5px solid #111511b3;
+  top: -17px;
+  left: -17px;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--reel-ring, #111511a6);
   border-radius: 50%;
-  background: #1115111a;
+  background: var(--reel-ring-fill, #11151114);
+}
+
+/* Everything the player draws over the app: it shares the scene's place and camera. */
+.reel-over {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  transform-origin: 0 0;
+  pointer-events: none;
+
+  & > * {
+    position: absolute;
+  }
+}
+/* The subject of a close shot stays clear and the rest goes quiet. One element: its
+   shadow is the veil, so the clear part has soft corners and a soft edge. */
+.reel-veil {
+  border-radius: 16px;
+  box-shadow: 0 0 22px 4000px var(--reel-veil, #f6f6f1b8);
+}
+/* A control answering the drawn pointer, as it would a real one. */
+.reel-press {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--reel-press, #111511) 10%, transparent);
+}
+/* The field under the keys: its ring, and the letters as they land. */
+.reel-focus {
+  box-shadow: 0 0 0 1px var(--reel-focus, #111511), 0 0 0 4px color-mix(in srgb, var(--reel-focus, #111511) 14%, transparent);
+}
+.reel-typed {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: pre;
+
+  & span {
+    border-radius: 2px;
+  }
+  &[data-selecting='true'] span {
+    background: color-mix(in srgb, var(--reel-focus, #111511) 16%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--reel-focus, #111511) 16%, transparent);
+  }
+  & i {
+    flex: none;
+    width: 1.5px;
+    height: 1.15em;
+    margin-left: 1px;
+    background: currentColor;
+  }
+  &[data-selecting='true'] i {
+    visibility: hidden;
+  }
+}
+/* A part that differs from the state it is being compared with. */
+.reel-mark {
+  border: 1.5px solid var(--reel-mark, #b3600f);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--reel-mark, #b3600f) 9%, transparent);
+  animation: reel-mark 0.28s cubic-bezier(0.3, 0, 0.1, 1) both;
+}
+@keyframes reel-mark {
+  from {
+    opacity: 0;
+    scale: 1.06;
+  }
+}
+.reel-cursor[data-up='true'] span {
+  top: -4px;
+  left: 24px;
+  border-radius: 8px;
+}
+.reel-cursor[data-back='true'] span {
+  left: auto;
+  right: 4px;
+  border-radius: 8px 3px 8px 8px;
+}
+.reel-cursor[data-up='true'][data-back='true'] span {
+  top: -24px;
+  right: 2px;
+  border-radius: 8px 8px 3px 8px;
 }
 /* The same pointer on its way between the story and the viewer's hand. */
 .reel-ghost {
@@ -115,47 +195,46 @@
   }
 }
 
-/* A caption, beside the thing it is about. */
+/* A caption, set under the picture like a subtitle. It has a band of its own between the
+   window and the timeline, so it can never cover the control it describes. */
+.reel-sub {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 52px;
+  padding: 0 12px;
+}
+.reel-caption,
+.reel-apart {
+  max-width: min(660px, 100%);
+  margin: 0;
+  color: #16241b;
+  font: 400 17.5px/23px var(--serif);
+  letter-spacing: -0.012em;
+  text-align: center;
+  text-wrap: balance;
+}
 .reel-caption {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 2;
-  pointer-events: none;
+  /* Two lines at most. A longer line is the author's to shorten. */
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  animation: reel-sub 0.34s cubic-bezier(0.3, 0, 0.1, 1) both;
+}
+.reel-apart {
+  color: #dfe9e1;
+  font-size: 15.5px;
+  transition: color 0.3s;
 
-  & p {
-    position: relative;
-    margin: 0;
-    padding: 9px 13px 10px;
-    border-radius: 10px;
-    background: #111511f5;
-    color: #fbfaf7;
-    font: 400 15px/20px var(--serif);
-    letter-spacing: -0.005em;
-    text-wrap: pretty;
-    box-shadow: 0 1px 2px #11151133, 0 10px 24px -6px #11151159;
-    animation: reel-pop 0.24s cubic-bezier(0.3, 0, 0.1, 1) both;
+  &[data-apart='true'] {
+    color: #f3d9a4;
   }
-  & i {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    margin-top: -5px;
-    border-radius: 2px;
-    background: #111511;
-    rotate: 45deg;
-  }
-  &[data-side='left'] i {
-    right: -4px;
-  }
-  &[data-side='right'] i {
-    left: -4px;
-  }
-  &[data-side='below'] i {
-    display: none;
-  }
-  &[data-side='below'] p {
-    text-align: center;
+}
+@keyframes reel-sub {
+  from {
+    opacity: 0;
+    translate: 0 5px;
   }
 }
 @keyframes reel-pop {
@@ -211,8 +290,8 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-  padding: 16px 24px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 14px 24px 0;
 
   &::before,
   &::after {
@@ -269,7 +348,7 @@
 /* One ring leaves the window as it changes hands. */
 .reel-claim {
   position: absolute;
-  inset: 16px 24px;
+  inset: 14px 24px 52px;
   z-index: -1;
   border-radius: 11px;
   box-shadow: 0 0 0 2px #a9d6bb;
@@ -423,48 +502,85 @@
   min-height: 0;
 }
 
-/* Where the story stops. One thing to do next. */
+/* Where the story stops. The app stays in view behind a sheet of paper, and a card says
+   what was just watched and what to do with it. */
 .reel-end {
   position: absolute;
-  bottom: 16px;
-  left: 50%;
+  inset: 32px 0 0;
   z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 8px 16px;
-  max-width: calc(100% - 24px);
-  padding: 8px 8px 8px 18px;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #fbfaf7c7;
+  animation: reel-fade-in 0.4s cubic-bezier(0.3, 0, 0.1, 1) both;
+}
+.reel-window[data-chrome='dark'] .reel-end {
+  background: #0f1512c7;
+}
+.reel-end-card {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: min(440px, 100%);
+  padding: 22px 24px 20px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--paper);
-  box-shadow: 0 1px 2px #11151112, 0 16px 36px -10px #11151152;
-  translate: -50% 0;
-  animation: reel-rise 0.36s cubic-bezier(0.3, 0, 0.1, 1) both;
+  box-shadow: 0 1px 2px #11151112, 0 24px 48px -16px #11151159;
+  text-align: center;
+  animation: reel-rise 0.46s 0.06s cubic-bezier(0.3, 0, 0.1, 1) both;
 
-  & p {
+  & h2 {
     margin: 0;
     color: var(--ink);
+    font: 400 27px/32px var(--serif);
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  & p {
+    margin: 0;
+    color: var(--body);
     font: 400 15.5px/22px var(--serif);
     letter-spacing: -0.005em;
-    white-space: nowrap;
+    text-wrap: balance;
   }
+  & .reel-end-kicker {
+    margin-bottom: 4px;
+    color: var(--muted);
+    font: 400 12.5px/16px var(--sans);
+    letter-spacing: 0;
+  }
+}
+.reel-end-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+
   & .control {
-    flex: none;
+    gap: 7px;
+  }
+}
+@keyframes reel-fade-in {
+  from {
+    opacity: 0;
   }
 }
 @keyframes reel-rise {
   from {
     opacity: 0;
-    translate: -50% 10px;
+    translate: 0 12px;
   }
 }
 
 /* The authoring panel, beside the window when there is room. */
-.reel-author {
+.reel-author,
+.reel-diff {
   position: absolute;
-  top: 16px;
+  top: 14px;
   right: 24px;
-  bottom: 16px;
+  bottom: 52px;
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -473,6 +589,179 @@
   overflow: hidden;
   border-radius: 11px;
   animation: reel-slide 0.3s cubic-bezier(0.3, 0, 0.1, 1) both;
+}
+/* What differs between two states, value by value. */
+.reel-diff {
+  width: 296px;
+
+  & header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 6px 6px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  & h2 {
+    margin: 0;
+    font: 400 17px/24px var(--serif);
+    letter-spacing: -0.01em;
+  }
+  & .reel-changes {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden auto;
+    padding: 4px 14px;
+    scrollbar-width: thin;
+  }
+}
+.reel-diff-ends {
+  flex: none;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--body);
+  font-size: 13px;
+  line-height: 18px;
+
+  & span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  & i {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    background: var(--ink);
+    color: #fff;
+    font: 500 10.5px/1 var(--sans);
+  }
+  & span + span i {
+    background: var(--reel-mark, #b3600f);
+  }
+}
+.reel-diff-none {
+  flex: 1;
+  margin: 0;
+  padding: 14px;
+  color: var(--body);
+  font: 400 15px/21px var(--serif);
+}
+.reel-diff-note {
+  flex: none;
+  margin: 0;
+  padding: 9px 14px 11px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+.reel-changes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reel-change {
+  display: grid;
+  gap: 1px;
+  padding: 7px 0;
+  font-size: 13px;
+  line-height: 18px;
+
+  & + .reel-change {
+    border-top: 1px solid var(--line);
+  }
+}
+.reel-change-label {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+.reel-change-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 7px;
+  color: var(--muted);
+
+  & s {
+    text-decoration-color: #11151159;
+  }
+  /* In a look ahead the value on screen is not wrong, only different, so it is not struck. */
+  .reel-change[data-plain='true'] & s {
+    text-decoration: none;
+  }
+  & b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  & svg {
+    flex: none;
+  }
+}
+.reel-change-more {
+  padding-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* The player's keys, on a small sheet over the stage. */
+.reel-keys-sheet {
+  position: absolute;
+  right: 24px;
+  bottom: 60px;
+  z-index: 7;
+  width: min(330px, calc(100% - 24px));
+  padding: 6px 6px 12px 14px;
+  border-radius: 11px;
+  animation: reel-rise 0.26s cubic-bezier(0.3, 0, 0.1, 1) both;
+
+  &:focus-visible {
+    outline: none;
+  }
+  & header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  & h2 {
+    margin: 0;
+    font: 400 17px/24px var(--serif);
+    letter-spacing: -0.01em;
+  }
+  & dl {
+    display: grid;
+    margin: 4px 8px 0 0;
+  }
+  & dl div {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 10px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  & dt {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  & dd {
+    margin: 0;
+    color: var(--body);
+  }
+  & p {
+    margin: 8px 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 16px;
+  }
 }
 @keyframes reel-slide {
   from {
@@ -484,7 +773,7 @@
 .reel-moments {
   position: absolute;
   left: 12px;
-  bottom: 10px;
+  bottom: 8px;
   z-index: 6;
   width: min(340px, calc(100% - 24px));
   max-height: calc(100% - 20px);
@@ -680,31 +969,77 @@
     stroke-width: 1.5;
     stroke-linecap: round;
   }
-  & path {
+  & .reel-fork-leave {
     stroke-dasharray: 1;
     animation: reel-draw 0.36s cubic-bezier(0.3, 0, 0.1, 1) both;
   }
-  & circle {
+  /* The copy's line grows with the time spent in it. */
+  & .reel-fork-run,
+  & .reel-fork-head,
+  & .reel-fork-mark,
+  & text {
+    transition: x2 0.25s linear, cx 0.25s linear, x 0.25s linear;
+  }
+  & .reel-fork-head {
     fill: var(--surface, #fbfaf7);
     stroke: var(--forest, #1d3a2a);
     stroke-width: 1.5;
+  }
+  /* What the viewer did is a filled dot. What the app answered by itself is a hollow one. */
+  & .reel-fork-mark {
+    fill: var(--forest, #1d3a2a);
+    stroke: var(--surface, #fbfaf7);
+    stroke-width: 1.5;
+    animation: reel-pop 0.24s both;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  & .reel-fork-mark[data-made='false'] {
+    fill: var(--surface, #fbfaf7);
+    stroke: var(--forest, #1d3a2a);
+    stroke-width: 1;
   }
   & text {
     fill: var(--forest, #1d3a2a);
     font: 500 11.5px/1 var(--sans);
     animation: reel-pop 0.3s 0.2s both;
   }
+  & .reel-fork-count {
+    fill: var(--muted, #535753);
+    font-weight: 400;
+  }
   &[data-kept='true'] {
-    opacity: 0.6;
+    opacity: 0.62;
 
-    & path {
-      stroke-dasharray: 0.035 0.035;
+    & .reel-fork-leave,
+    & .reel-fork-run {
+      stroke-dasharray: 3 3;
       animation: none;
     }
     & text {
       animation: none;
     }
   }
+}
+/* A moment held for comparison. */
+.reel-pin {
+  & line {
+    stroke: var(--ink, #111511);
+    stroke-width: 1.5;
+  }
+  & rect {
+    fill: var(--ink, #111511);
+  }
+  & text {
+    fill: #fff;
+    font: 500 10px/1 var(--sans);
+  }
+}
+.reel-peek-line {
+  stroke: var(--ink, #111511);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.55;
 }
 @keyframes reel-draw {
   from {
@@ -774,6 +1109,155 @@
     box-shadow: 0 0 0 2px var(--surface, #fbfaf7), 0 0 0 4px var(--forest, #1d3a2a);
   }
 }
+/* Any moment of the story, drawn from its state above the place it sits on the line. */
+.reel-peek {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  animation: reel-peek 0.16s cubic-bezier(0.3, 0, 0.1, 1) both;
+
+  /* The stem from the card down to the moment. */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: var(--at, 50%);
+    width: 1.5px;
+    height: 8px;
+    margin-left: -0.75px;
+    background: var(--ink, #111511);
+    opacity: 0.55;
+  }
+}
+@keyframes reel-peek {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+.reel-peek-card {
+  display: grid;
+  gap: 0;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 1px 2px #11151114, 0 18px 40px -12px #11151166;
+}
+.reel-peek-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 0 4px;
+  font-size: 12.5px;
+  line-height: 18px;
+
+  & b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  & span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--body);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & i {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-style: normal;
+    white-space: nowrap;
+  }
+}
+.reel-peek-step {
+  margin: 1px 0 0;
+  padding: 0 4px;
+  overflow: hidden;
+  color: var(--ink);
+  font: 400 14.5px/20px var(--serif);
+  letter-spacing: -0.005em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reel-peek-same {
+  margin: 6px 0 0;
+  padding: 6px 4px 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+.reel-peek-card .reel-changes {
+  margin-top: 6px;
+  padding: 0 4px;
+  border-top: 1px solid var(--line);
+}
+.reel-peek-card .reel-change {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 12px;
+  line-height: 16px;
+
+  & .reel-change-values {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}
+.reel-change-head {
+  padding: 5px 0 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 16px;
+}
+.reel-peek-card .reel-change-head + .reel-change {
+  border-top: 0;
+}
+.reel-peek-card .reel-change-more {
+  padding: 3px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+/* The real scene at a small size. */
+.reel-mini {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--line);
+
+  &[data-chrome='dark'] {
+    background: #101512;
+  }
+}
+.reel-mini-scene,
+.reel-mini-marks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  transform-origin: 0 0;
+}
+.reel-mini-scene * {
+  /* A still of a state. Nothing in it moves by itself. */
+  animation: none !important;
+  transition: none !important;
+}
+.reel-mini-marks {
+  pointer-events: none;
+
+  & i {
+    position: absolute;
+    border: solid var(--reel-mark, #b3600f);
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--reel-mark, #b3600f) 14%, transparent);
+  }
+}
+
 .reel-hover {
   position: absolute;
   z-index: 3;
@@ -820,10 +1304,17 @@
     text-overflow: ellipsis;
   }
 }
+/* It takes the room that is left and no more, so a long line never pushes a control down. */
 .reel-box[data-mode='branch'] .reel-time {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   gap: 10px;
   color: var(--muted);
+}
+.reel-box[data-mode='branch'] .reel-spacer {
+  display: none;
+}
+.reel-box[data-mode='branch'] .reel-problem {
+  flex: 1 1 0;
 }
 .reel-now {
   display: none;
@@ -851,6 +1342,14 @@
     visibility: visible;
   }
 }
+.reel-compare {
+  color: var(--body);
+}
+.reel-keys-button {
+  min-width: var(--control-height);
+  padding: 0;
+  color: var(--body);
+}
 .reel-copy {
   display: inline-grid;
   grid-template-columns: 16px auto;
@@ -874,7 +1373,25 @@
 
 /* The stage's height is set once per page, so the box stays put in every mode. */
 .stage {
-  --stage-height: clamp(440px, calc(100svh - 150px), 660px);
+  --stage-height: clamp(440px, calc(100svh - 150px), 704px);
+}
+/* A short window keeps the app as large as it can: the subtitle band gives up a little. */
+@media (max-height: 800px) {
+  .reel-sub {
+    height: 44px;
+  }
+  .reel-caption,
+  .reel-apart {
+    font-size: 15.5px;
+    line-height: 19px;
+  }
+  .reel-claim {
+    bottom: 44px;
+  }
+  .reel-author,
+  .reel-diff {
+    bottom: 44px;
+  }
 }
 @media (max-width: 767px) {
   .stage {
@@ -883,22 +1400,45 @@
 }
 
 @container (min-width: 900px) {
+  .reel-box[data-side='true'] .reel-window {
+    margin-right: 312px;
+  }
   .reel-box[data-author='true'] .reel-window {
     margin-right: 332px;
   }
 }
 @container (max-width: 899px) {
+  .reel-author,
+  .reel-diff {
+    inset: 8px 8px 8px auto;
+    width: min(316px, calc(100% - 16px));
+  }
   .reel-author {
-    inset: 8px;
+    left: 8px;
     width: auto;
+  }
+  .reel-keys-button {
+    display: none;
   }
 }
 @container (max-width: 819px) {
   .reel-work {
-    padding: 12px 14px;
+    padding: 12px 14px 0;
   }
   .reel-claim {
-    inset: 12px 14px;
+    inset: 12px 14px 48px;
+  }
+  .reel-sub {
+    height: 48px;
+  }
+  .reel-caption {
+    font-size: 16px;
+    line-height: 21px;
+  }
+  .reel-compare {
+    font-size: 0;
+    gap: 0;
+    padding: 0 10px;
   }
   .reel-chapter span {
     display: none;
@@ -916,6 +1456,34 @@
   }
   .reel-claim {
     inset: 8px;
+  }
+  /* A narrow stage says its captions in the title bar, at a size that reads on a phone. */
+  .reel-sub {
+    display: none;
+  }
+  .reel-end {
+    inset: 68px 0 0;
+    padding: 10px;
+  }
+  .reel-end-card {
+    padding: 16px 14px;
+
+    & h2 {
+      font-size: 22px;
+      line-height: 27px;
+    }
+  }
+  .reel-diff {
+    inset: 8px;
+    width: auto;
+  }
+  /* Holding a moment to compare needs room for the list beside the app. */
+  .reel-compare {
+    display: none;
+  }
+  .reel-keys-sheet {
+    right: 8px;
+    bottom: 8px;
   }
   .reel-line {
     grid-template-columns: minmax(0, 1fr);
@@ -955,17 +1523,6 @@
   }
   .reel-bar {
     padding: 6px 12px 8px;
-  }
-  .reel-end {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: calc(100% - 24px);
-    padding: 12px;
-    text-align: center;
-
-    & p {
-      white-space: normal;
-    }
   }
   .reel-now,
   .reel-controls .primary svg {
@@ -1106,6 +1663,54 @@
   }
   & p {
     color: var(--body);
+  }
+}
+
+/* A scene with a dark face gets a window to match, and marks that read on it. */
+.reel-window[data-chrome='dark'] {
+  --reel-veil: #0c110eb3;
+  --reel-press: #ffffff;
+  --reel-ring: #ffffffb3;
+  --reel-ring-fill: #ffffff1f;
+  --reel-mark: #f0b95a;
+  background: #101512;
+
+  & .reel-line {
+    border-color: #ffffff14;
+    background: #171d19;
+  }
+  & .reel-dots i {
+    background: #ffffff29;
+  }
+  & .reel-address {
+    background: #0c110e;
+    box-shadow: 0 0 0 1px #ffffff1a;
+    color: #b9c2bb;
+  }
+  & .reel-narration {
+    color: #eef2ee;
+  }
+  & .reel-tag {
+    color: #b9c2bb;
+  }
+  & .reel-tag i {
+    border-color: #b9c2bb;
+  }
+  & .reel-fade {
+    background:
+      linear-gradient(to right, rgb(16 21 18 / var(--fade-left, 0)), #10151200) left / 40px 100% no-repeat,
+      linear-gradient(to left, rgb(16 21 18 / var(--fade-right, 0)), #10151200) right / 40px 100% no-repeat,
+      linear-gradient(to bottom, rgb(16 21 18 / var(--fade-top, 0)), #10151200) top / 100% 28px no-repeat,
+      linear-gradient(to top, rgb(16 21 18 / var(--fade-bottom, 0)), #10151200) bottom / 100% 28px no-repeat;
+  }
+  & .reel-cursor path {
+    fill: #f4f6f3;
+    stroke: #101512;
+  }
+  & .reel-cursor span {
+    background: #f4f6f3;
+    color: #101512;
+    box-shadow: 0 0 0 1.5px #101512, 0 3px 8px #00000066;
   }
 }
 
