@@ -1,9 +1,9 @@
-import type { Command, Effect, Payload, SceneAdapter } from '../../core/adapter';
+import type { Command, Effect, Field, Payload, SceneAdapter } from '../../core/adapter';
 import type { Json } from '../../core/canonical';
 import { Render } from './Render';
-import { formatCents, formatPercent, sharesFor } from './money';
+import { FULL_BPS, formatCents, formatPercent, sharesFor } from './money';
 import { apply, precondition } from './reduce';
-import { type ReceiptState, balanceLine, initialState, memberIds } from './state';
+import { type ReceiptState, balanceLine, initialState, memberIds, selectedExpense } from './state';
 
 const MAX_VALUE = 100_000_000;
 
@@ -80,6 +80,58 @@ function describe(before: ReceiptState, command: Command, after: ReceiptState): 
     default:
       return null;
   }
+}
+
+const standing = (cents: number) =>
+  cents === 0 ? 'Settled' : cents > 0 ? `Owed ${formatCents(cents)}` : `Owes ${formatCents(-cents)}`;
+
+/**
+ * The state as a person would read it off the screen. It is a fixed, short list whatever
+ * the size of the ledger, so two states can be compared at any moment.
+ */
+function fields(state: ReceiptState): Field[] {
+  const out: Field[] = [];
+  const add = (id: string, label: string, value: string) => out.push({ id, label, value });
+  const expense = selectedExpense(state);
+  add('view', 'Screen', state.view === 'balances' ? 'Balances' : 'Receipt');
+  add('open', 'Open receipt', expense === null ? 'None' : expense.merchant);
+  add('receipts', 'Receipts', String(state.expenses.length));
+  const split = state.draft?.split ?? null;
+  if (split !== null && expense !== null) {
+    add('method', 'Split method', split.mode === 'equal' ? 'Equal' : split.mode === 'percent' ? 'Percent' : 'Amount');
+    let sum = 0;
+    for (const member of state.members) {
+      const value = split.values[member.id] ?? 0;
+      sum += value;
+      const shown = split.mode === 'equal' ? 'Equal share' : split.mode === 'percent' ? formatPercent(value) : formatCents(value);
+      add(`share:${member.id}`, `${member.name} share`, shown);
+    }
+    if (split.mode !== 'equal') {
+      add('sum', 'Shares add up to', split.mode === 'percent' ? formatPercent(sum) : formatCents(sum));
+    }
+    const saved = expense.split;
+    const dirty = saved.mode !== split.mode || state.members.some((m) => (saved.values[m.id] ?? 0) !== (split.values[m.id] ?? 0));
+    add(
+      'save',
+      'Save',
+      state.pendingSave !== null
+        ? 'Sending'
+        : state.validation !== null
+          ? 'Refused'
+          : dirty
+            ? 'Not saved yet'
+            : 'Up to date',
+    );
+  }
+  for (const member of state.members) {
+    add(`balance:${member.id}`, `${member.name} balance`, standing(state.balances[member.id] ?? 0));
+  }
+  if (state.preview !== null) {
+    for (const member of state.members) {
+      add(`preview:${member.id}`, `${member.name} after this split`, standing(state.preview[member.id] ?? 0));
+    }
+  }
+  return out;
 }
 
 /** Removes transient fields. Everything left must be plain JSON. */
@@ -165,6 +217,14 @@ export const receiptAdapter: SceneAdapter<ReceiptState> = {
         return null;
     }
   },
+  typedOf(state, command) {
+    if (command.type !== 'setSplit' || state.draft === null) return null;
+    // As the field shows it: a percentage without its sign, or an amount with its cents.
+    const value = command.payload.value as number;
+    if (state.draft.split.mode === 'amount') return (value / 100).toFixed(2);
+    return String(value / (FULL_BPS / 100));
+  },
+  fields,
   // The reserved .example ending keeps the address from ever being a real one.
   address: 'tabkin.example/flat-4b',
   Render,

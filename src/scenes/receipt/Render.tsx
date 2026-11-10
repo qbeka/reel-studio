@@ -19,6 +19,8 @@ import { type Expense, type Member, type ReceiptState, memberIds, selectedExpens
 
 /** How many receipts the list shows. The stage is a fixed size, so a long ledger is windowed. */
 const LIST_WINDOW = 6;
+/** How many receipts the ledger on the balances screen spells out. Earlier ones are counted. */
+const LEDGER_WINDOW = 3;
 
 /** The share bar keeps this much of its width as headroom, so a split over 100% has somewhere to go. */
 const BAR_FULL = 78;
@@ -437,7 +439,7 @@ function BalanceRows({
         return (
           <li key={member.id}>
             <span className="rs-who">
-              <Avatar member={member} index={i} small />
+              <Avatar member={member} index={i} />
               {member.name}
             </span>
             <span className="rs-meter" aria-hidden="true">
@@ -453,6 +455,68 @@ function BalanceRows({
         );
       })}
     </ul>
+  );
+}
+
+/** How a balance moves if the draft is saved, in the words of the person it belongs to. */
+function movement(now: number, after: number): { text: string; way: 'better' | 'worse' | 'same' } {
+  const gap = after - now;
+  if (gap === 0) return { text: 'No change', way: 'same' };
+  return gap > 0
+    ? { text: `${formatCents(gap)} better off`, way: 'better' }
+    : { text: `${formatCents(-gap)} worse off`, way: 'worse' };
+}
+
+/**
+ * What saving the draft would do to each person, beside where they stand now. It reads the
+ * two sets of balances the state already holds and keeps nothing of its own.
+ */
+function AfterSplit({ state }: { state: ReceiptState }) {
+  const { preview, balances } = state;
+  const ready = preview !== null;
+  const shown = preview ?? balances;
+  const largest = Math.max(1, ...state.members.map((m) => Math.abs(shown[m.id] ?? 0)));
+  return (
+    <section
+      className="rs-preview"
+      data-reel-target="preview"
+      data-ready={ready}
+      aria-label="Balances after this split"
+    >
+      <header>
+        <h3>Balances with this split</h3>
+        <p className="rs-muted">
+          {ready
+            ? `Worked out across all ${state.expenses.length} receipts`
+            : 'Where things stand now, until the shares add up'}
+        </p>
+      </header>
+      <ul className="rs-after">
+        {state.members.map((member, i) => {
+          const now = balances[member.id] ?? 0;
+          const value = shown[member.id] ?? 0;
+          const moved = movement(now, value);
+          return (
+            <li key={member.id} data-way={ready ? moved.way : 'waiting'}>
+              <span className="rs-who">
+                <Avatar member={member} index={i} small />
+                {member.name}
+              </span>
+              <strong className="rs-num" data-side={value === 0 ? 'even' : value < 0 ? 'owes' : 'owed'}>
+                {standing(value)}
+              </strong>
+              <span className="rs-meter" aria-hidden="true">
+                <span
+                  data-side={value < 0 ? 'owes' : 'owed'}
+                  style={{ width: `${(Math.abs(value) / largest) * 50}%` }}
+                />
+              </span>
+              <span className="rs-moved">{ready ? moved.text : 'Before this split'}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -481,16 +545,92 @@ function settlements(state: ReceiptState, balances: Record<string, number>): Pay
   return payments;
 }
 
+/**
+ * The receipts the balances come from, one row each, with what every person's share of it
+ * is. Only the most recent rows are worked out and drawn, so a long ledger costs no more
+ * than a short one, and the last row is the net the state already holds.
+ */
+function Ledger({ state }: { state: ReceiptState }) {
+  const ids = memberIds(state);
+  const recent = state.expenses.slice(-LEDGER_WINDOW);
+  const earlier = state.expenses.length - recent.length;
+  return (
+    <table className="rs-ledger">
+      <thead>
+        <tr>
+          <th scope="col">Receipt</th>
+          <th scope="col">Paid by</th>
+          {state.members.map((member) => (
+            <th key={member.id} scope="col" className="rs-num">
+              {member.name}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {earlier > 0 && (
+          <tr className="rs-ledger-more">
+            <td colSpan={2 + ids.length}>
+              {earlier} earlier {earlier === 1 ? 'receipt' : 'receipts'} counted the same way
+            </td>
+          </tr>
+        )}
+        {recent.map((expense) => {
+          const shares = sharesFor(expense.totalCents, expense.split, ids);
+          const payer = state.members.findIndex((m) => m.id === expense.paidBy);
+          return (
+            <tr key={expense.id}>
+              <th scope="row">
+                <span>{expense.merchant}</span>
+                <span className="rs-muted">{formatCents(expense.totalCents)}</span>
+              </th>
+              <td>
+                <span className="rs-who">
+                  <Avatar member={state.members[payer]!} index={payer} small />
+                </span>
+              </td>
+              {shares.map((share, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: one cell per member, in member order.
+                <td key={i} className="rs-num" data-paid={i === payer}>
+                  {formatCents(share)}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" colSpan={2}>
+            Net
+          </th>
+          {state.members.map((member) => {
+            const value = state.balances[member.id] ?? 0;
+            return (
+              <td key={member.id} className="rs-num" data-side={value === 0 ? 'even' : value < 0 ? 'owes' : 'owed'}>
+                {value > 0 ? '+' : ''}
+                {formatCents(value)}
+              </td>
+            );
+          })}
+        </tr>
+      </tfoot>
+    </table>
+  );
+}
+
 function BalancesPanel({ state }: { state: ReceiptState }) {
   const payments = settlements(state, state.balances);
   return (
     <section className="rs-panel" data-reel-target="balances" aria-label="Balances">
       <div className="rs-standing">
-        <h2>Who owes what</h2>
+        <header>
+          <h2>Who owes what</h2>
+          <p className="rs-muted">
+            Computed from all {state.expenses.length} receipts, and the amounts add up to zero
+          </p>
+        </header>
         <BalanceRows state={state} balances={state.balances} />
-        <p className="rs-muted">
-          Computed from all {state.expenses.length} receipts, and the amounts add up to zero
-        </p>
       </div>
       <div className="rs-settle">
         <h3>To settle up</h3>
@@ -504,7 +644,12 @@ function BalancesPanel({ state }: { state: ReceiptState }) {
                   <Avatar member={state.members[from]!} index={from} small />
                   {state.members[from]!.name}
                 </span>
-                <span className="rs-pays">pays</span>
+                <span className="rs-pays">
+                  <span>pays</span>
+                  <svg viewBox="0 0 28 8" width="28" height="8" fill="none" aria-hidden="true">
+                    <path d="M1 4h25M22.5 1l3.500 3-3.500 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
                 <span className="rs-who">
                   <Avatar member={state.members[to]!} index={to} small />
                   {state.members[to]!.name}
@@ -514,6 +659,16 @@ function BalancesPanel({ state }: { state: ReceiptState }) {
             ))}
           </ul>
         )}
+        {payments.length > 0 && (
+          <p className="rs-settle-sum">
+            {payments.length === 1 ? 'One payment clears' : `${payments.length} payments clear`}{' '}
+            {formatCents(payments.reduce((sum, payment) => sum + payment.cents, 0))}
+          </p>
+        )}
+      </div>
+      <div className="rs-source">
+        <h3>Where it comes from</h3>
+        <Ledger state={state} />
       </div>
     </section>
   );
@@ -549,21 +704,7 @@ export function Render(props: SceneProps<ReceiptState>) {
       <div className="rs-main">
         <Tabs {...props} />
         {onReceipt ? <SplitEditor {...props} /> : <BalancesPanel state={state} />}
-        {hasDraft && (
-          <section
-            className="rs-preview"
-            data-reel-target="preview"
-            data-ready={state.preview !== null}
-            aria-label="Balances after this split"
-          >
-            <h3>Balances with this split</h3>
-            {state.preview !== null ? (
-              <BalanceRows state={state} balances={state.preview} />
-            ) : (
-              <p className="rs-muted">They appear once the shares add up</p>
-            )}
-          </section>
-        )}
+        {hasDraft && <AfterSplit state={state} />}
       </div>
     </div>
   );
