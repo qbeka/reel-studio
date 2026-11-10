@@ -652,8 +652,8 @@ function EmbedBlock({ folder }: { folder: string }) {
           </button>
         </div>
         <p className="embed-note">
-          Put the folder on any static host and change the address to match. This site does not allow its own pages in
-          frames, so the snippet points at your copy.
+          Put the folder on any static host and change the address to match, because this site does not allow its own
+          pages in frames and the snippet has to point at your copy
         </p>
       </div>
       <div className="embed-files">
