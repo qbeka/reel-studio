@@ -95,6 +95,8 @@ export function boundsOf(elements: readonly HTMLElement[], root: HTMLElement): R
     }
     // An element that is not laid out has no offset parent and no size.
     if (node === null || element.offsetWidth === 0 || element.offsetHeight === 0) continue;
+    // One that keeps its place but is not shown has nothing to outline.
+    if (getComputedStyle(element).visibility === 'hidden') continue;
     rects.push({ x, y, width: element.offsetWidth, height: element.offsetHeight });
   }
   return rects;

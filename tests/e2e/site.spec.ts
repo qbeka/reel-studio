@@ -302,6 +302,17 @@ test.describe('what changed between two moments', () => {
     const mina = await box(app(page).getByLabel('Mina share'));
     expect(around.some((mark) => inside(mina, mark, 2) && mark.width < mina.width * 2)).toBe(false);
 
+    // A control that keeps its place but is hidden from a viewer of the story is not outlined,
+    // though it is disabled in one of the two states and not in the other.
+    await slider(page).fill('14300');
+    await expect(panel.locator('.reel-change', { hasText: 'Save' })).toContainText('Sending');
+    await page.waitForTimeout(CAMERA_SETTLES_MS);
+    const [undo] = await together(page, '.reel-scene .rs-quiet', '.reel-scene .rs-quiet');
+    const outlines = await stage(page)
+      .locator('.reel-mark')
+      .evaluateAll((marks) => marks.map((mark) => mark.getBoundingClientRect().toJSON() as { x: number; y: number; width: number; height: number }));
+    expect(outlines.some((mark) => inside(undo!, mark, 4) && mark.width < undo!.width + 12)).toBe(false);
+
     await panel.getByRole('button', { name: 'Done' }).click();
     await expect(panel).toHaveCount(0);
     await expect(stage(page).locator('.reel-mark')).toHaveCount(0);
