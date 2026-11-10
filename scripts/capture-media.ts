@@ -90,14 +90,16 @@ const browser = await chromium.launch();
 /* Stills ------------------------------------------------------------------------------ */
 {
   // The cover is the stage alone, just after a viewer took over at the refused save and
-  // fixed it. The viewport is sized so the stage comes out close to the 2:1 GitHub uses.
-  const page = await browser.newPage({ viewport: { width: 1128, height: 700 }, deviceScaleFactor: 2 });
+  // fixed it, with what their copy changed listed beside it. The viewport is sized so the
+  // stage comes out close to the 2:1 GitHub uses.
+  const page = await browser.newPage({ viewport: { width: 1368, height: 780 }, deviceScaleFactor: 2 });
   await page.goto(`${viewerUrl}#t=10600`);
   await page.getByRole('button', { name: 'Full view' }).click();
   await page.waitForTimeout(800);
   await page.getByRole('button', { name: 'Take over' }).click();
   await page.getByLabel('Ana share').fill('10');
   await page.getByLabel('Ana share').blur();
+  await page.getByRole('button', { name: 'What changed' }).click();
   await page.mouse.move(0, 0);
   await page.waitForTimeout(1200);
   await page.locator('.stage').screenshot({ path: join(OUT, 'cover.png') });
@@ -117,6 +119,14 @@ await record(browser, 'demo', async (page) => {
   await page.waitForTimeout(700);
   await click(page, page.getByRole('button', { name: 'Play', exact: true }));
   await page.waitForTimeout(2300);
+  await click(page, page.getByRole('button', { name: 'Pause' }));
+  // Look along the line without leaving this moment. Each small app is drawn from its state.
+  const line = (await page.locator('.reel-slider').boundingBox())!;
+  for (let i = 0; i <= 60; i++) {
+    await page.mouse.move(line.x + line.width * (0.2 + 0.7 * (i / 60)), line.y + line.height / 2);
+    await page.waitForTimeout(40);
+  }
+  await page.waitForTimeout(700);
   await click(page, page.getByRole('button', { name: 'Take over' }));
   await page.waitForTimeout(1200);
   await type(page, 'Mina share', '60');
@@ -124,7 +134,10 @@ await record(browser, 'demo', async (page) => {
   await type(page, 'Theo share', '30');
   await page.waitForTimeout(500);
   await type(page, 'Ana share', '10');
-  await page.waitForTimeout(1800);
+  await page.waitForTimeout(900);
+  await click(page, page.getByRole('button', { name: 'What changed' }));
+  await page.waitForTimeout(2200);
+  await click(page, page.getByRole('button', { name: 'Done' }));
   await click(page, page.getByRole('button', { name: 'Choose a moment' }));
   await page.waitForTimeout(1600);
   await click(page, page.getByRole('group', { name: 'Choose a moment' }).getByRole('button', { name: /Inspect the balances/ }));
