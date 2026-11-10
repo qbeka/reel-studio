@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reel</title>
 <meta name="description" content="A product demo you can actually use">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Reel">
+<meta property="og:description" content="A product demo you can actually use">
+<meta property="og:url" content="https://www.qendrimbeka.com/projects/reel/">
+<meta property="og:image" content="https://www.qendrimbeka.com/projects/reel/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Reel, a product demo you can actually use, over a timeline cut into five chapters with a second line forking away from it">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.qendrimbeka.com/projects/reel/og.png">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="preload" href="../src/assets/fonts/GeistSerif-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../src/assets/fonts/Geist-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <script type="module" src="./main.tsx"></script>
@@ -25,48 +36,130 @@
   <main>
     <header class="title">
       <h1>Reel</h1>
-      <a class="control outline" href="demo/">Open the exported viewer</a>
+      <div class="title-actions" id="title-actions">
+        <a class="control outline" href="demo/">Open the exported viewer</a>
+      </div>
       <p>A product demo you can actually use</p>
     </header>
 
-    <section class="stage" id="stage" aria-label="Fix a shared receipt, a recorded demo of an invented product">
+    <section class="stage" id="stage" aria-label="A recorded demo of an invented product, which you can scrub, compare and take over">
       <noscript><p class="prose nojs">The demo needs JavaScript, but the <a href="demo/transcript.html">transcript</a> and the details below still work.</p></noscript>
     </section>
 
-    <section class="reading" id="details" aria-labelledby="details-title">
+    <section class="details" id="details" aria-labelledby="details-title">
       <h2 id="details-title">Details</h2>
-      <p class="prose">Reel records the commands of a workflow instead of a video of it, so playback runs the real app, and Take over hands you a working copy of the exact frame you stopped on, which never reaches the recording.</p>
-      <p class="prose">Tabkin, the product in the window, is invented for this page, and its receipts are synthetic, with no real people, receipts or balances behind them.</p>
-      <p class="prose">Reel records commands and not pointer movement, so the pointer you see is drawn from the recorded commands and was never a recording of a real one.</p>
-      <p class="prose">Copy link gives you the address of the moment on screen, and Author lets you rename a chapter, rewrite a caption or move the camera, then export the result as a static viewer that needs no backend.</p>
+      <p class="lede" data-reveal>Reel keeps what happened in an app instead of pictures of its screen, so the demo above is the app itself, run again from a list of ten commands</p>
 
-      <h3>Results</h3>
-      <dl class="results">
-        <div><dt>Seeking a long log</dt><dd><b>22 ms at p95</b>to any point of a generated 20,000 command log, 19.7 to 35.2 across 5 runs, against 1,074 ms replaying from the start</dd></div>
-        <div><dt>Seeking correctness</dt><dd><b>0 mismatches</b>against replay at 5,332 positions</dd></div>
-        <div><dt>Seeded failures</dt><dd><b>14 of 14 detected</b>overall, including 6 of 6 seeded reducer bugs that the replay comparison could not see, caught by a separate BigInt model of the money</dd></div>
-      </dl>
+      <article class="part" data-reveal>
+        <div class="part-text">
+          <h3>A recording is a list of what happened</h3>
+          <p class="prose">A screen recording of the Tabkin demo at 30 frames a second would be 600 pictures. Reel's recording of it is ten commands, such as <code>setSplit</code>, each with the millisecond it happened at. To play it, Reel starts the real app and hands it those commands at the right moments, which is why you can stop anywhere and the thing on screen still works.</p>
+          <p class="prose">Reel records commands and not pointer movement or key presses, so the pointer and the typing you see are drawn from the recorded commands and were never a recording of a real hand.</p>
+          <p class="prose">Tabkin and Relaymoth, the two products in the window, are invented for this page, and their data is synthetic, with no real people, receipts, endpoints or accounts behind it.</p>
+        </div>
+        <figure class="fig">
+          <div class="fig-live" id="fig-log">
+            <p class="fig-plain">The figure compares 600 video frames with the ten recorded commands on one timeline, and needs JavaScript to draw.</p>
+          </div>
+          <figcaption>Drag across the two lines to see what each holds at one moment, where the 600 frames are only arithmetic for 20 seconds at 30 a second, since no video of this demo exists, and the commands are the real recording this page plays</figcaption>
+        </figure>
+      </article>
 
-      <h3>Limits</h3>
-      <ul class="limits">
-        <li>The gain only appears on a generated stress log, because on the real 10 command recording here both variants take 3.2 ms.</li>
-        <li>The first seek in a fresh page is slower, and on the stress log the slowest of four takes about 1.2 s.</li>
-        <li>Timings come from one Apple M5 Pro laptop in headless Chromium, while other work pushed its load average from 7 to 49.</li>
-        <li>The pointer shows which control each command pressed, because where a hand really moved was never recorded.</li>
-        <li>It records only scenes written for it, so it cannot record any website.</li>
-        <li>No study has been run, so nobody outside this project has been measured using it.</li>
-      </ul>
+      <article class="part" data-reveal>
+        <div class="part-text">
+          <h3>Any moment can be drawn, compared or copied</h3>
+          <p class="prose">A moment of a video is a picture. A moment of a Reel recording is a whole state of the app, and that lets the player above do three things a video player cannot. Hover its timeline and it works out the state at that moment and runs the app on it, small, beside a list of what differs from the moment on screen. Press Compare to hold one moment and have every value that has changed since outlined in the app. Press Take over and the state on screen becomes your own working copy.</p>
+          <p class="prose">Taking over is a copy and nothing more. Reel writes the state out as data, reads it back into a new session, and gives that session an empty log of its own. Your commands go to that log. The recording is never written to, and the figure lets you check that for yourself.</p>
+        </div>
+        <figure class="fig">
+          <div class="fig-live" id="fig-fork">
+            <p class="fig-plain">The figure runs the code behind Take over on the Tabkin recording, and needs JavaScript to draw.</p>
+          </div>
+          <figcaption>This runs the same code as Take over, on the Tabkin recording, and each code beside a step is the first twelve characters of the SHA-256 of a state, worked out in your browser as you press</figcaption>
+        </figure>
+      </article>
 
-      <h3>Keyboard</h3>
-      <dl class="results">
-        <div><dt>Space or K</dt><dd>Play or pause</dd></div>
-        <div><dt>Left and Right</dt><dd>Back or forward 5 seconds</dd></div>
-        <div><dt>[ and ]</dt><dd>Previous or next chapter</dd></div>
-        <div><dt>T</dt><dd>Take over</dd></div>
-      </dl>
+      <article class="part" data-reveal>
+        <div class="part-text">
+          <h3>Seeking is a checkpoint and a short replay</h3>
+          <p class="prose">Showing a moment means rebuilding its state. Replaying every command from the start takes longer as a recording grows, so Reel stores the state every 256 commands and replays from the nearest stored one. On a generated log of <span data-claim="stress.commands">20,000</span> commands that brings the wait at the 95th percentile from <span data-claim="stress.baseline">1,074</span> ms to <span data-claim="stress.p95">22</span> ms. On the real <span data-claim="short.commands">10</span> command recording on this page it changes nothing, because both ways take <span data-claim="short.p95">3.2</span> ms.</p>
+        </div>
+        <figure class="fig">
+          <div class="fig-live" id="fig-seek">
+            <dl class="results">
+              <div><dt>Generated log of <span data-claim="stress.commands">20,000</span> commands</dt><dd><b><span data-claim="stress.p95">22</span> ms at p95 from the nearest checkpoint</b><span data-claim="stress.min">19.7</span> to <span data-claim="stress.max">35.2</span> across 5 runs, against <span data-claim="stress.baseline">1,074</span> ms replaying from the start, <span data-claim="stress.baseline.min">1,048</span> to <span data-claim="stress.baseline.max">1,659</span></dd></div>
+              <div><dt>The real recording, <span data-claim="short.commands">10</span> commands</dt><dd><b><span data-claim="short.p95">3.2</span> ms at p95 either way</b>against <span data-claim="short.baseline">3.2</span> ms replaying from the start, so there is no gain</dd></div>
+            </dl>
+          </div>
+          <figcaption>The 95th percentile of warm seeks to a coherent state, as the median of 5 runs with each run drawn as a dot and their range as a line, measured on <span data-claim="run.date">9 November 2026</span> on one <span data-claim="run.machine">Apple M5 Pro</span> laptop in headless Chromium while other work held its load average between <span data-claim="load.min">7</span> and <span data-claim="load.max">49</span></figcaption>
+        </figure>
+      </article>
 
-      <h3>Method</h3>
-      <p class="prose">The numbers come from protocol 3 in the <a href="https://github.com/qbeka/reel-studio/blob/main/docs/REPORT.md">full report</a>, measured on 9 November 2026 on the viewer you see here, and you can also read the <a href="demo/transcript.html">transcript</a> or open the <a href="demo/">exported viewer</a> built from this recording.</p>
+      <article class="part" data-reveal>
+        <div class="part-text">
+          <h3>Checked against a replay, and against a second model</h3>
+          <p class="prose">A seek is right only if it gives the same state as playing from the start. That was compared at <span data-claim="positions">5,332</span> positions across <span data-claim="logs">4</span> logs and both scenes, with <span data-claim="mismatches">0</span> mismatches. A comparison like that cannot see a bug in the reducer, because both sides share it, so the money is also checked against a separate model written with BigInt.</p>
+          <p class="prose">To find out whether the checks would notice anything at all, <span data-claim="controls.total">14</span> bugs were written in on purpose. All <span data-claim="controls.caught">14</span> were caught, and <span data-claim="blind.caught">6</span> of the <span data-claim="blind.total">6</span> reducer bugs were caught only by the separate model.</p>
+        </div>
+        <figure class="fig">
+          <div class="fig-live" id="fig-seeded">
+            <p class="fig-plain"><span data-claim="controls.caught">14</span> of <span data-claim="controls.total">14</span> seeded failures were detected, including <span data-claim="blind.caught">6</span> of <span data-claim="blind.total">6</span> seeded reducer bugs that the comparison against replay could not see.</p>
+          </div>
+          <figcaption>Each square is one bug written in on purpose, with the check that caught it, from the correctness run of <span data-claim="run.date">9 November 2026</span></figcaption>
+        </figure>
+      </article>
+
+      <article class="part part-split" data-reveal>
+        <div class="part-text">
+          <h3>Limits</h3>
+          <p class="prose">These are the things the numbers and this page do not show.</p>
+        </div>
+        <ol class="limits">
+          <li>The gain only appears on a generated stress log, because on the real <span data-claim="short.commands">10</span> command recording here both ways take <span data-claim="short.p95">3.2</span> ms.</li>
+          <li>The first seek in a fresh page is slower, and on the stress log the slowest of four takes about <span data-claim="first.seek">1.2</span> s.</li>
+          <li>Timings come from one <span data-claim="run.machine">Apple M5 Pro</span> laptop in headless Chromium, while other work pushed its load average from <span data-claim="load.min">7</span> to <span data-claim="load.max">49</span>.</li>
+          <li>The pointer and the typing show which control each command used, because where a hand really moved and which keys it pressed were never recorded.</li>
+          <li>It records only scenes written for it, so it cannot record any website.</li>
+          <li>No study has been run, so nobody outside this project has been measured using it.</li>
+        </ol>
+      </article>
+
+      <article class="part" data-reveal>
+        <div class="part-text">
+          <h3>Take the viewer with you</h3>
+          <p class="prose">Export writes a folder of static files that needs no backend. Its poster page has no script, so an iframe of it costs one small page, one stylesheet and two fonts until someone presses play. The player and both scenes come to <span data-claim="viewer.kb">105</span> KB of JavaScript and CSS with gzip.</p>
+        </div>
+        <figure class="fig">
+          <div class="fig-live" id="fig-embed">
+            <p class="fig-plain">Open the <a href="demo/">exported viewer</a>, or read its <a href="demo/transcript.html">transcript</a>.</p>
+          </div>
+        </figure>
+      </article>
+
+      <article class="part part-split" data-reveal>
+        <div class="part-text">
+          <h3>Keyboard</h3>
+          <p class="prose">Press ? on the stage to see these there. Keys do nothing while you type in a field or use a control.</p>
+        </div>
+        <dl class="keys">
+          <div><dt><kbd>Space</kbd> <kbd>K</kbd></dt><dd>Play or pause</dd></div>
+          <div><dt><kbd>Left</kbd> <kbd>Right</kbd></dt><dd>Back or forward 5 seconds</dd></div>
+          <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous or next chapter</dd></div>
+          <div><dt><kbd>T</kbd></dt><dd>Take over</dd></div>
+          <div><dt><kbd>C</kbd></dt><dd>Hold this moment and compare</dd></div>
+          <div><dt><kbd>?</kbd></dt><dd>Show or hide the keys</dd></div>
+        </dl>
+      </article>
+
+      <article class="part part-end" data-reveal>
+        <p class="prose">The numbers come from protocol 3 in the <a href="https://github.com/qbeka/reel-studio/blob/main/docs/REPORT.md">full report</a>, measured on <span data-claim="run.date">9 November 2026</span> on the viewer you see here.</p>
+        <nav class="onward" aria-label="Where to go next">
+          <a href="https://github.com/qbeka/reel-studio/blob/main/docs/REPORT.md"><span>Read how it was measured</span><i>The full report</i></a>
+          <a href="demo/"><span>Open the exported viewer</span><i>The same demo as a static folder</i></a>
+          <a href="demo/transcript.html"><span>Read the transcript</span><i>The story as plain text</i></a>
+          <a href="https://github.com/qbeka/reel-studio"><span>Read the code</span><i>github.com/qbeka/reel-studio</i></a>
+        </nav>
+      </article>
     </section>
 
     <footer class="page-end">
