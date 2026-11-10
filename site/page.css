@@ -1493,6 +1493,10 @@ html.reveals [data-reveal='in'] {
   .fig-tools {
     justify-content: flex-start;
   }
+  /* Five tick labels do not fit a phone, so the one before the last gives way. */
+  .bars-ticks li:nth-last-child(2) {
+    display: none;
+  }
   .seg {
     display: flex;
     width: 100%;
