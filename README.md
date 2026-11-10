@@ -71,15 +71,15 @@ that, use a tool like [rrweb](https://github.com/rrweb-io/rrweb).
 
 | | |
 |---|---|
-| **Seek** | p95 22 ms on a generated 20,000 command log, against 1,074 ms replaying from the start. On a real 10 command recording both take 3.2 ms. |
-| **First seek** | About 1.2 s at worst on that same log, in a fresh page. The page appears in 137 ms. |
+| **Seek** | p95 23 ms on a generated 20,000 command log, against 1,130 ms replaying from the start. On a real 10 command recording there is no gain: 3.5 ms with checkpoints and 3.1 ms without. |
+| **First seek** | About 1.3 s at worst on that same log, in a fresh page. The page appears in 144 ms. |
 | **Correctness** | 0 mismatches against replay at 5,332 positions. An independent model of each scene agreed on every log. |
 | **Test quality** | 14 of 14 seeded failures caught. 36 of 38 mutants killed, 2 equivalent. |
-| **Viewer size** | 105 KB of JavaScript and CSS with gzip. It needs no backend. |
+| **Viewer size** | 115 KB of JavaScript and CSS with gzip. It needs no backend. |
 
-Measured on 9 November 2026 on one Apple M5 Pro laptop in headless Chromium, with other work
-running. The mutants are from the run of 6 November, because the code they change has not
-changed. These are lab numbers. [What they leave out](docs/REPORT.md#what-the-headline-leaves-out).
+Measured on 10 November 2026 (UTC) on one Apple M5 Pro laptop in headless Chromium, with other
+work running. The mutants are from the run of 6 November, because the code they change has
+not changed. These are lab numbers. [What they leave out](docs/REPORT.md#what-the-headline-leaves-out).
 
 ## Add a scene
 
