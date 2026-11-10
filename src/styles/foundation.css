@@ -106,9 +106,11 @@ body {
   font: 400 13px/16px var(--sans); letter-spacing: -0.003em; white-space: nowrap; text-decoration: none;
   cursor: pointer; user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-  transition: background-color .12s, color .12s, border-color .12s;
+  transition: background-color .12s, color .12s, border-color .12s, scale .1s;
 }
-.control:active { background: var(--wash-strong); }
+/* A press has weight: the control gives a little under it. A disabled one does not move. */
+.control:active { background: var(--wash-strong); scale: .975; }
+.control[aria-disabled='true']:active { scale: 1; }
 @media (hover: hover) {
   .control:hover { background: var(--wash); }
   .control:active { background: var(--wash-strong); }
