@@ -56,6 +56,16 @@ async function readToTheEnd(page: Page) {
 
 const box = async (locator: Locator) => (await locator.boundingBox())!;
 
+/** How long the camera takes to join the story after the first move, with room to spare. */
+const CAMERA_SETTLES_MS = 900;
+
+/** The boxes of two parts of the stage, read in the same instant so a moving camera cannot part them. */
+const together = (page: Page, first: string, second: string) =>
+  page.locator('#stage').evaluate(
+    (root, [a, b]) => [a, b].map((selector) => root.querySelector(selector!)!.getBoundingClientRect().toJSON()),
+    [first, second],
+  ) as Promise<{ x: number; y: number; width: number; height: number }[]>;
+
 test.describe('the first screen', () => {
   test('is a working app at a useful moment', async ({ page }) => {
     await open(page);
@@ -129,9 +139,9 @@ test.describe('the story', () => {
     const veil = stage(page).locator('.reel-veil');
     await expect(veil).toHaveCount(1);
     // The clear part is the split editor, with a little room around it.
-    const clear = await box(veil);
-    const subject = await box(app(page).locator('[data-reel-target="split-editor"]'));
-    expect(inside(subject, clear)).toBe(true);
+    await page.waitForTimeout(CAMERA_SETTLES_MS);
+    const [clear, subject] = await together(page, '.reel-veil', '.reel-scene [data-reel-target="split-editor"]');
+    expect(inside(subject!, clear!)).toBe(true);
     await stage(page).getByRole('button', { name: 'Take over' }).click();
     await expect(stage(page).locator('.reel-veil')).toHaveCount(0);
   });
@@ -159,10 +169,11 @@ test.describe('the story', () => {
     await expect(typed).toHaveText('5');
     await expect(app(page).getByLabel('Mina share')).not.toHaveValue('50');
     // The letters sit exactly over the field they are for.
-    const over = await box(typed);
-    const field = await box(app(page).getByLabel('Mina share'));
-    expect(Math.abs(over.x - field.x)).toBeLessThan(1.5);
-    expect(Math.abs(over.width - field.width)).toBeLessThan(1.5);
+    await page.waitForTimeout(CAMERA_SETTLES_MS);
+    const [over, field] = await together(page, '.reel-typed', '.reel-scene input[aria-label="Mina share"]');
+    expect(Math.abs(over!.x - field!.x)).toBeLessThan(1.5);
+    expect(Math.abs(over!.y - field!.y)).toBeLessThan(1.5);
+    expect(Math.abs(over!.width - field!.width)).toBeLessThan(1.5);
     // Earlier still the old value is selected, and nothing has been typed.
     await slider(page).fill('5500');
     await expect(typed).toHaveAttribute('data-selecting', 'true');
