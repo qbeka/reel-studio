@@ -213,18 +213,24 @@ machines. The state hashes in `manifest.json` should not.
 
 ## Clean checkout
 
-A fresh `git clone` of commit `b84472a`, on the same machine, with a frozen lockfile. Source
-files match the measured commit. Only the text of the project page, a benchmark script, the
-media and documents changed after it.
+A fresh `git clone` of commit `4bee208`, on the same machine, with a frozen lockfile. The
+viewer that was measured was built at `afbae05`. After it, three things under `src` changed:
+the comparison no longer outlines a control that is hidden, its panel says nothing about
+outlines when no value differs, and the handler behind Compare was tidied. None of them is on
+the path a seek takes. Everything else after the measured build is the project page, the
+tests, the media and documents.
 
 | Command | Result |
 |---|---|
 | `pnpm install --frozen-lockfile` | Passed |
 | `pnpm check` | Passed |
-| `pnpm test` | 247 of 247 passed |
+| `pnpm test` | 286 of 286 passed |
 | `pnpm build` | Passed |
-| `pnpm exec playwright test` | 135 of 135 passed on Chromium, WebKit and Firefox |
+| `pnpm exec playwright test` | 223 passed and 4 skipped on Chromium, WebKit and Firefox |
 | `pnpm export` and `scripts/verify-bundle.ts` | 14 files matched, and the replay reproduced the final state |
-| `pnpm build:site` | Built the project page with the exported viewer under it |
+| `pnpm build:site` | Built the project page with both exported viewers under it |
+
+The 4 skipped runs are the two tests of the look ahead on WebKit and Firefox. It answers a
+mouse over the timeline, and Chromium runs both.
 
 This shows a clean checkout works here. It was not repeated on a second machine.
