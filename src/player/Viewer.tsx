@@ -490,16 +490,11 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
     const { t, seeking } = playback.getSnapshot();
     if (seeking) return;
     setAuthoring(false);
-    setPin((held) => {
-      const nextPin = held === null ? t : null;
-      setAnnouncement(
-        nextPin === null
-          ? 'Comparison closed'
-          : `Holding ${formatTime(t)}, so move the story to see what differs from it`,
-      );
-      return nextPin;
-    });
-  }, [branch, playback]);
+    setPin(pin === null ? t : null);
+    setAnnouncement(
+      pin === null ? `Holding ${formatTime(t)}, so move the story to see what differs from it` : 'Comparison closed',
+    );
+  }, [branch, playback, pin]);
 
   const closeKeys = useCallback(() => {
     setKeysOpen(false);
@@ -944,9 +939,11 @@ export function Viewer({ adapter, project, transcript, variant, autoplay, startA
                 ))}
               </ul>
             )}
-            <p className="reel-diff-note">
-              {changes.length} of the state's values differ, and each is outlined in the app
-            </p>
+            {changes.length > 0 && (
+              <p className="reel-diff-note">
+                {changes.length} of the state's values differ, and each is outlined in the app
+              </p>
+            )}
           </aside>
         )}
 
