@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CameraShot, Caption, Chapter } from '../core/project';
 import { formatTime } from '../core/project';
 import { chapterIndexAt } from '../core/tracks';
@@ -19,53 +19,80 @@ const RAIL = 6;
 const SEGMENT_GAP = 3;
 const LANE = 19;
 const BEND = 30;
-const EDIT_GAP = 9;
 
 export interface ForkMark {
   t: number;
   edits: number;
   /** True while the copy is set aside and can still be brought back. */
   kept: boolean;
+  /**
+   * How long the copy has been running, and when each thing happened in it, in milliseconds
+   * since the fork. With these the copy is drawn on the recording's own time scale.
+   */
+  elapsed?: number;
+  marks?: readonly { at: number; made: boolean }[];
 }
 
+/** The copy's line always shows at least this much, so it can be seen the moment it starts. */
+const FORK_MIN = 26;
+/** Room kept past the end of the copy's line for its name. */
+const FORK_NAME = 92;
+
 /**
- * The viewer's own line, leaving the recording at the moment they took over. The recording
- * stays where it is. The status line says the same in words, so this hides from readers.
+ * The viewer's own line, leaving the recording at the moment they took over and running
+ * beside it. The recording stays where it is. Both lines share one time scale while there
+ * is room, so a minute in the copy is as long as a minute of the recording, and the copy's
+ * scale tightens once it would run off the end. The status line says the same in words, so
+ * this hides from readers.
  */
 function Fork({
   x,
   width,
   top,
-  edits,
-  kept,
+  perMs,
+  fork,
 }: {
   x: number;
   width: number;
   top: number;
-  edits: number;
-  kept: boolean;
+  /** Pixels per millisecond on the recording's line. */
+  perMs: number;
+  fork: ForkMark;
 }) {
+  const { edits, kept, marks = [], elapsed = 0 } = fork;
   const mine = top + LANE;
   // Close to the end there is no room ahead, so the copy runs back under the recording.
-  const way = width - x < BEND + 96 ? -1 : 1;
+  const way = width - x < BEND + FORK_NAME + 40 ? -1 : 1;
   const bent = x + way * BEND;
-  const room = way > 0 ? width - INSET - bent : bent - INSET;
-  const shown = Math.min(edits, Math.max(0, Math.floor((room - 84) / EDIT_GAP)));
-  const end = bent + way * (12 + shown * EDIT_GAP);
+  const room = Math.max(0, (way > 0 ? width - INSET - bent : bent - INSET) - FORK_NAME);
+  const last = Math.max(elapsed, marks.at(-1)?.at ?? 0);
+  const scale = Math.min(perMs, last > 0 ? (room - FORK_MIN) / last : perMs);
+  const place = (at: number) => bent + way * (FORK_MIN * 0.5 + Math.max(0, at) * Math.max(0, scale));
+  const end = bent + way * (FORK_MIN + last * Math.max(0, scale));
   const reach = x + way * (BEND * 0.5);
   return (
     <g className="reel-fork" data-kept={kept}>
       <path
+        className="reel-fork-leave"
         pathLength={1}
-        d={`M ${x} ${top} C ${reach} ${top}, ${reach} ${mine}, ${bent} ${mine} L ${end} ${mine}`}
+        d={`M ${x} ${top} C ${reach} ${top}, ${reach} ${mine}, ${bent} ${mine}`}
       />
-      {Array.from({ length: shown }, (_, i) => {
-        const at = bent + way * (i + 1) * EDIT_GAP;
-        return <line key={at} x1={at} x2={at} y1={mine - 4} y2={mine + 4} />;
-      })}
-      <circle cx={end} cy={mine} r={4.5} />
+      <line className="reel-fork-run" x1={bent} x2={end} y1={mine} y2={mine} />
+      {marks.map((mark, i) => (
+        <circle
+          // biome-ignore lint/suspicious/noArrayIndexKey: a log only grows, so an index names one entry for good.
+          key={i}
+          className="reel-fork-mark"
+          data-made={mark.made}
+          cx={place(mark.at)}
+          cy={mine}
+          r={mark.made ? 3 : 2}
+        />
+      ))}
+      <circle className="reel-fork-head" cx={end} cy={mine} r={4.5} />
       <text x={end + way * 11} y={mine + 4} textAnchor={way > 0 ? 'start' : 'end'}>
         {kept ? 'Set aside' : 'Your copy'}
+        {edits > 0 && <tspan className="reel-fork-count">{`  ${edits} ${edits === 1 ? 'edit' : 'edits'}`}</tspan>}
       </text>
     </g>
   );
@@ -107,7 +134,17 @@ export interface TimelineBarProps {
   labels?: boolean;
   /** The authored tracks, drawn as two thin lanes. Only an authoring view passes them. */
   tracks?: { captions: readonly Caption[]; camera: readonly CameraShot[] } | null;
+  /**
+   * What to show above the line for the moment under a mouse. With it the line becomes a
+   * way to look at any moment without going there.
+   */
+  peek?: (t: number) => ReactNode;
+  /** A moment held for comparison, marked on the line. */
+  pin?: number | null;
 }
+
+/** The widest a peek can be. It is kept inside the track. */
+const PEEK_WIDTH = 348;
 
 const NO_STEPS: readonly number[] = [];
 
@@ -141,11 +178,15 @@ export function TimelineBar({
   fork,
   labels = false,
   tracks = null,
+  peek,
+  pin = null,
 }: TimelineBarProps) {
   const track = useRef<HTMLDivElement>(null);
   const clip = useId();
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
+  /** True while a button is down on the line. The stage is then showing the moment itself. */
+  const [held, setHeld] = useState(false);
   const names = useRef<(HTMLButtonElement | null)[]>([]);
   /** The width each chapter name wants, measured for one track width and set of names. */
   const [wanted, setWanted] = useState<{ key: string; widths: number[] } | null>(null);
@@ -221,13 +262,21 @@ export function TimelineBar({
       data-labels={labels}
       data-disabled={disabled}
       style={{ height }}
+      data-peeking={peek !== undefined && hover !== null && !held}
       onPointerMove={(event) => {
         if (event.pointerType !== 'mouse' || disabled) return;
         const bounds = event.currentTarget.getBoundingClientRect();
         const y = event.clientY - bounds.top;
-        setHover(Math.abs(y - top) <= 12 ? event.clientX - bounds.left : null);
+        // The line and the row of command dots under it, and nothing of the chapter names.
+        setHover(y >= top - 12 && y <= top + 18 ? event.clientX - bounds.left : null);
       }}
-      onPointerLeave={() => setHover(null)}
+      onPointerDown={() => setHeld(true)}
+      onPointerUp={() => setHeld(false)}
+      onPointerCancel={() => setHeld(false)}
+      onPointerLeave={() => {
+        setHover(null);
+        setHeld(false);
+      }}
     >
       {labels && width > 0 && (
         <ol className="reel-chapters">
@@ -315,7 +364,25 @@ export function TimelineBar({
           ),
         )}
         {fork !== null && width > 0 && (
-          <Fork x={x(fork.t)} width={width} top={top} edits={fork.edits} kept={fork.kept} />
+          <Fork x={x(fork.t)} width={width} top={top} perMs={usable / span} fork={fork} />
+        )}
+        {pin !== null && width > 0 && (
+          <g className="reel-pin" transform={`translate(${x(pin)} ${top})`}>
+            <line y1={-11} y2={11} />
+            <rect x={-7} y={-25} width={14} height={14} rx={4} />
+            <text y={-14.500} textAnchor="middle">
+              A
+            </text>
+          </g>
+        )}
+        {peek !== undefined && hover !== null && !held && width > 0 && (
+          <line
+            className="reel-peek-line"
+            x1={Math.min(width - INSET, Math.max(INSET, hover))}
+            x2={Math.min(width - INSET, Math.max(INSET, hover))}
+            y1={top - 9}
+            y2={top + 9}
+          />
         )}
       </svg>
       <input
@@ -337,10 +404,25 @@ export function TimelineBar({
           onSeek(t + step);
         }}
       />
-      {hover !== null && width > 0 && (
+      {hover !== null && width > 0 && peek === undefined && (
         <span className="reel-hover" aria-hidden="true" style={{ left: Math.min(width - INSET, Math.max(INSET, hover)), top: top + 12 }}>
           {formatTime(timeAt(hover))}
         </span>
+      )}
+      {hover !== null && width > 0 && peek !== undefined && !held && (
+        <div
+          className="reel-peek"
+          aria-hidden="true"
+          style={{
+            width: Math.min(PEEK_WIDTH, width),
+            left: Math.round(Math.min(Math.max(0, width - PEEK_WIDTH), Math.max(0, hover - PEEK_WIDTH / 2))),
+            bottom: height - top + 16,
+            // Where the moment is under the card, for the stem that joins them.
+            ['--at' as string]: `${Math.round(hover - Math.min(Math.max(0, width - PEEK_WIDTH), Math.max(0, hover - PEEK_WIDTH / 2)))}px`,
+          }}
+        >
+          {peek(Math.round(timeAt(hover)))}
+        </div>
       )}
     </div>
   );
