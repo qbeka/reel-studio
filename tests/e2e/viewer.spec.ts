@@ -336,6 +336,118 @@ test.describe('motion and framing', () => {
   });
 });
 
+test.describe('what a recording of state allows', () => {
+  /** Moves the mouse onto the timeline's line at a time of the story. */
+  async function hoverAt(page: Page, t: number) {
+    const track = (await page.locator('.reel-track').boundingBox())!;
+    const rail = (await page.locator('.reel-slider').boundingBox())!;
+    await page.mouse.move(track.x + 8 + (track.width - 16) * (t / 22_000), rail.y + rail.height / 2);
+  }
+
+  test('the timeline draws the app at any moment from its state, with no picture stored', async ({ page }) => {
+    const seen: string[] = [];
+    page.on('request', (request) => seen.push(request.url()));
+    await page.goto(`${host.url}#t=9000`);
+    await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
+    seen.length = 0;
+    await hoverAt(page, 20_000);
+    const peek = page.locator('.reel-peek');
+    await expect(peek.getByRole('heading', { name: 'Who owes what', includeHidden: true })).toHaveCount(1);
+    await expect(peek).toContainText('Inspect the balances');
+    await expect(peek.locator('.reel-change')).not.toHaveCount(0);
+    await hoverAt(page, 2000);
+    await expect(peek).toContainText('Opened Harbor Noodle Bar');
+    // Nothing was fetched for either moment, and the story has not moved.
+    expect(seen).toEqual([]);
+    await expect(slider(page)).toHaveValue('9000');
+    await page.mouse.move(4, 4);
+    await expect(peek).toHaveCount(0);
+  });
+
+  test('the look ahead goes away while the line is being dragged, since the stage is then the moment', async ({ page }) => {
+    await page.goto(`${host.url}#t=9000`);
+    await hoverAt(page, 12_000);
+    await expect(page.locator('.reel-peek')).toHaveCount(1);
+    await page.mouse.down();
+    await expect(page.locator('.reel-peek')).toHaveCount(0);
+    await page.mouse.up();
+  });
+
+  test('Compare holds a moment and lists what differs from it, by key as well as by button', async ({ page }) => {
+    await page.goto(`${host.url}#t=9000`);
+    await page.locator('h1').click();
+    await page.keyboard.press('c');
+    const panel = page.getByRole('complementary', { name: 'What changed' });
+    await expect(panel).toContainText('Held at 0:09');
+    await page.keyboard.press(']');
+    await expect(slider(page)).toHaveValue('10400');
+    await expect(panel.locator('.reel-change', { hasText: 'Save' })).toContainText('Refused');
+    await expect(page.locator('.reel-mark')).not.toHaveCount(0);
+    await expect(page.getByRole('status')).toContainText('Holding 0:09');
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await expect(page.locator('.reel-mark')).toHaveCount(0);
+  });
+
+  test('a held moment is let go when the viewer takes over, and their copy has a comparison of its own', async ({ page }) => {
+    await page.goto(`${host.url}#t=9000`);
+    await page.getByRole('button', { name: 'Compare' }).click();
+    await page.getByRole('button', { name: 'Take over' }).click();
+    await expect(page.getByRole('complementary', { name: 'What changed' })).toHaveCount(0);
+    await page.getByLabel('Ana share').fill('10');
+    await page.getByRole('button', { name: 'What changed' }).click();
+    await expect(page.getByRole('complementary', { name: 'What changed' })).toContainText('The recording at 0:09');
+    await expect(page.locator('.reel-apart')).toContainText('differs from the recording in');
+  });
+
+  test('a typed value is drawn key by key over its field, and the field keeps the state value', async ({ page }) => {
+    await page.goto(host.url);
+    // Theo's share becomes 40 at 7400.
+    await slider(page).fill('7380');
+    await expect(page.locator('.reel-typed')).toHaveText('4');
+    await expect(page.getByLabel('Theo share')).not.toHaveValue('40');
+    await slider(page).fill('7400');
+    await expect(page.locator('.reel-typed')).toHaveCount(0);
+    await expect(page.getByLabel('Theo share')).toHaveValue('40');
+  });
+
+  test('the drawn button goes down before a command and is up again soon after', async ({ page }) => {
+    const press = () =>
+      page.locator('.reel-frame > .reel-cursor').evaluate((element) => Number((element as HTMLElement).style.getPropertyValue('--press')));
+    await page.goto(host.url);
+    await slider(page).fill('10000');
+    expect(await press()).toBe(0);
+    await slider(page).fill('10390');
+    expect(await press()).toBeGreaterThan(0.9);
+    await expect(page.locator('.reel-press')).toHaveCount(1);
+    await slider(page).fill('10800');
+    expect(await press()).toBe(0);
+    await expect(page.locator('.reel-press')).toHaveCount(0);
+  });
+
+  test('the story ends on a card with what to do next', async ({ page }) => {
+    await page.goto(host.url);
+    await slider(page).fill('22000');
+    const end = page.locator('.reel-end');
+    await expect(end.getByRole('heading', { name: 'Fix a shared receipt' })).toBeVisible();
+    await expect(end.locator('.control')).toHaveText(['Try it yourself', 'Watch again']);
+    await end.getByRole('button', { name: 'Watch again' }).click();
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  });
+
+  test('the keys are listed on a sheet that takes focus and gives it back', async ({ page }) => {
+    await page.goto(`${host.url}#t=9000`);
+    const button = page.getByRole('button', { name: 'Keyboard shortcuts' });
+    await button.click();
+    const sheet = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+    await expect(sheet).toBeFocused();
+    await expect(sheet).toContainText('Hold this moment and compare');
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+    await expect(button).toBeFocused();
+  });
+});
+
 test.describe('layouts', () => {
   for (const [width, height] of [
     [320, 640],
@@ -489,6 +601,25 @@ test.describe('accessibility scan', () => {
     await page.goto(`${host.url}#t=14000`);
     await expect(page.getByRole('button', { name: 'Take over' })).toBeVisible();
     expect(await scan(page)).toEqual([]);
+    // With a moment held, the list of changes open and the keys on their sheet.
+    await page.getByRole('button', { name: 'Compare' }).click();
+    await slider(page).fill('20000');
+    await expect(page.getByRole('complementary', { name: 'What changed' })).toBeVisible();
+    // The pressed control takes a moment to reach its colours, and a scan in between misreads them.
+    await page.waitForTimeout(300);
+    expect(await scan(page)).toEqual([]);
+    await page.getByRole('button', { name: 'Keyboard shortcuts' }).click();
+    expect(await scan(page)).toEqual([]);
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Compare' }).click();
+    // On the card the story ends with.
+    await slider(page).fill('22000');
+    await expect(page.locator('.reel-end')).toBeVisible();
+    // The card fades in, and the controls under it are changing colour as it does.
+    await page.waitForTimeout(700);
+    expect(await scan(page)).toEqual([]);
+    await slider(page).fill('14000');
+    await page.waitForTimeout(300);
     await page.getByRole('button', { name: 'Take over' }).click();
     expect(await scan(page)).toEqual([]);
     await page.getByRole('button', { name: 'Choose a moment' }).click();
