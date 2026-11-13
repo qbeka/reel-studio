@@ -292,18 +292,26 @@ test.describe('what changed between two moments', () => {
     await expect(ana).toContainText('30%');
     await expect(ana).toContainText('10%');
     await expect(panel.locator('.reel-change', { hasText: 'Shares add up to' })).toContainText('100%');
-    // Ana's field is one of the outlined parts. The camera is given time to stop first.
+    // Ana's field is one of the outlined parts. The camera is given time to stop first, and
+    // the fields and the outlines are read in one instant, so a camera still moving on a slow
+    // machine cannot part them. Until it stops, they are read again.
     await expect(stage(page).locator('.reel-mark').first()).toBeVisible();
-    await page.waitForTimeout(900);
-    const field = await box(app(page).getByLabel('Ana share'));
-    const around = await stage(page)
-      .locator('.reel-mark')
-      .evaluateAll((marks) => marks.map((mark) => mark.getBoundingClientRect().toJSON() as { x: number; y: number; width: number; height: number }));
-    expect(around.length).toBeGreaterThan(0);
-    expect(around.some((mark) => inside(field, mark, 2) && mark.width < field.width * 4)).toBe(true);
-    // Mina's share did not change, and no outline is drawn tightly around it.
-    const mina = await box(app(page).getByLabel('Mina share'));
-    expect(around.some((mark) => inside(mina, mark, 2) && mark.width < mina.width * 2)).toBe(false);
+    await page.waitForTimeout(CAMERA_SETTLES_MS);
+    await expect(async () => {
+      const { field, mina, around } = await stage(page).evaluate((root) => {
+        const rect = (element: Element) => element.getBoundingClientRect().toJSON() as { x: number; y: number; width: number; height: number };
+        return {
+          field: rect(root.querySelector('.reel-scene input[aria-label="Ana share"]')!),
+          mina: rect(root.querySelector('.reel-scene input[aria-label="Mina share"]')!),
+          around: [...root.querySelectorAll('.reel-mark')].map(rect),
+        };
+      });
+      const seen = JSON.stringify({ field, around });
+      expect(around.length).toBeGreaterThan(0);
+      expect(around.some((mark) => inside(field, mark, 2) && mark.width < field.width * 4), seen).toBe(true);
+      // Mina's share did not change, and no outline is drawn tightly around it.
+      expect(around.some((mark) => inside(mina, mark, 2) && mark.width < mina.width * 2), seen).toBe(false);
+    }).toPass({ timeout: 3000 });
 
     // A control that keeps its place but is hidden from a viewer of the story is not outlined,
     // though it is disabled in one of the two states and not in the other.
@@ -670,6 +678,22 @@ test.describe('widths and motion', () => {
           return nav.getBoundingClientRect().right - bar.getBoundingClientRect().right + Number.parseFloat(getComputedStyle(nav).marginRight);
         });
         expect(spill, `top bar ${query} at ${width}`).toBeLessThanOrEqual(0.5);
+        // The same goes for everything under the stage: nothing reaches into the right gutter,
+        // unless a part that scrolls or clips holds it.
+        const wide = await page.locator('#details').evaluate((details) => {
+          const edge = details.getBoundingClientRect().right + 1;
+          const held = (element: Element) => {
+            for (let node = element.parentElement; node !== null && node !== details; node = node.parentElement) {
+              if (getComputedStyle(node).overflowX !== 'visible') return true;
+            }
+            return false;
+          };
+          return [...details.querySelectorAll('*')]
+            .filter((element) => element.getBoundingClientRect().right > edge && !held(element))
+            .map((element) => `${element.tagName.toLowerCase()}.${element.getAttribute('class') ?? ''}`)
+            .slice(0, 5);
+        });
+        expect(wide, `under the stage ${query} at ${width}`).toEqual([]);
       }
       await context.close();
     });
