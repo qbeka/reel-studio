@@ -1,3 +1,12 @@
+/* The page sits on the site's paper. The exported viewer keeps its own white. */
+:root {
+  --page: #fbf6ea;
+}
+html,
+body {
+  background: var(--page);
+}
+
 .nojs {
   margin: 0;
   padding: 24px;
