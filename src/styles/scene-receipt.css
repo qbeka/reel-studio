@@ -867,6 +867,14 @@
       opacity: 0.38;
     }
   }
+  /* A narrow preview stacks each tile, so the name and its avatar are never cut to a sliver. */
+  @container (max-width: 560px) {
+    & .rs-after li {
+      grid-template-columns: minmax(0, 1fr);
+      align-content: center;
+      gap: 4px;
+    }
+  }
   @container (max-height: 104px) {
     & .rs-after .rs-moved {
       display: none;
