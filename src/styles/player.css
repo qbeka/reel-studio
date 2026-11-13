@@ -452,8 +452,8 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 14px;
+  line-height: 18px;
   color: var(--muted);
   white-space: nowrap;
   transition: color 0.42s;
