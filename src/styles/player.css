@@ -1446,8 +1446,15 @@
   .reel-chapter {
     padding: 0 3px;
   }
+  /* The chapter name may take a second line rather than lose its end. */
   .reel-now {
-    display: block;
+    flex: 1 1 auto;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 16px;
+    white-space: normal;
+    text-wrap: balance;
   }
 }
 @container (max-width: 559px) {
