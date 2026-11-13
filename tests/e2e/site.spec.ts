@@ -70,7 +70,9 @@ test.describe('the first screen', () => {
   test('is a working app at a useful moment', async ({ page }) => {
     await open(page);
     await expect(page.getByRole('heading', { name: 'Reel', level: 1 })).toBeVisible();
-    await expect(page.getByText('A product demo you can actually use')).toBeVisible();
+    // The name stands alone. The sentence that once sat under it is the share card's.
+    await expect(page.locator('.title > p')).toHaveCount(0);
+    await expect(page.getByText('A product demo you can actually use')).toHaveCount(0);
     await expect(app(page).locator('.rs-error')).toContainText('120%');
     await expect(stage(page).getByText('Recorded, synthetic data')).toBeVisible();
     await expect(stage(page).getByRole('button', { name: 'Take over' })).toBeInViewport();
@@ -220,7 +222,8 @@ test.describe('the story', () => {
   test('the page keeps its own address and leaves reading keys alone', async ({ page }) => {
     await open(page);
     await page.getByRole('link', { name: 'Details' }).click();
-    await expect(page.getByRole('heading', { name: 'Details' })).toBeInViewport();
+    // The section opens on its sentence, which is its heading.
+    await expect(page.getByRole('heading', { name: /^Reel keeps what happened in an app/, level: 2 })).toBeInViewport();
     await page.keyboard.press('ArrowRight');
     await slider(page).fill('5000');
     expect(new URL(page.url()).hash).toBe('#details');
@@ -627,9 +630,11 @@ test.describe('under the stage', () => {
     await open(page);
     const onward = page.getByRole('navigation', { name: 'Where to go next' });
     await expect(onward.getByRole('link')).toHaveCount(4);
-    const local = await page.locator('a[href]').evaluateAll((links) =>
-      [...new Set(links.map((link) => link.getAttribute('href')!))].filter((href) => !/^(https?:|#)/.test(href)),
-    );
+    const hrefs = await page.locator('a[href]').evaluateAll((links) => [...new Set(links.map((link) => link.getAttribute('href')!))]);
+    // A link from the site root leaves the demo for the rest of the site, like a link to another
+    // host, so it is not looked for here. These are the only ones: the way back and the story.
+    expect(hrefs.filter((href) => href.startsWith('/')).sort()).toEqual(['/#work-reel', '/work/reel']);
+    const local = hrefs.filter((href) => !/^(https?:|#|\/)/.test(href));
     expect(local).toContain('demo/');
     for (const href of local) {
       // Sub-pages are linked as folders, never as a file inside one.
@@ -658,6 +663,13 @@ test.describe('widths and motion', () => {
         await readToTheEnd(page);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
         expect(overflow, `${query} at ${width}`).toBeLessThanOrEqual(0);
+        // The top bar's links end where the bar does, rather than spilling into the gutter, which
+        // hides an overflow until an engine sets the same words a pixel or two wider.
+        const spill = await page.locator('.topbar').evaluate((bar) => {
+          const nav = bar.querySelector('nav')!;
+          return nav.getBoundingClientRect().right - bar.getBoundingClientRect().right + Number.parseFloat(getComputedStyle(nav).marginRight);
+        });
+        expect(spill, `top bar ${query} at ${width}`).toBeLessThanOrEqual(0.5);
       }
       await context.close();
     });
@@ -666,7 +678,7 @@ test.describe('widths and motion', () => {
   test('the first second arrives in order and is over within 700 ms', async ({ page }) => {
     await page.goto(host.url);
     const timing = await page.evaluate(() =>
-      ['.title h1', '.title > p', '.stage'].map((selector) => {
+      ['.title h1', '.title-actions', '.stage'].map((selector) => {
         const style = getComputedStyle(document.querySelector(selector)!);
         return { name: style.animationName, ends: (Number.parseFloat(style.animationDelay) + Number.parseFloat(style.animationDuration)) * 1000, delay: Number.parseFloat(style.animationDelay) };
       }),
