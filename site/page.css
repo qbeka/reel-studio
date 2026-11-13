@@ -1444,6 +1444,17 @@ html.reveals [data-reveal='in'] {
   align-items: center;
   gap: 4px;
 }
+/* With the story link the top bar holds four links, so on a phone they sit a little closer. */
+@media (max-width: 419px) {
+  .topbar nav {
+    gap: 0;
+    margin-right: -6px;
+  }
+  .topbar nav .quiet {
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+}
 
 @media (max-width: 899px) {
   .log-read {
