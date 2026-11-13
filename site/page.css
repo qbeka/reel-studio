@@ -307,16 +307,12 @@ body {
   }
 }
 
-/* The first second: the name, the sentence, the controls and the stage arrive in that order. */
+/* The first second: the name, the controls and the stage arrive in that order. */
 @media (prefers-reduced-motion: no-preference) {
   .title h1,
-  .title > p,
   .title-actions,
   .stage {
     animation: page-arrive 0.52s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  }
-  .title > p {
-    animation-delay: 0.06s;
   }
   .title-actions {
     animation-delay: 0.1s;
