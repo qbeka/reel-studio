@@ -1439,6 +1439,11 @@ html.reveals [data-reveal='in'] {
   max-width: none;
   margin-top: 72px;
 }
+.page-end nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 @media (max-width: 899px) {
   .log-read {
