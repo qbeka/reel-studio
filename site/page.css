@@ -355,12 +355,13 @@ body {
     font: 400 0.9em/1 ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
   }
 }
-.lede {
-  max-width: 940px;
+/* The section opens on its sentence, set like the first heading on every other project page. */
+#details-title {
+  max-width: 880px;
   margin: 0;
   color: var(--ink);
-  font: 400 clamp(26px, 3.5vw, 40px) / 1.16 var(--serif);
-  letter-spacing: -0.028em;
+  font: 400 clamp(30px, 4.3vw, 46px) / 1.08 var(--serif);
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 .part {
