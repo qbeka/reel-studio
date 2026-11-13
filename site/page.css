@@ -1452,6 +1452,19 @@ html.reveals [data-reveal='in'] {
     white-space: nowrap;
   }
 }
+/* At 320 px even that is a few pixels too wide, so the links close up once more. */
+@media (max-width: 359px) {
+  .topbar .back {
+    gap: 4px;
+    padding-right: 2px;
+  }
+  .topbar nav {
+    margin-right: -4px;
+  }
+  .topbar nav .quiet {
+    padding: 0 4px;
+  }
+}
 
 @media (max-width: 899px) {
   .log-read {
