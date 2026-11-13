@@ -1532,9 +1532,12 @@ html.reveals [data-reveal='in'] {
   .bars-ticks li:nth-last-child(2) {
     display: none;
   }
+  /* A fieldset will not shrink below its words unless told to, and then the labels below
+     could never cut their ends short. */
   .seg {
     display: flex;
     width: 100%;
+    min-width: 0;
   }
   .seg label {
     flex: 1 1 0;
