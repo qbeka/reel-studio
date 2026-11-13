@@ -520,7 +520,7 @@ html.reveals [data-reveal='in'] {
 }
 .lane-command {
   & circle {
-    fill: var(--paper);
+    fill: var(--page);
     stroke: var(--faint);
     stroke-width: 1.5;
     transition: fill 0.16s, stroke 0.16s, r 0.16s;
@@ -904,7 +904,7 @@ html.reveals [data-reveal='in'] {
   stroke-width: 1.5;
 }
 .fork-dot {
-  fill: var(--paper);
+  fill: var(--page);
   stroke: var(--faint);
   stroke-width: 1.5;
 
@@ -917,7 +917,7 @@ html.reveals [data-reveal='in'] {
 }
 .fork-at {
   & circle:first-child {
-    fill: var(--paper);
+    fill: var(--page);
     stroke: var(--forest);
     stroke-width: 2;
   }
@@ -936,14 +936,14 @@ html.reveals [data-reveal='in'] {
   }
   & circle {
     fill: var(--forest);
-    stroke: var(--paper);
+    stroke: var(--page);
     stroke-width: 1.5;
     animation: reel-pop 0.24s both;
     transform-box: fill-box;
     transform-origin: center;
   }
   & circle[data-made='false'] {
-    fill: var(--paper);
+    fill: var(--page);
     stroke: var(--forest);
   }
 }
