@@ -403,7 +403,7 @@ html.reveals [data-reveal='in'] {
     max-width: var(--reading-width);
     margin-top: 16px;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 20px;
     text-wrap: pretty;
   }
@@ -522,7 +522,7 @@ html.reveals [data-reveal='in'] {
   }
   & text {
     fill: var(--muted);
-    font: 400 11px/1 ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+    font: 400 12px/1 ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
     transition: fill 0.16s;
   }
   &[data-past='true'] circle {
@@ -559,7 +559,7 @@ html.reveals [data-reveal='in'] {
     border-radius: 5px;
     background: var(--forest);
     color: #fff;
-    font: 500 11px/14px var(--sans);
+    font: 500 12px/14px var(--sans);
     font-style: normal;
     translate: -50% 0;
     white-space: nowrap;
@@ -748,7 +748,7 @@ html.reveals [data-reveal='in'] {
     position: absolute;
     top: 0;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 12px;
     line-height: 16px;
     translate: -50% 0;
     white-space: nowrap;
@@ -1012,7 +1012,7 @@ html.reveals [data-reveal='in'] {
     border-radius: 50%;
     background: var(--wash-strong);
     color: var(--body);
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1;
     transition: background-color 0.3s, color 0.3s;
   }
